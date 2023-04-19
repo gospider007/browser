@@ -278,7 +278,6 @@ func runChrome(ctx context.Context, option *ClientOption) (*cmd.Client, error) {
 			return nil, err
 		}
 	}
-
 	cli := cmd.NewLeakClient(ctx, cmd.ClientOption{
 		Name: fileName,
 	})
@@ -547,9 +546,10 @@ func (obj *Client) init() error {
 	rs, err := obj.globalReqCli.Request(obj.ctx, "get",
 		fmt.Sprintf("http://%s:%d/json/version", obj.host, obj.port),
 		requests.RequestOption{
+			Timeout:  3,
 			DisProxy: true,
 			ErrCallBack: func(err error) bool {
-				time.Sleep(time.Millisecond * 1000)
+				time.Sleep(time.Second)
 				return false
 			},
 			AfterCallBack: func(r *requests.Response) error {
