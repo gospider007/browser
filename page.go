@@ -147,18 +147,18 @@ func (obj *Page) LoadId() int64 {
 	return obj.pageStarId
 }
 func (obj *Page) WaitStop(preCtx context.Context, waits ...int) error {
-	var ctx context.Context
-	var cnl context.CancelFunc
 	wait := 2
 	if len(waits) > 0 {
 		wait = waits[0]
 	}
+	var ctx context.Context
+	var cnl context.CancelFunc
 	if preCtx == nil {
-		ctx, cnl = context.WithTimeout(obj.ctx, time.Second*30)
-		defer cnl()
+		ctx, cnl = context.WithTimeout(obj.ctx, time.Second*60)
 	} else {
-		ctx = preCtx
+		ctx, cnl = context.WithTimeout(preCtx, time.Second*60)
 	}
+	defer cnl()
 	for {
 		select {
 		case <-ctx.Done():
@@ -174,21 +174,12 @@ func (obj *Page) WaitStop(preCtx context.Context, waits ...int) error {
 	}
 }
 func (obj *Page) GoTo(preCtx context.Context, url string) error {
-	var err error
 	obj.baseUrl = url
-	var ctx context.Context
-	var cnl context.CancelFunc
-	if preCtx == nil {
-		ctx, cnl = context.WithTimeout(obj.ctx, time.Second*30)
-		defer cnl()
-	} else {
-		ctx = preCtx
-	}
-	_, err = obj.webSock.PageNavigate(ctx, url)
+	_, err := obj.webSock.PageNavigate(preCtx, url)
 	if err != nil {
 		return err
 	}
-	return obj.WaitStop(ctx)
+	return obj.WaitStop(preCtx)
 }
 
 // ex:   ()=>{}  或者  (params)=>{}
