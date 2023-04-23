@@ -239,6 +239,9 @@ func (obj *Dom) Rect(ctx context.Context) (cdp.Rect, error) {
 	}
 	jsonData := tools.Any2json(rs.Result["model"])
 	content := jsonData.Get("content").Array()
+	if len(content) == 0 {
+		return cdp.Rect{}, errors.New("rect没有content")
+	}
 	boxData := cdp.Rect{
 		X:      content[0].Float(),
 		Y:      content[1].Float(),

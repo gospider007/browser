@@ -360,6 +360,9 @@ func (obj *Page) querySelector(ctx context.Context, selector string) (*Dom, erro
 			return obj.querySelector(ctx, selector)
 		}
 	}
+	if rs.Result == nil {
+		return nil, nil
+	}
 	nodeId := int64(rs.Result["nodeId"].(float64))
 	if nodeId == 0 {
 		return nil, nil

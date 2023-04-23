@@ -498,10 +498,10 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 		}
 	}()
 	if option.Width == 0 {
-		option.Width = 1492
+		option.Width = 800
 	}
 	if option.Height == 0 {
-		option.Height = 843
+		option.Height = 1000
 	}
 	var cli *cmd.Client
 	if option.Host == "" || option.Port == 0 {
