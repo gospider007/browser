@@ -8,8 +8,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"log"
+	"net"
 	"net/url"
 	"os"
 	"runtime"
@@ -23,7 +23,6 @@ import (
 	"gitee.com/baixudong/gospider/conf"
 	"gitee.com/baixudong/gospider/db"
 	"gitee.com/baixudong/gospider/ja3"
-	"gitee.com/baixudong/gospider/proxy"
 	"gitee.com/baixudong/gospider/re"
 	"gitee.com/baixudong/gospider/requests"
 	"gitee.com/baixudong/gospider/tools"
@@ -128,7 +127,6 @@ type Client struct {
 	ctx          context.Context
 	cnl          context.CancelFunc
 	webSock      *cdp.WebSock
-	proxyCli     *proxy.Client
 	dataCache    bool
 	headless     bool
 	stealth      bool //是否开启随机指纹
@@ -455,7 +453,7 @@ func downLoadChrome(preCtx context.Context, dirUrl string, version int) error {
 			return err
 		}
 		tempBody := bytes.NewBuffer(nil)
-		if _, err = io.Copy(tempBody, readBody); err != nil {
+		if err = tools.CopyWitchContext(preCtx, tempBody, readBody); err != nil {
 			return err
 		}
 		if err = os.WriteFile(filePath, tempBody.Bytes(), 0777); err != nil {
@@ -579,26 +577,7 @@ func (obj *Client) init() error {
 		cdp.WebSockOption{},
 		obj.db,
 	)
-	if err != nil {
-		return err
-	}
-	var host string
-	if runtime.GOOS == "windows" {
-		host = "0.0.0.0"
-	} else {
-		host = tools.GetHost(4).String()
-	}
-	obj.proxyCli, err = proxy.NewClient(obj.ctx, proxy.ClientOption{
-		Host:  host,
-		Port:  obj.port,
-		Proxy: fmt.Sprintf("http://%s:%d", obj.host, obj.port),
-	})
-	if err != nil {
-		return err
-	}
-	obj.proxyCli.DisVerify = true
-	go obj.proxyCli.Run()
-	return obj.proxyCli.Err
+	return err
 }
 
 // 浏览器是否结束的 chan
@@ -608,7 +587,7 @@ func (obj *Client) Done() <-chan struct{} {
 
 // 返回浏览器远程控制的地址
 func (obj *Client) Addr() string {
-	return obj.proxyCli.Addr()
+	return net.JoinHostPort(obj.host, strconv.Itoa(obj.port))
 }
 
 // 关闭浏览器
