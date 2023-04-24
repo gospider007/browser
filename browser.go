@@ -28,84 +28,6 @@ import (
 	"gitee.com/baixudong/gospider/tools"
 )
 
-var version = "020"
-
-func delTempDir(dir string) {
-	timeout := 10 * 1000         //10s
-	sleep := 100                 //每次睡眠0.1s
-	totalSize := timeout / sleep //总共100次
-	for i := 0; i < totalSize; i++ {
-		if i > 0 {
-			time.Sleep(time.Millisecond * time.Duration(sleep))
-		}
-		if os.RemoveAll(dir) == nil {
-			return
-		}
-	}
-}
-
-// go build -ldflags="-H windowsgui" -o browser/browserCmd.exe main.go
-// go build -o browser/browserCmd main.go
-func BrowserCmdMain() (err error) {
-	preCtx := context.Background()
-	ctx, cnl := context.WithCancelCause(preCtx)
-	pipData := make(chan struct{})
-	data := map[string]any{}
-	args := []string{}
-	var cmdCli *cmd.Client
-	go func() (err error) {
-		defer cnl(err)
-		jsonDecode := json.NewDecoder(os.Stdin)
-		if err = jsonDecode.Decode(&data); err != nil || data["name"] == nil {
-			return
-		}
-		jsonData := tools.Any2json(data)
-		for _, arg := range jsonData.Get("args").Array() {
-			args = append(args, arg.String())
-		}
-		cmdCli = cmd.NewClient(ctx, cmd.ClientOption{Name: jsonData.Get("name").String(), Args: args})
-		go func() {
-			err = cmdCli.Run()
-		}()
-		if err != nil {
-			return
-		}
-		close(pipData)
-		return jsonDecode.Decode(&data)
-	}()
-	select {
-	case <-cmdCli.Done():
-		return cmdCli.Err()
-	case <-ctx.Done():
-		return context.Cause(ctx)
-	case <-pipData:
-	case <-time.After(time.Second * 2):
-		return
-	}
-	//dong some thing
-	for _, arg := range args {
-		if strings.Contains(arg, "--user-data-dir=") {
-			rs := re.Search(`--user-data-dir="(.*?)"`, arg)
-			if rs != nil {
-				defer delTempDir(rs.Group(1))
-			} else {
-				rs = re.Search(`--user-data-dir=(\S*)`, arg)
-				if rs != nil {
-					defer delTempDir(rs.Group(1))
-				}
-			}
-		}
-	}
-	//join
-	defer cmdCli.Close()
-	select {
-	case <-ctx.Done():
-		return context.Cause(ctx)
-	case <-cmdCli.Done():
-		return cmdCli.Err()
-	}
-}
-
 //go:embed stealth.min.js
 var stealth string
 
@@ -150,49 +72,17 @@ type ClientOption struct {
 	DisDnsCache bool                                                    //关闭dns 解析
 }
 
-//go:embed browserCmd.exe
-var browserCmdWindows []byte
-
-//go:embed browserCmd
-var browserCmdLinux []byte
-
-func getCmdName() (string, error) {
-	mainDir, err := conf.GetMainDirPath()
-	if err != nil {
-		return "", err
-	}
-	fileName := tools.PathJoin(mainDir, fmt.Sprintf("browserCmd%s", version))
-	if runtime.GOOS == "windows" {
-		fileName += ".exe"
-	}
-	if !tools.PathExist(fileName) {
-		os.MkdirAll(mainDir, 0777)
-		if runtime.GOOS == "windows" {
-			if err = os.WriteFile(fileName, browserCmdWindows, 0777); err != nil {
-				return "", err
-			}
-		} else {
-			if err = os.WriteFile(fileName, browserCmdLinux, 0777); err != nil {
-				return "", err
-			}
-		}
-	}
-	return fileName, nil
-}
-
 type downClient struct {
 	sync.Mutex
 }
 
 var oneDown = &downClient{}
-var chromeVersion = 1108766
+
+// var chromeVersion = 1108766
+var chromeVersion = 1132420
 
 func verifyEvalPath(path string) error {
-	if !tools.PathExist(path) {
-		return errors.New("路径不存在")
-	}
-
-	if strings.HasSuffix(path, "chrome.exe") || strings.HasSuffix(path, "Chromium.app") || strings.HasSuffix(path, "chrome") {
+	if strings.HasSuffix(path, "chrome.exe") || strings.HasSuffix(path, "Chromium.app") || strings.HasSuffix(path, "chrome") || strings.HasSuffix(path, "chromium") {
 		return nil
 	}
 	return errors.New("请输入正确的浏览器路径,如: c:/chrome.exe")
@@ -213,10 +103,6 @@ func (obj *downClient) getChromePath(preCtx context.Context) (string, error) {
 	case "darwin":
 		chromePath = tools.PathJoin(chromDir, "chrome-mac", "Chromium.app")
 	case "linux":
-		chromeArgs = append(chromeArgs,
-			"--use-gl=swiftshader",
-			"--disable-gpu",
-		)
 		chromePath = tools.PathJoin(chromDir, "chrome-linux", "chrome")
 	default:
 		return "", errors.New("dont know goos")
@@ -245,10 +131,7 @@ func clearTemp() {
 	}
 }
 func runChrome(ctx context.Context, option *ClientOption) (*cmd.Client, error) {
-	fileName, err := getCmdName()
-	if err != nil {
-		return nil, err
-	}
+	var err error
 	if option.Host == "" {
 		option.Host = "127.0.0.1"
 	}
@@ -270,21 +153,22 @@ func runChrome(ctx context.Context, option *ClientOption) (*cmd.Client, error) {
 	if err = verifyEvalPath(option.ChromePath); err != nil {
 		return nil, err
 	}
+	var isDelDir bool
 	if option.UserDir == "" {
 		option.UserDir, err = os.MkdirTemp(os.TempDir(), conf.TempChromeDir)
 		if err != nil {
 			return nil, err
 		}
-	}
-	cli := cmd.NewLeakClient(ctx, cmd.ClientOption{
-		Name: fileName,
-	})
-	inP, err := cli.StdInPipe()
-	if err != nil {
-		return nil, err
+		isDelDir = true
 	}
 	args := []string{}
 	args = append(args, chromeArgs...)
+	if runtime.GOOS == "linux" {
+		args = append(args,
+			"--use-gl=swiftshader",
+			"--disable-gpu",
+		)
+	}
 	if option.UserAgent != "" {
 		args = append(args, fmt.Sprintf("--user-agent=%s", option.UserAgent))
 	}
@@ -299,12 +183,19 @@ func runChrome(ctx context.Context, option *ClientOption) (*cmd.Client, error) {
 	args = append(args, fmt.Sprintf("--window-size=%d,%d", option.Width, option.Height))
 
 	args = append(args, option.Args...)
-	_, err = inP.Write(tools.StringToBytes(tools.Any2json(map[string]any{
-		"name": option.ChromePath,
-		"args": args,
-	}).Raw))
-	if err != nil {
-		return nil, err
+	cli := cmd.NewClient(ctx, cmd.ClientOption{
+		Name: option.ChromePath,
+		Args: args,
+	})
+	if isDelDir {
+		cli.CloseCallBack = func() {
+			for i := 0; i < 10; i++ {
+				time.Sleep(time.Millisecond * 200)
+				if os.RemoveAll(option.UserDir) == nil {
+					return
+				}
+			}
+		}
 	}
 	go cli.Run()
 	return cli, cli.Err()
@@ -318,6 +209,7 @@ var chromeArgs = []string{
 	"--blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4,imagesEnabled=true", //Blink 设置。
 	"--ignore-ssl-errors=true", //忽略 SSL 错误。
 	// "--virtual-time-budget=1000", //缩短setTimeout  setInterval 的时间1000秒:目前不生效，不知道以后会不会生效，等生效了再打开
+	"--disable-setuid-sandbox", //重要headless
 
 	"--no-pings",                                  //禁用 ping。
 	"--no-zygote",                                 //禁用 zygote 进程。
@@ -441,8 +333,12 @@ func downLoadChrome(preCtx context.Context, dirUrl string, version int) error {
 	mainDir = tools.PathJoin(mainDir, strconv.Itoa(ver))
 	for _, file := range zipData.File {
 		filePath := tools.PathJoin(mainDir, file.Name)
-		fileDirPath := tools.PathJoin(filePath, "..")
 		log.Printf("解压文件: %s", filePath)
+		if file.FileInfo().IsDir() {
+			os.MkdirAll(filePath, 0777)
+			continue
+		}
+		fileDirPath := tools.PathJoin(filePath, "..")
 		if !tools.PathExist(fileDirPath) {
 			if err = os.MkdirAll(fileDirPath, 0777); err != nil {
 				return err
@@ -548,6 +444,9 @@ func (obj *Client) init() error {
 			DisProxy: true,
 			ErrCallBack: func(err error) bool {
 				time.Sleep(time.Second)
+				if obj.cmdCli.Err() != nil {
+					return true
+				}
 				return false
 			},
 			AfterCallBack: func(r *requests.Response) error {
@@ -559,7 +458,9 @@ func (obj *Client) init() error {
 			TryNum: 10,
 		})
 	if err != nil {
-		obj.cmdCli.Err()
+		if obj.cmdCli.Err() != nil {
+			return obj.cmdCli.Err()
+		}
 		return err
 	}
 	wsUrl := rs.Json().Get("webSocketDebuggerUrl").String()
