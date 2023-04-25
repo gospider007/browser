@@ -429,6 +429,7 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 		globalReqCli: globalReqCli,
 		stealth:      option.Stealth,
 	}
+	go tools.Signal(ctx, client.Close)
 	return client, client.init()
 }
 func (obj *Client) RequestClient() *requests.Client {
@@ -436,8 +437,14 @@ func (obj *Client) RequestClient() *requests.Client {
 }
 
 // 浏览器初始化
-func (obj *Client) init() error {
-	rs, err := obj.globalReqCli.Request(obj.ctx, "get",
+func (obj *Client) init() (err error) {
+	defer func() {
+		if err != nil {
+			obj.Close()
+		}
+	}()
+	var resp *requests.Response
+	resp, err = obj.globalReqCli.Request(obj.ctx, "get",
 		fmt.Sprintf("http://%s:%d/json/version", obj.host, obj.port),
 		requests.RequestOption{
 			Timeout:  3,
@@ -463,7 +470,7 @@ func (obj *Client) init() error {
 		}
 		return err
 	}
-	wsUrl := rs.Json().Get("webSocketDebuggerUrl").String()
+	wsUrl := resp.Json().Get("webSocketDebuggerUrl").String()
 	if wsUrl == "" {
 		return errors.New("not fouond browser wsUrl")
 	}
@@ -492,18 +499,15 @@ func (obj *Client) Addr() string {
 }
 
 // 关闭浏览器
-func (obj *Client) Close() (err error) {
+func (obj *Client) Close() {
 	if obj.webSock != nil {
-		if err = obj.webSock.BrowserClose(); err != nil {
-			return err
-		}
+		obj.webSock.BrowserClose()
 	}
 	if obj.cmdCli != nil {
 		obj.cmdCli.Close()
 	}
 	obj.cnl()
 	obj.db.Close()
-	return
 }
 
 type PageOption struct {
