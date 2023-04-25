@@ -377,7 +377,7 @@ func DownChrome(preCtx context.Context, versions ...int) error {
 
 // 新建浏览器
 func NewClient(preCtx context.Context, options ...ClientOption) (client *Client, err error) {
-	clearTemp()
+	// clearTemp()
 	var option ClientOption
 	if len(options) > 0 {
 		option = options[0]
