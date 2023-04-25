@@ -78,7 +78,6 @@ type downClient struct {
 
 var oneDown = &downClient{}
 
-// var chromeVersion = 1108766
 var chromeVersion = 1132420
 
 func verifyEvalPath(path string) error {
@@ -117,19 +116,6 @@ func (obj *downClient) getChromePath(preCtx context.Context) (string, error) {
 	}
 	return chromePath, nil
 }
-
-func clearTemp() {
-	tempDir := os.TempDir()
-	dirs, err := os.ReadDir(tempDir)
-	if err != nil {
-		return
-	}
-	for _, dir := range dirs {
-		if re.Search(fmt.Sprintf(`%s\d+$`, conf.TempChromeDir), dir.Name()) != nil {
-			os.RemoveAll(tools.PathJoin(tempDir, dir.Name()))
-		}
-	}
-}
 func runChrome(ctx context.Context, option *ClientOption) (*cmd.Client, error) {
 	var err error
 	if option.Host == "" {
@@ -155,7 +141,7 @@ func runChrome(ctx context.Context, option *ClientOption) (*cmd.Client, error) {
 	}
 	var isDelDir bool
 	if option.UserDir == "" {
-		option.UserDir, err = os.MkdirTemp(os.TempDir(), conf.TempChromeDir)
+		option.UserDir, err = conf.GetTempChromeDirPath()
 		if err != nil {
 			return nil, err
 		}
@@ -183,17 +169,20 @@ func runChrome(ctx context.Context, option *ClientOption) (*cmd.Client, error) {
 	args = append(args, fmt.Sprintf("--window-size=%d,%d", option.Width, option.Height))
 
 	args = append(args, option.Args...)
-	cli := cmd.NewClient(ctx, cmd.ClientOption{
+	cli, err := cmd.NewLeakClient(ctx, cmd.ClientOption{
 		Name: option.ChromePath,
 		Args: args,
 	})
-	if isDelDir {
+	if err != nil {
+		return cli, err
+	}
+	if isDelDir && option.UserDir != "" {
 		cli.CloseCallBack = func() {
 			for i := 0; i < 10; i++ {
-				time.Sleep(time.Millisecond * 200)
 				if os.RemoveAll(option.UserDir) == nil {
 					return
 				}
+				time.Sleep(time.Millisecond * 300)
 			}
 		}
 	}
@@ -377,7 +366,6 @@ func DownChrome(preCtx context.Context, versions ...int) error {
 
 // 新建浏览器
 func NewClient(preCtx context.Context, options ...ClientOption) (client *Client, err error) {
-	// clearTemp()
 	var option ClientOption
 	if len(options) > 0 {
 		option = options[0]
