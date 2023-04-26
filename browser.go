@@ -169,9 +169,10 @@ func runChrome(ctx context.Context, option *ClientOption) (*cmd.Client, error) {
 	args = append(args, fmt.Sprintf("--window-size=%d,%d", option.Width, option.Height))
 
 	args = append(args, option.Args...)
-	cli, err := cmd.NewLeakClient(ctx, cmd.ClientOption{
+	cli, err := cmd.NewClient(ctx, cmd.ClientOption{
 		Name: option.ChromePath,
 		Args: args,
+		Leak: true,
 	})
 	if err != nil {
 		return cli, err
@@ -499,11 +500,12 @@ func (obj *Client) Close() {
 }
 
 type PageOption struct {
-	Proxy     string
-	DataCache bool //开启数据缓存
-	Ja3Spec   ja3.ClientHelloSpec
-	Ja3       bool
-	Stealth   bool //是否开启随机指纹
+	Proxy            string
+	DataCache        bool //开启数据缓存
+	Ja3Spec          ja3.ClientHelloSpec
+	Ja3              bool
+	Stealth          bool //是否开启随机指纹
+	isReplaceRequest bool
 }
 
 // 新建标签页
@@ -515,12 +517,13 @@ func (obj *Client) NewPage(preCtx context.Context, options ...PageOption) (*Page
 	if !option.DataCache {
 		option.DataCache = obj.dataCache
 	}
+	option.isReplaceRequest = option.DataCache
 	if option.Ja3 || option.Ja3Spec.IsSet() {
-		option.DataCache = true
+		option.isReplaceRequest = true
 	} else if option.Proxy != "" && option.Proxy != obj.proxy {
-		option.DataCache = true
+		option.isReplaceRequest = true
 	} else if obj.getProxy != nil {
-		option.DataCache = true
+		option.isReplaceRequest = true
 	}
 
 	rs, err := obj.webSock.TargetCreateTarget(preCtx, "")
@@ -533,21 +536,21 @@ func (obj *Client) NewPage(preCtx context.Context, options ...PageOption) (*Page
 	}
 	ctx, cnl := context.WithCancel(obj.ctx)
 	page := &Page{
-		id:           targetId,
-		preWebSock:   obj.webSock,
-		port:         obj.port,
-		host:         obj.host,
-		ctx:          ctx,
-		cnl:          cnl,
-		headless:     obj.headless,
-		globalReqCli: obj.globalReqCli,
-		stealth:      obj.stealth,
-		dataCache:    option.DataCache,
+		id:               targetId,
+		preWebSock:       obj.webSock,
+		port:             obj.port,
+		host:             obj.host,
+		ctx:              ctx,
+		cnl:              cnl,
+		headless:         obj.headless,
+		globalReqCli:     obj.globalReqCli,
+		stealth:          obj.stealth,
+		isReplaceRequest: option.isReplaceRequest,
 	}
 	if err = page.init(obj.globalReqCli, option, obj.db); err != nil {
 		return nil, err
 	}
-	if option.DataCache {
+	if option.isReplaceRequest {
 		if err = page.Request(preCtx, defaultRequestFunc); err != nil {
 			return nil, err
 		}

@@ -20,21 +20,21 @@ import (
 )
 
 type Page struct {
-	host         string
-	port         int
-	id           string
-	mouseX       float64
-	mouseY       float64
-	ctx          context.Context
-	cnl          context.CancelFunc
-	preWebSock   *cdp.WebSock
-	globalReqCli *requests.Client
-	headless     bool
-	nodeId       int64
-	baseUrl      string
-	webSock      *cdp.WebSock
-	stealth      bool
-	dataCache    bool
+	host             string
+	port             int
+	id               string
+	mouseX           float64
+	mouseY           float64
+	ctx              context.Context
+	cnl              context.CancelFunc
+	preWebSock       *cdp.WebSock
+	globalReqCli     *requests.Client
+	headless         bool
+	nodeId           int64
+	baseUrl          string
+	webSock          *cdp.WebSock
+	stealth          bool
+	isReplaceRequest bool
 
 	pageStarId int64
 	pageEndId  int64
@@ -80,10 +80,11 @@ func (obj *Page) init(globalReqCli *requests.Client, option PageOption, db *db.C
 		globalReqCli,
 		fmt.Sprintf("ws://%s:%d/devtools/page/%s", obj.host, obj.port, obj.id),
 		cdp.WebSockOption{
-			Proxy:     option.Proxy,
-			DataCache: option.DataCache,
-			Ja3Spec:   option.Ja3Spec,
-			Ja3:       option.Ja3,
+			IsReplaceRequest: option.isReplaceRequest,
+			Proxy:            option.Proxy,
+			DataCache:        option.DataCache,
+			Ja3Spec:          option.Ja3Spec,
+			Ja3:              option.Ja3,
 		},
 		db,
 	); err != nil {
@@ -221,7 +222,7 @@ func (obj *Page) Done() <-chan struct{} {
 }
 func (obj *Page) Request(ctx context.Context, RequestFunc func(context.Context, *cdp.Route)) error {
 	if RequestFunc == nil {
-		if obj.dataCache {
+		if obj.isReplaceRequest {
 			obj.webSock.RequestFunc = defaultRequestFunc
 		} else {
 			obj.webSock.RequestFunc = nil
@@ -630,16 +631,16 @@ func (obj *Page) SetCookies(ctx context.Context, cookies ...cdp.Cookie) error {
 	_, err = obj.webSock.NetworkSetCookies(ctx, cookies)
 	return err
 }
-func (obj *Page) GetCookies(ctx context.Context, urls ...string) ([]cdp.Cookie, error) {
+func (obj *Page) GetCookies(ctx context.Context, urls ...string) (cdp.Cookies, error) {
 	if len(urls) == 0 {
 		urls = append(urls, obj.baseUrl)
 	}
 	rs, err := obj.webSock.NetworkGetCookies(ctx, urls...)
-	result := []cdp.Cookie{}
 	if err != nil {
-		return result, err
+		return nil, err
 	}
 	jsonData := tools.Any2json(rs.Result)
+	result := []cdp.Cookie{}
 	for _, cookie := range jsonData.Get("cookies").Array() {
 		var cook cdp.Cookie
 		if err = json.Unmarshal(tools.StringToBytes(cookie.Raw), &cook); err != nil {
