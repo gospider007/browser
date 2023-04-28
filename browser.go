@@ -489,14 +489,17 @@ func (obj *Client) Addr() string {
 
 // 关闭浏览器
 func (obj *Client) Close() {
+	if obj.globalReqCli != nil {
+		obj.globalReqCli.Close()
+	}
 	if obj.webSock != nil {
 		obj.webSock.BrowserClose()
 	}
 	if obj.cmdCli != nil {
 		obj.cmdCli.Close()
 	}
-	obj.cnl()
 	obj.db.Close()
+	obj.cnl()
 }
 
 type PageOption struct {
