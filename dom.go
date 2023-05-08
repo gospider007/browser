@@ -154,7 +154,11 @@ func (obj *Dom) querySelector(ctx context.Context, selector string) (*Dom, error
 	if err != nil {
 		return nil, err
 	}
-	nodeId := int64(rs.Result["nodeId"].(float64))
+	nodeIdAny, ok := rs.Result["nodeId"]
+	if !ok {
+		return nil, errors.New("not found")
+	}
+	nodeId := int64(nodeIdAny.(float64))
 	if nodeId == 0 {
 		return nil, nil
 	}
