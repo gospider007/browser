@@ -255,7 +255,7 @@ func (obj *Dom) Rect(ctx context.Context) (cdp.Rect, error) {
 	return boxData, nil
 }
 
-func (obj *Dom) Img(ctx context.Context, options ...cdp.ScreenshotOption) ([]byte, error) {
+func (obj *Dom) Screenshot(ctx context.Context, options ...cdp.ScreenshotOption) ([]byte, error) {
 	rect, err := obj.Rect(ctx)
 	if err != nil {
 		return nil, err

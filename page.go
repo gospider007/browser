@@ -114,8 +114,8 @@ func (obj *Page) AddScript(ctx context.Context, script string) error {
 	_, err := obj.webSock.PageAddScriptToEvaluateOnNewDocument(ctx, script)
 	return err
 }
-func (obj *Page) Screenshot(ctx context.Context, options ...cdp.ScreenshotOption) ([]byte, error) {
-	rs, err := obj.webSock.PageCaptureScreenshot(ctx, cdp.Rect{}, options...)
+func (obj *Page) Screenshot(ctx context.Context, rect cdp.Rect, options ...cdp.ScreenshotOption) ([]byte, error) {
+	rs, err := obj.webSock.PageCaptureScreenshot(ctx, rect, options...)
 	if err != nil {
 		return nil, err
 	}
