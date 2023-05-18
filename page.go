@@ -160,14 +160,17 @@ func (obj *Page) WaitStop(preCtx context.Context, waits ...int) error {
 		ctx, cnl = context.WithTimeout(preCtx, time.Second*60)
 	}
 	defer cnl()
+	afterTime := time.NewTimer(time.Second * time.Duration(wait))
+	defer afterTime.Stop()
 	for {
+		afterTime.Reset(time.Second * time.Duration(wait))
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-obj.ctx.Done():
 			return obj.ctx.Err()
 		case <-obj.pageDone:
-		case <-time.After(time.Second * time.Duration(wait)):
+		case <-afterTime.C:
 			if obj.pageStop() {
 				return nil
 			}
