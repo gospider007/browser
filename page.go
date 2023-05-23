@@ -35,37 +35,35 @@ type Page struct {
 	webSock          *cdp.WebSock
 	stealth          bool
 	isReplaceRequest bool
+	pageAfterTime    *time.Timer
+	domAfterTime     *time.Timer
 
-	pageStarId int64
-	pageEndId  int64
-	pageDone   chan struct{}
+	pageLoadId int64
+	pageStop   bool
+	domLoad    bool
 }
 
 func defaultRequestFunc(ctx context.Context, r *cdp.Route) { r.RequestContinue(ctx) }
-func (obj *Page) pageStop() bool {
-	return obj.pageEndId >= obj.pageStarId
-}
 func (obj *Page) pageStartLoadMain(ctx context.Context, rd cdp.RecvData) {
 	if obj.id == rd.Params["frameId"].(string) {
-		if rd.Id > obj.pageStarId {
-			obj.pageStarId = rd.Id
+		if rd.Id > obj.pageLoadId {
+			obj.pageLoadId = rd.Id
+			obj.pageStop = false
+			obj.domLoad = false
 		}
-	}
-	select {
-	case obj.pageDone <- struct{}{}:
-	default:
 	}
 }
 func (obj *Page) pageEndLoadMain(ctx context.Context, rd cdp.RecvData) {
 	if obj.id == rd.Params["frameId"].(string) {
-		if rd.Id > obj.pageEndId {
-			obj.pageEndId = rd.Id
+		if rd.Id > obj.pageLoadId {
+			obj.pageLoadId = rd.Id
+			obj.pageStop = true
 		}
 	}
-	select {
-	case obj.pageDone <- struct{}{}:
-	default:
-	}
+}
+
+func (obj *Page) domLoadMain(ctx context.Context, rd cdp.RecvData) {
+	obj.domLoad = true
 }
 func (obj *Page) addEvent(method string, fun func(ctx context.Context, rd cdp.RecvData)) {
 	obj.webSock.AddEvent(method, fun)
@@ -92,17 +90,10 @@ func (obj *Page) init(globalReqCli *requests.Client, option PageOption, db *db.C
 	}
 	obj.addEvent("Page.frameStartedLoading", obj.pageStartLoadMain)
 	obj.addEvent("Page.frameStoppedLoading", obj.pageEndLoadMain)
+	obj.addEvent("Page.domContentEventFired", obj.domLoadMain)
 	if _, err = obj.webSock.PageEnable(obj.ctx); err != nil {
 		return err
 	}
-	// if obj.headless {
-	// 	if err = obj.AddScript(obj.ctx, stealth); err != nil {
-	// 		return err
-	// 	}
-	// 	if err = obj.AddScript(obj.ctx, stealth3); err != nil {
-	// 		return err
-	// 	}
-	// }
 	if option.Stealth || obj.stealth {
 		if err = obj.AddScript(obj.ctx, stealth2); err != nil {
 			return err
@@ -136,18 +127,9 @@ func (obj *Page) Rect(ctx context.Context) (cdp.Rect, error) {
 }
 func (obj *Page) Reload(ctx context.Context) error {
 	_, err := obj.webSock.PageReload(ctx)
-	if err != nil {
-		return err
-	}
-	return obj.WaitStop(ctx)
+	return err
 }
-func (obj *Page) PageLoadDone() <-chan struct{} {
-	return obj.pageDone
-}
-func (obj *Page) LoadId() int64 {
-	return obj.pageStarId
-}
-func (obj *Page) WaitStop(preCtx context.Context, waits ...int) error {
+func (obj *Page) WaitPageStop(preCtx context.Context, waits ...int) error {
 	wait := 2
 	if len(waits) > 0 {
 		wait = waits[0]
@@ -160,18 +142,42 @@ func (obj *Page) WaitStop(preCtx context.Context, waits ...int) error {
 		ctx, cnl = context.WithTimeout(preCtx, time.Second*60)
 	}
 	defer cnl()
-	afterTime := time.NewTimer(time.Second * time.Duration(wait))
-	defer afterTime.Stop()
 	for {
-		afterTime.Reset(time.Second * time.Duration(wait))
+		obj.pageAfterTime.Reset(time.Second * time.Duration(wait))
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-obj.ctx.Done():
 			return obj.ctx.Err()
-		case <-obj.pageDone:
-		case <-afterTime.C:
-			if obj.pageStop() {
+		case <-obj.pageAfterTime.C:
+			if obj.pageStop {
+				return nil
+			}
+		}
+	}
+}
+func (obj *Page) WaitDomLoad(preCtx context.Context, waits ...int) error {
+	wait := 2
+	if len(waits) > 0 {
+		wait = waits[0]
+	}
+	var ctx context.Context
+	var cnl context.CancelFunc
+	if preCtx == nil {
+		ctx, cnl = context.WithTimeout(obj.ctx, time.Second*60)
+	} else {
+		ctx, cnl = context.WithTimeout(preCtx, time.Second*60)
+	}
+	defer cnl()
+	for {
+		obj.domAfterTime.Reset(time.Second * time.Duration(wait))
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-obj.ctx.Done():
+			return obj.ctx.Err()
+		case <-obj.domAfterTime.C:
+			if obj.domLoad {
 				return nil
 			}
 		}
@@ -180,10 +186,7 @@ func (obj *Page) WaitStop(preCtx context.Context, waits ...int) error {
 func (obj *Page) GoTo(preCtx context.Context, url string) error {
 	obj.baseUrl = url
 	_, err := obj.webSock.PageNavigate(preCtx, url)
-	if err != nil {
-		return err
-	}
-	return obj.WaitStop(preCtx)
+	return err
 }
 
 // ex:   ()=>{}  或者  (params)=>{}
@@ -201,6 +204,8 @@ func (obj *Page) Eval(ctx context.Context, expression string, params map[string]
 	return tools.Any2json(rs.Result), err
 }
 func (obj *Page) Close() error {
+	defer obj.domAfterTime.Stop()
+	defer obj.pageAfterTime.Stop()
 	defer obj.cnl()
 	_, err := obj.preWebSock.TargetCloseTarget(obj.id)
 	if err != nil {
