@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	uurl "net/url"
-	"strings"
 	"time"
 
 	"gitee.com/baixudong/gospider/bs4"
@@ -20,17 +19,17 @@ import (
 )
 
 type Page struct {
-	host             string
-	port             int
-	id               string
-	mouseX           float64
-	mouseY           float64
-	ctx              context.Context
-	cnl              context.CancelFunc
-	preWebSock       *cdp.WebSock
-	globalReqCli     *requests.Client
-	headless         bool
-	nodeId           int64
+	host         string
+	port         int
+	id           string
+	mouseX       float64
+	mouseY       float64
+	ctx          context.Context
+	cnl          context.CancelFunc
+	preWebSock   *cdp.WebSock
+	globalReqCli *requests.Client
+	headless     bool
+
 	baseUrl          string
 	webSock          *cdp.WebSock
 	stealth          bool
@@ -41,6 +40,7 @@ type Page struct {
 	pageLoadId int64
 	pageStop   bool
 	domLoad    bool
+	iframes    map[string]string
 }
 
 func defaultRequestFunc(ctx context.Context, r *cdp.Route) { r.RequestContinue(ctx) }
@@ -50,6 +50,7 @@ func (obj *Page) pageStartLoadMain(ctx context.Context, rd cdp.RecvData) {
 			obj.pageLoadId = rd.Id
 			obj.pageStop = false
 			obj.domLoad = false
+			obj.iframes = make(map[string]string)
 		}
 	}
 }
@@ -65,6 +66,15 @@ func (obj *Page) pageEndLoadMain(ctx context.Context, rd cdp.RecvData) {
 func (obj *Page) domLoadMain(ctx context.Context, rd cdp.RecvData) {
 	obj.domLoad = true
 }
+func (obj *Page) frameLoadMain(ctx context.Context, rd cdp.RecvData) {
+	jsonData := tools.Any2json(rd.Params)
+	href := jsonData.Get("frame.url").String()
+	frameId := jsonData.Get("frame.id").String()
+	if href != "" && frameId != "" {
+		obj.iframes[href] = frameId
+	}
+}
+
 func (obj *Page) addEvent(method string, fun func(ctx context.Context, rd cdp.RecvData)) {
 	obj.webSock.AddEvent(method, fun)
 }
@@ -91,6 +101,7 @@ func (obj *Page) init(globalReqCli *requests.Client, option PageOption, db *db.C
 	obj.addEvent("Page.frameStartedLoading", obj.pageStartLoadMain)
 	obj.addEvent("Page.frameStoppedLoading", obj.pageEndLoadMain)
 	obj.addEvent("Page.domContentEventFired", obj.domLoadMain)
+	obj.addEvent("Page.frameNavigated", obj.frameLoadMain)
 	if _, err = obj.webSock.PageEnable(obj.ctx); err != nil {
 		return err
 	}
@@ -256,73 +267,69 @@ func (obj *Page) Response(ctx context.Context, ResponseFunc func(context.Context
 	}
 	return err
 }
-func (obj *Page) initNodeId(ctx context.Context) (error, bool) {
+func (obj *Page) nodeId(ctx context.Context) (int64, error) {
 	rs, err := obj.webSock.DOMGetDocument(ctx)
 	if err != nil {
-		return err, false
+		return 0, err
 	}
 	jsonData := tools.Any2json(rs.Result["root"])
 	href := jsonData.Get("baseURL").String()
 	if href != "" {
 		obj.baseUrl = href
 	}
-	nodeId := jsonData.Get("nodeId").Int()
-	ok := obj.nodeId == nodeId
-	obj.nodeId = nodeId
-	return nil, ok
+	return jsonData.Get("nodeId").Int(), nil
 }
 func (obj *Page) Html(ctx context.Context, contents ...string) (*bs4.Client, error) {
-	err, _ := obj.initNodeId(ctx)
+	nodeId, err := obj.nodeId(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if len(contents) > 0 {
-		return nil, obj.setHtml(ctx, contents[0])
-	}
-	return obj.html(ctx)
+	return obj.HtmlWithNodeId(ctx, nodeId, contents...)
 }
-func (obj *Page) setHtml(ctx context.Context, content string) error {
-	_, err := obj.webSock.DOMSetOuterHTML(ctx, obj.nodeId, content)
+func (obj *Page) HtmlWithNodeId(ctx context.Context, nodeId int64, contents ...string) (*bs4.Client, error) {
+	if len(contents) > 0 {
+		return nil, obj.setHtml(ctx, nodeId, contents[0])
+	}
+	return obj.html(ctx, nodeId)
+}
+func (obj *Page) setHtml(ctx context.Context, nodeId int64, content string) error {
+	_, err := obj.webSock.DOMSetOuterHTML(ctx, nodeId, content)
 	return err
 }
-func (obj *Page) html(ctx context.Context) (*bs4.Client, error) {
-	rs, err := obj.webSock.DOMGetOuterHTML(ctx, obj.nodeId)
+func (obj *Page) html(ctx context.Context, nodeId int64) (*bs4.Client, error) {
+	rs, err := obj.webSock.DOMGetOuterHTML(ctx, nodeId, 0)
 	if err != nil {
 		return nil, err
 	}
 	html := bs4.NewClient(rs.Result["outerHTML"].(string), obj.baseUrl)
-	iframes := []*bs4.Client{}
 	for _, iframe := range html.Finds("iframe") {
-		if !strings.HasPrefix(iframe.Get("src"), "javascript:") {
-			iframes = append(iframes, iframe)
-		}
-	}
-	if len(iframes) > 0 {
-		pageFrams, err := obj.QuerySelectorAll(ctx, "iframe")
-		if err != nil {
-			return nil, err
-		}
-		if len(iframes) != len(pageFrams) {
-			return nil, errors.New("iframe error")
-		}
-		for i, ifram := range iframes {
-			dh, err := pageFrams[i].Html(ctx)
+		href := iframe.Get("src")
+		iframeId, ok := obj.iframes[href]
+		if ok {
+			frameHtml, err := obj.getFrameHtml(ctx, iframeId)
 			if err != nil {
 				return nil, err
 			}
-			ifram.Html(dh.Html())
+			iframe.Html(frameHtml)
 		}
 	}
 	return html, nil
 }
-func (obj *Page) WaitSelector(preCtx context.Context, selector string, timeouts ...int64) (*Dom, error) {
+func (obj *Page) WaitSelector(ctx context.Context, selector string, timeouts ...int64) (*Dom, error) {
+	nodeId, err := obj.nodeId(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return obj.WaitSelectorWithNodeId(ctx, nodeId, selector, timeouts...)
+}
+func (obj *Page) WaitSelectorWithNodeId(preCtx context.Context, nodeId int64, selector string, timeouts ...int64) (*Dom, error) {
 	var timeout int64 = 30
 	if len(timeouts) > 0 {
 		timeout = timeouts[0]
 	}
 	startTime := time.Now().Unix()
 	for time.Now().Unix()-startTime <= timeout {
-		dom, err := obj.QuerySelector(preCtx, selector)
+		dom, err := obj.QuerySelectorWithNodeId(preCtx, nodeId, selector)
 		if err != nil {
 			return nil, err
 		}
@@ -334,17 +341,24 @@ func (obj *Page) WaitSelector(preCtx context.Context, selector string, timeouts 
 	return nil, errors.New("超时")
 }
 func (obj *Page) QuerySelector(ctx context.Context, selector string) (*Dom, error) {
-	dom, err := obj.querySelector(ctx, selector)
+	nodeId, err := obj.nodeId(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return obj.QuerySelectorWithNodeId(ctx, nodeId, selector)
+}
+func (obj *Page) QuerySelectorWithNodeId(ctx context.Context, nodeId int64, selector string) (*Dom, error) {
+	dom, err := obj.querySelector(ctx, nodeId, selector)
 	if err != nil {
 		return dom, err
 	}
 	if dom == nil && selector != "iframe" {
-		iframes, err := obj.querySelectorAll(ctx, "iframe")
+		iframes, err := obj.querySelectorAll(ctx, nodeId, "iframe")
 		if err != nil {
 			return nil, err
 		}
 		for _, iframe := range iframes {
-			dom, err = iframe.querySelector(ctx, selector)
+			dom, err = obj.querySelector(ctx, iframe.nodeId, selector)
 			if err != nil || dom != nil {
 				return dom, err
 			}
@@ -352,22 +366,10 @@ func (obj *Page) QuerySelector(ctx context.Context, selector string) (*Dom, erro
 	}
 	return dom, err
 }
-func (obj *Page) querySelector(ctx context.Context, selector string) (*Dom, error) {
-	err, _ := obj.initNodeId(ctx)
+func (obj *Page) querySelector(ctx context.Context, nodeId int64, selector string) (*Dom, error) {
+	rs, err := obj.webSock.DOMQuerySelector(ctx, nodeId, selector)
 	if err != nil {
 		return nil, err
-	}
-	rs, err := obj.webSock.DOMQuerySelector(ctx, obj.nodeId, selector)
-	if err != nil {
-		err2, ok := obj.initNodeId(ctx)
-		if err2 != nil {
-			return nil, err2
-		}
-		if ok {
-			return nil, err
-		} else {
-			return obj.querySelector(ctx, selector)
-		}
 	}
 	if rs.Result == nil {
 		return nil, nil
@@ -376,7 +378,7 @@ func (obj *Page) querySelector(ctx context.Context, selector string) (*Dom, erro
 	if !ok {
 		return nil, errors.New("not found")
 	}
-	nodeId := int64(nodeIdAny.(float64))
+	nodeId = int64(nodeIdAny.(float64))
 	if nodeId == 0 {
 		return nil, nil
 	}
@@ -386,25 +388,32 @@ func (obj *Page) querySelector(ctx context.Context, selector string) (*Dom, erro
 		nodeId:  nodeId,
 	}
 	if re.Search(`^iframe\W|\Wiframe\W|\Wiframe$|^iframe$`, selector) != nil {
-		if err = dom.dom2Iframe(ctx); err != nil {
+		if err = dom.frame2Dom(ctx); err != nil {
 			return nil, err
 		}
 	}
 	return dom, nil
 }
 func (obj *Page) QuerySelectorAll(ctx context.Context, selector string) ([]*Dom, error) {
-	dom, err := obj.querySelectorAll(ctx, selector)
+	nodeId, err := obj.nodeId(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return obj.QuerySelectorAllWithNodeId(ctx, nodeId, selector)
+}
+func (obj *Page) QuerySelectorAllWithNodeId(ctx context.Context, nodeId int64, selector string) ([]*Dom, error) {
+	dom, err := obj.querySelectorAll(ctx, nodeId, selector)
 	if err != nil {
 		return dom, err
 	}
 	if dom == nil && selector != "iframe" {
-		iframes, err := obj.querySelectorAll(ctx, "iframe")
+		iframes, err := obj.querySelectorAll(ctx, nodeId, "iframe")
 		if err != nil {
 			return nil, err
 		}
 		doms := []*Dom{}
 		for _, iframe := range iframes {
-			dom, err = iframe.querySelectorAll(ctx, selector)
+			dom, err = obj.querySelectorAll(ctx, iframe.nodeId, selector)
 			if err != nil {
 				return dom, err
 			}
@@ -414,22 +423,10 @@ func (obj *Page) QuerySelectorAll(ctx context.Context, selector string) ([]*Dom,
 	}
 	return dom, err
 }
-func (obj *Page) querySelectorAll(ctx context.Context, selector string) ([]*Dom, error) {
-	err, _ := obj.initNodeId(ctx)
+func (obj *Page) querySelectorAll(ctx context.Context, nodeId int64, selector string) ([]*Dom, error) {
+	rs, err := obj.webSock.DOMQuerySelectorAll(ctx, nodeId, selector)
 	if err != nil {
 		return nil, err
-	}
-	rs, err := obj.webSock.DOMQuerySelectorAll(ctx, obj.nodeId, selector)
-	if err != nil {
-		err2, ok := obj.initNodeId(ctx)
-		if err2 != nil {
-			return nil, err2
-		}
-		if ok {
-			return nil, err
-		} else {
-			return obj.querySelectorAll(ctx, selector)
-		}
 	}
 	doms := []*Dom{}
 	for _, nodeId := range tools.Any2json(rs.Result["nodeIds"]).Array() {
@@ -439,13 +436,53 @@ func (obj *Page) querySelectorAll(ctx context.Context, selector string) ([]*Dom,
 			nodeId:  nodeId.Int(),
 		}
 		if re.Search(`^iframe\W|\Wiframe\W|\Wiframe$|^iframe$`, selector) != nil {
-			if err = dom.dom2Iframe(ctx); err != nil {
+			if err = dom.frame2Dom(ctx); err != nil {
 				return nil, err
 			}
 		}
 		doms = append(doms, dom)
 	}
 	return doms, nil
+}
+func (obj *Page) Focus(ctx context.Context, nodeId int64) error {
+	_, err := obj.webSock.DOMFocus(ctx, nodeId)
+	return err
+}
+func (obj *Page) sendChar(ctx context.Context, chr rune) error {
+	_, err := obj.webSock.InputDispatchKeyEvent(ctx, cdp.DispatchKeyEventOption{
+		Type: "keyDown",
+		Key:  "Unidentified",
+	})
+	if err != nil {
+		return err
+	}
+	_, err = obj.webSock.InputDispatchKeyEvent(ctx, cdp.DispatchKeyEventOption{
+		Type:           "keyDown",
+		Key:            "Unidentified",
+		Text:           string(chr),
+		UnmodifiedText: string(chr),
+	})
+	if err != nil {
+		return err
+	}
+	_, err = obj.webSock.InputDispatchKeyEvent(ctx, cdp.DispatchKeyEventOption{
+		Type: "keyUp",
+		Key:  "Unidentified",
+	})
+	return err
+}
+func (obj *Page) SendText(ctx context.Context, nodeId int64, text string) error {
+	err := obj.Focus(ctx, nodeId)
+	if err != nil {
+		return err
+	}
+	for _, chr := range text {
+		err = obj.sendChar(ctx, chr)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // 移动操作

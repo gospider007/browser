@@ -438,14 +438,14 @@ func (obj *Client) init() (err error) {
 		requests.RequestOption{
 			Timeout:  3,
 			DisProxy: true,
-			ErrCallBack: func(err error) bool {
+			ErrCallBack: func(ctx context.Context, err error) bool {
 				time.Sleep(time.Second)
 				if obj.cmdCli.Err() != nil {
 					return true
 				}
 				return false
 			},
-			AfterCallBack: func(r *requests.Response) error {
+			AfterCallBack: func(ctx context.Context, r *requests.Response) error {
 				if r.StatusCode() == 200 {
 					return nil
 				}
