@@ -48,8 +48,8 @@ func (obj *Page) pageStartLoadMain(ctx context.Context, rd cdp.RecvData) {
 	if obj.id == rd.Params["frameId"].(string) {
 		if rd.Id > obj.pageLoadId {
 			obj.pageLoadId = rd.Id
-			obj.pageStop = false
 			obj.domLoad = false
+			obj.pageStop = false
 			obj.iframes = make(map[string]string)
 		}
 	}
@@ -58,6 +58,7 @@ func (obj *Page) pageEndLoadMain(ctx context.Context, rd cdp.RecvData) {
 	if obj.id == rd.Params["frameId"].(string) {
 		if rd.Id > obj.pageLoadId {
 			obj.pageLoadId = rd.Id
+			obj.domLoad = true
 			obj.pageStop = true
 		}
 	}
@@ -106,7 +107,7 @@ func (obj *Page) init(globalReqCli *requests.Client, option PageOption, db *db.C
 		return err
 	}
 	if option.Stealth || obj.stealth {
-		if err = obj.AddScript(obj.ctx, stealth2); err != nil {
+		if err = obj.AddScript(obj.ctx, stealth); err != nil {
 			return err
 		}
 	}
