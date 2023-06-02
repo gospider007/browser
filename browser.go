@@ -157,16 +157,9 @@ func runChrome(ctx context.Context, option *ClientOption) (*cmd.Client, error) {
 	args = append(args, fmt.Sprintf("--window-size=%d,%d", option.Width, option.Height))
 
 	args = append(args, option.Args...)
-	cli, err := cmd.NewClient(ctx, cmd.ClientOption{
-		Name: option.ChromePath,
-		Args: args,
-		Leak: true,
-	})
-	if err != nil {
-		return cli, err
-	}
+	var closeCallBack func()
 	if isDelDir && option.UserDir != "" {
-		cli.CloseCallBack = func() {
+		closeCallBack = func() {
 			for i := 0; i < 10; i++ {
 				if os.RemoveAll(option.UserDir) == nil {
 					return
@@ -174,6 +167,15 @@ func runChrome(ctx context.Context, option *ClientOption) (*cmd.Client, error) {
 				time.Sleep(time.Millisecond * 300)
 			}
 		}
+	}
+	cli, err := cmd.NewClient(ctx, cmd.ClientOption{
+		Name:          option.ChromePath,
+		Args:          args,
+		Leak:          true,
+		CloseCallBack: closeCallBack,
+	})
+	if err != nil {
+		return cli, err
 	}
 	go cli.Run()
 	return cli, cli.Err()
@@ -395,12 +397,12 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 		Ja3Spec:     option.Ja3Spec,
 		Ja3:         option.Ja3,
 		DisDnsCache: option.DisDnsCache,
+		RedirectNum: -1,
+		DisDecode:   true,
 	})
 	if err != nil {
 		return nil, err
 	}
-	globalReqCli.RedirectNum = -1
-	globalReqCli.DisDecode = true
 	client = &Client{
 		proxy:        option.Proxy,
 		getProxy:     option.GetProxy,
