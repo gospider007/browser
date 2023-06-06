@@ -182,7 +182,10 @@ func runChrome(ctx context.Context, option *ClientOption) (*cmd.Client, error) {
 }
 
 var chromeArgs = []string{
-	"--no-sandbox",                                  //禁用 Chrome 的沙盒模式。
+	"--no-sandbox",      //禁用 Chrome 的沙盒模式。
+	"--set-uid-sandbox", //命令行参数用于设置 Chrome 进程运行时使用的 UID，从而提高 Chrome 浏览器的安全性
+	"--set-gid-sandbox", //命令行参数用于设置 Chrome 进程运行时使用的 GID，从而提高 Chrome 浏览器的安全性
+
 	"--useAutomationExtension=false",                //禁用自动化扩展。
 	"--excludeSwitches=enable-automation",           //禁用自动化
 	"--disable-blink-features=AutomationControlled", //禁用 Blink 引擎的自动化控制。
@@ -222,7 +225,7 @@ var chromeArgs = []string{
 	"--enable-simple-cache-backend",               //启用简单缓存后端
 	"--enable-tcp-fast-open",                      //启用 TCP 快速打开。
 	"--prerender-from-omnibox=disabled",           //用于禁用从地址栏预渲染页面
-	"--disable-features=AutoUpdate,EasyBakeWebBundler,AudioServiceOutOfProcess,TranslateUI,BackgroundSync,ClientHints,NetworkQualityEstimator,PasswordGeneration,PrefetchPrivacyChanges,TabHoverCards", // 禁用一些 Chrome 功能。
+	"--disable-features=AutoUpdate,EasyBakeWebBundler,MultipleCompositingThreads,AudioServiceOutOfProcess,TranslateUI,BackgroundSync,ClientHints,NetworkQualityEstimator,PasswordGeneration,PrefetchPrivacyChanges,TabHoverCards", // 禁用一些 Chrome 功能。
 
 	"--ignore-certificate-errors",
 	"--aggressive-cache-discard",                                      //启用缓存丢弃。
