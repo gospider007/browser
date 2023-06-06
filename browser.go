@@ -171,7 +171,6 @@ func runChrome(ctx context.Context, option *ClientOption) (*cmd.Client, error) {
 	cli, err := cmd.NewClient(ctx, cmd.ClientOption{
 		Name:          option.ChromePath,
 		Args:          args,
-		Leak:          true,
 		CloseCallBack: closeCallBack,
 	})
 	if err != nil {
