@@ -509,8 +509,6 @@ func (obj *Client) Close() {
 type PageOption struct {
 	Proxy            string
 	DataCache        bool //开启数据缓存
-	Ja3Spec          ja3.ClientHelloSpec
-	Ja3              bool
 	Stealth          bool //是否开启随机指纹
 	isReplaceRequest bool
 }
@@ -525,9 +523,7 @@ func (obj *Client) NewPage(preCtx context.Context, options ...PageOption) (*Page
 		option.DataCache = obj.dataCache
 	}
 	option.isReplaceRequest = option.DataCache
-	if option.Ja3 || option.Ja3Spec.IsSet() {
-		option.isReplaceRequest = true
-	} else if option.Proxy != "" && option.Proxy != obj.proxy {
+	if option.Proxy != "" && option.Proxy != obj.proxy {
 		option.isReplaceRequest = true
 	} else if obj.getProxy != nil {
 		option.isReplaceRequest = true

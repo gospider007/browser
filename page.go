@@ -92,8 +92,6 @@ func (obj *Page) init(globalReqCli *requests.Client, option PageOption, db *db.C
 			IsReplaceRequest: option.isReplaceRequest,
 			Proxy:            option.Proxy,
 			DataCache:        option.DataCache,
-			Ja3Spec:          option.Ja3Spec,
-			Ja3:              option.Ja3,
 		},
 		db,
 	); err != nil {
