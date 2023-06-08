@@ -89,7 +89,7 @@ func (obj *Page) init(globalReqCli *requests.Client, option PageOption, db *db.C
 		globalReqCli,
 		fmt.Sprintf("ws://%s:%d/devtools/page/%s", obj.host, obj.port, obj.id),
 		cdp.WebSockOption{
-			IsReplaceRequest: option.isReplaceRequest,
+			IsReplaceRequest: obj.isReplaceRequest,
 			Proxy:            option.Proxy,
 			DataCache:        option.DataCache,
 		},
@@ -239,14 +239,12 @@ func (obj *Page) Done() <-chan struct{} {
 	return obj.webSock.Done()
 }
 func (obj *Page) Request(ctx context.Context, RequestFunc func(context.Context, *cdp.Route)) error {
-	if RequestFunc == nil {
-		if obj.isReplaceRequest {
-			obj.webSock.RequestFunc = defaultRequestFunc
-		} else {
-			obj.webSock.RequestFunc = nil
-		}
-	} else {
+	if RequestFunc != nil {
 		obj.webSock.RequestFunc = RequestFunc
+	} else if obj.isReplaceRequest {
+		obj.webSock.RequestFunc = defaultRequestFunc
+	} else {
+		obj.webSock.RequestFunc = nil
 	}
 	var err error
 	if obj.webSock.RequestFunc != nil {

@@ -32,20 +32,21 @@ import (
 var stealth string
 
 type Client struct {
-	proxy        string
-	getProxy     func(ctx context.Context, url *url.URL) (string, error)
-	db           *db.Client[cdp.FulData]
-	cmdCli       *cmd.Client
-	globalReqCli *requests.Client
-	port         int
-	host         string
-	lock         sync.Mutex
-	ctx          context.Context
-	cnl          context.CancelFunc
-	webSock      *cdp.WebSock
-	dataCache    bool
-	headless     bool
-	stealth      bool //是否开启随机指纹
+	isReplaceRequest bool //是否自定义请求
+	proxy            string
+	getProxy         func(ctx context.Context, url *url.URL) (string, error)
+	db               *db.Client[cdp.FulData]
+	cmdCli           *cmd.Client
+	globalReqCli     *requests.Client
+	port             int
+	host             string
+	lock             sync.Mutex
+	ctx              context.Context
+	cnl              context.CancelFunc
+	webSock          *cdp.WebSock
+	dataCache        bool
+	headless         bool
+	stealth          bool //是否开启随机指纹
 }
 type ClientOption struct {
 	ChromePath  string   //chrome浏览器执行路径
@@ -112,15 +113,16 @@ func (obj *downClient) getChromePath(preCtx context.Context) (string, error) {
 	}
 	return chromePath, nil
 }
-func runChrome(ctx context.Context, option *ClientOption) (*cmd.Client, error) {
+func runChrome(ctx context.Context, option *ClientOption) (*cmd.Client, bool, error) {
 	var err error
+	var isReplaceRequest bool
 	if option.Host == "" {
 		option.Host = "127.0.0.1"
 	}
 	if option.Port == 0 {
 		option.Port, err = tools.FreePort()
 		if err != nil {
-			return nil, err
+			return nil, isReplaceRequest, err
 		}
 	}
 	if option.UserAgent == "" {
@@ -129,17 +131,17 @@ func runChrome(ctx context.Context, option *ClientOption) (*cmd.Client, error) {
 	if option.ChromePath == "" {
 		option.ChromePath, err = oneDown.getChromePath(ctx)
 		if err != nil {
-			return nil, err
+			return nil, isReplaceRequest, err
 		}
 	}
 	if err = verifyEvalPath(option.ChromePath); err != nil {
-		return nil, err
+		return nil, isReplaceRequest, err
 	}
 	var isDelDir bool
 	if option.UserDir == "" {
 		option.UserDir, err = conf.GetTempChromeDirPath()
 		if err != nil {
-			return nil, err
+			return nil, isReplaceRequest, err
 		}
 		isDelDir = true
 	}
@@ -152,7 +154,15 @@ func runChrome(ctx context.Context, option *ClientOption) (*cmd.Client, error) {
 		args = append(args, "--headless=new")
 	}
 	if option.Proxy != "" {
-		args = append(args, fmt.Sprintf(`--proxy-server=%s`, option.Proxy))
+		proxyUrl, err := url.Parse(option.Proxy)
+		if err != nil {
+			return nil, isReplaceRequest, err
+		}
+		if proxyUrl.User == nil {
+			args = append(args, fmt.Sprintf(`--proxy-server=%s`, proxyUrl.String()))
+		} else {
+			isReplaceRequest = true
+		}
 	}
 	args = append(args, fmt.Sprintf(`--user-data-dir=%s`, option.UserDir))
 	args = append(args, fmt.Sprintf("--remote-debugging-port=%d", option.Port))
@@ -176,10 +186,10 @@ func runChrome(ctx context.Context, option *ClientOption) (*cmd.Client, error) {
 		CloseCallBack: closeCallBack,
 	})
 	if err != nil {
-		return cli, err
+		return cli, isReplaceRequest, err
 	}
 	go cli.Run()
-	return cli, cli.Err()
+	return cli, isReplaceRequest, cli.Err()
 }
 
 var chromeArgs = []string{
@@ -387,16 +397,10 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 		}
 	}()
 	if option.Width == 0 {
-		option.Width = 800
+		option.Width = 1000
 	}
 	if option.Height == 0 {
-		option.Height = 1000
-	}
-	var cli *cmd.Client
-	if option.Host == "" || option.Port == 0 {
-		if cli, err = runChrome(ctx, &option); err != nil {
-			return
-		}
+		option.Height = 1200
 	}
 	globalReqCli, err := requests.NewClient(preCtx, requests.ClientOption{
 		Proxy:       option.Proxy,
@@ -412,19 +416,30 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 	if err != nil {
 		return nil, err
 	}
+	var cli *cmd.Client
+	var isReplaceRequest bool
+	if option.Host == "" || option.Port == 0 {
+		if cli, isReplaceRequest, err = runChrome(ctx, &option); err != nil {
+			return
+		}
+	}
+	if option.Ja3Spec.IsSet() || option.H2Ja3Spec.IsSet() || option.DataCache {
+		isReplaceRequest = true
+	}
 	client = &Client{
-		proxy:        option.Proxy,
-		getProxy:     option.GetProxy,
-		dataCache:    option.DataCache,
-		headless:     option.Headless,
-		ctx:          ctx,
-		cnl:          cnl,
-		cmdCli:       cli,
-		db:           db.NewClient[cdp.FulData](ctx, cnl),
-		host:         option.Host,
-		port:         option.Port,
-		globalReqCli: globalReqCli,
-		stealth:      option.Stealth,
+		isReplaceRequest: isReplaceRequest,
+		proxy:            option.Proxy,
+		getProxy:         option.GetProxy,
+		dataCache:        option.DataCache,
+		headless:         option.Headless,
+		ctx:              ctx,
+		cnl:              cnl,
+		cmdCli:           cli,
+		db:               db.NewClient[cdp.FulData](ctx, cnl),
+		host:             option.Host,
+		port:             option.Port,
+		globalReqCli:     globalReqCli,
+		stealth:          option.Stealth,
 	}
 	go tools.Signal(ctx, client.Close)
 	return client, client.init()
@@ -511,10 +526,9 @@ func (obj *Client) Close() {
 }
 
 type PageOption struct {
-	Proxy            string
-	DataCache        bool //开启数据缓存
-	Stealth          bool //是否开启随机指纹
-	isReplaceRequest bool
+	Proxy     string
+	DataCache bool //开启数据缓存
+	Stealth   bool //是否开启随机指纹
 }
 
 // 新建标签页
@@ -526,11 +540,13 @@ func (obj *Client) NewPage(preCtx context.Context, options ...PageOption) (*Page
 	if !option.DataCache {
 		option.DataCache = obj.dataCache
 	}
-	option.isReplaceRequest = option.DataCache
-	if option.Proxy != "" && option.Proxy != obj.proxy {
-		option.isReplaceRequest = true
-	} else if obj.getProxy != nil {
-		option.isReplaceRequest = true
+	isReplaceRequest := obj.isReplaceRequest
+	if !isReplaceRequest {
+		if option.DataCache {
+			isReplaceRequest = true
+		} else if option.Proxy != "" && option.Proxy != obj.proxy {
+			isReplaceRequest = true
+		}
 	}
 
 	rs, err := obj.webSock.TargetCreateTarget(preCtx, "")
@@ -552,14 +568,14 @@ func (obj *Client) NewPage(preCtx context.Context, options ...PageOption) (*Page
 		headless:         obj.headless,
 		globalReqCli:     obj.globalReqCli,
 		stealth:          obj.stealth,
-		isReplaceRequest: option.isReplaceRequest,
+		isReplaceRequest: isReplaceRequest,
 		pageAfterTime:    time.NewTimer(0),
 		domAfterTime:     time.NewTimer(0),
 	}
 	if err = page.init(obj.globalReqCli, option, obj.db); err != nil {
 		return nil, err
 	}
-	if option.isReplaceRequest {
+	if isReplaceRequest {
 		if err = page.Request(preCtx, defaultRequestFunc); err != nil {
 			return nil, err
 		}
