@@ -49,24 +49,23 @@ type Client struct {
 	stealth          bool //是否开启随机指纹
 }
 type ClientOption struct {
-	ChromePath  string   //chrome浏览器执行路径
-	Host        string   //连接host
-	Port        int      //连接port
-	UserDir     string   //设置用户目录
-	Args        []string //启动参数
-	Headless    bool     //是否使用无头
-	DataCache   bool     //开启数据缓存
-	Ja3Spec     ja3.ClientHelloSpec
-	Ja3         bool
-	H2Ja3Spec   ja3.H2Ja3Spec
-	H2Ja3       bool
-	UserAgent   string
-	Proxy       string                                                  //代理http,https,socks5,ex: http://127.0.0.1:7005
-	GetProxy    func(ctx context.Context, url *url.URL) (string, error) //代理
-	Width       int64                                                   //浏览器的宽
-	Height      int64                                                   //浏览器的高
-	Stealth     bool                                                    //是否开启随机指纹
-	DisDnsCache bool                                                    //关闭dns 解析
+	ChromePath string   //chrome浏览器执行路径
+	Host       string   //连接host
+	Port       int      //连接port
+	UserDir    string   //设置用户目录
+	Args       []string //启动参数
+	Headless   bool     //是否使用无头
+	DataCache  bool     //开启数据缓存
+	Ja3Spec    ja3.ClientHelloSpec
+	Ja3        bool
+	H2Ja3Spec  ja3.H2Ja3Spec
+	H2Ja3      bool
+	UserAgent  string
+	Proxy      string                                                  //代理http,https,socks5,ex: http://127.0.0.1:7005
+	GetProxy   func(ctx context.Context, url *url.URL) (string, error) //代理
+	Width      int64                                                   //浏览器的宽
+	Height     int64                                                   //浏览器的高
+	Stealth    bool                                                    //是否开启随机指纹
 }
 
 type downClient struct {
@@ -409,7 +408,6 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 		Ja3:         option.Ja3,
 		H2Ja3Spec:   option.H2Ja3Spec,
 		H2Ja3:       option.H2Ja3,
-		DisDnsCache: option.DisDnsCache,
 		RedirectNum: -1,
 		DisDecode:   true,
 	})
