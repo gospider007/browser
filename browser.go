@@ -80,6 +80,9 @@ func verifyEvalPath(path string) error {
 	if strings.HasSuffix(path, "chrome.exe") || strings.HasSuffix(path, "Chromium.app") || strings.HasSuffix(path, "chrome") || strings.HasSuffix(path, "chromium") {
 		return nil
 	}
+	if strings.HasSuffix(path, "msedge.exe") || strings.HasSuffix(path, "msedge") {
+		return nil
+	}
 	return errors.New("请输入正确的浏览器路径,如: c:/chrome.exe")
 }
 func (obj *downClient) getChromePath(preCtx context.Context) (string, error) {
@@ -192,13 +195,16 @@ func runChrome(ctx context.Context, option *ClientOption) (*cmd.Client, bool, er
 }
 
 var chromeArgs = []string{
-	"--no-sandbox",      //禁用 Chrome 的沙盒模式。
-	"--set-uid-sandbox", //命令行参数用于设置 Chrome 进程运行时使用的 UID，从而提高 Chrome 浏览器的安全性
-	"--set-gid-sandbox", //命令行参数用于设置 Chrome 进程运行时使用的 GID，从而提高 Chrome 浏览器的安全性
-
+	//自动化选项禁用
 	"--useAutomationExtension=false",                //禁用自动化扩展。
 	"--excludeSwitches=enable-automation",           //禁用自动化
 	"--disable-blink-features=AutomationControlled", //禁用 Blink 引擎的自动化控制。
+
+	//稳定性选项
+	"--no-sandbox",      //禁用 Chrome 的沙盒模式。
+	"--set-uid-sandbox", //命令行参数用于设置 Chrome 进程运行时使用的 UID，从而提高 Chrome 浏览器的安全性
+	"--set-gid-sandbox", //命令行参数用于设置 Chrome 进程运行时使用的 GID，从而提高 Chrome 浏览器的安全性
+	"--incognito",       //隐私模式
 	"--blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4,imagesEnabled=true", //Blink 设置。
 	"--ignore-ssl-errors=true", //忽略 SSL 错误。
 	// "--virtual-time-budget=1000", //缩短setTimeout  setInterval 的时间1000秒:目前不生效，不知道以后会不会生效，等生效了再打开
@@ -206,18 +212,19 @@ var chromeArgs = []string{
 	"--disable-extensions",     //禁用所有扩展程序，这可以降低Chrome对内存的占用。
 	"--disable-plugins",        //禁用所有已安装的Chrome浏览器插件。
 
-	"--process-per-site",                          //为每个站点启动一个新的进程，这可以防止内存泄漏，并降低同一进程中多个标签页的内存占用。
-	"--single-process",                            //全部使用单进程模式，这可以降低Chrome的内存占用，但可能会影响浏览器的稳定性。
-	"--disable-dev-shm-usage",                     //禁用Chrome在/dev/shm文件系统中分配的共享内存，这可以减少Chrome进程的内存占用。
-	"--fast-start",                                //启用快速启动功能，这可以加快Chrome的启动速度。
-	"--disable-hardware-acceleration",             //禁用硬件加速功能，这可以在某些旧的计算机和旧的显卡上降低Chrome的资源消耗，但可能会影响一些图形性能和视频播放。
-	"--browser-test",                              //启用浏览器测试模式，这可以对Chrome进行优化以实现更低的内存占用率。
-	"--disable-background-networking",             // 禁用Chrome的后台网络请求，可以降低Chrome对内存的占用。
-	"--disable-site-isolation-trials",             //禁用站点隔离特性试验，这可以提高Chrome的性能并降低其内存占用。
-	"--disable-gpu",                               //禁用硬件加速功能，这可以降低一些GPU相关任务的CPU占用，但可能降低图形性能和视频播放能力。
-	"--process-per-tab",                           //为每个标签页启动一个新的进程，这可以有效防止内存泄漏，并大幅度降低Chrome进程的内存占用。
-	"--no-pings",                                  //禁用 ping。
-	"--no-zygote",                                 //禁用 zygote 进程。
+	"--process-per-site",              //为每个站点启动一个新的进程，这可以防止内存泄漏，并降低同一进程中多个标签页的内存占用。
+	"--disable-dev-shm-usage",         //禁用Chrome在/dev/shm文件系统中分配的共享内存，这可以减少Chrome进程的内存占用。
+	"--fast-start",                    //启用快速启动功能，这可以加快Chrome的启动速度。
+	"--disable-hardware-acceleration", //禁用硬件加速功能，这可以在某些旧的计算机和旧的显卡上降低Chrome的资源消耗，但可能会影响一些图形性能和视频播放。
+
+	"--browser-test",                  //启用浏览器测试模式，这可以对Chrome进行优化以实现更低的内存占用率。
+	"--disable-background-networking", // 禁用Chrome的后台网络请求，可以降低Chrome对内存的占用。
+	"--disable-site-isolation-trials", //禁用站点隔离特性试验，这可以提高Chrome的性能并降低其内存占用。
+	"--disable-gpu",                   //禁用硬件加速功能，这可以降低一些GPU相关任务的CPU占用，但可能降低图形性能和视频播放能力。
+	"--process-per-tab",               //为每个标签页启动一个新的进程，这可以有效防止内存泄漏，并大幅度降低Chrome进程的内存占用。
+	"--no-pings",                      //禁用 ping。
+	"--no-zygote",                     //禁用 zygote 进程。
+
 	"--mute-audio",                                //禁用音频。
 	"--no-first-run",                              //不显示欢迎页面。
 	"--no-default-browser-check",                  //不检查是否为默认浏览器。
@@ -235,20 +242,28 @@ var chromeArgs = []string{
 	"--enable-simple-cache-backend",               //启用简单缓存后端
 	"--enable-tcp-fast-open",                      //启用 TCP 快速打开。
 	"--prerender-from-omnibox=disabled",           //用于禁用从地址栏预渲染页面
-	"--disable-features=AutoUpdate,EasyBakeWebBundler,MultipleCompositingThreads,AudioServiceOutOfProcess,TranslateUI,BackgroundSync,ClientHints,NetworkQualityEstimator,PasswordGeneration,PrefetchPrivacyChanges,TabHoverCards", // 禁用一些 Chrome 功能。
+	"--disable-features=AutoUpdate,site-per-process,Profiles,EasyBakeWebBundler,MultipleCompositingThreads,AudioServiceOutOfProcess,TranslateUI,BackgroundSync,ClientHints,NetworkQualityEstimator,PasswordGeneration,PrefetchPrivacyChanges,TabHoverCards,ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate", // 禁用一些 Chrome 功能。
+
+	"--disable-field-trial-config", //禁用实验室配置，在禁用情况下，不会向远程服务器报告任何配置或默认设置。
+	"--disable-back-forward-cache", //禁用后退/前进缓存。
+
+	"--allow-pre-commit-input", //允许在提交前输入词语。
+
+	"--no-service-autorun", //不自动运行服务。
 
 	"--ignore-certificate-errors",
-	"--aggressive-cache-discard",                                      //启用缓存丢弃。
-	"--disable-ipc-flooding-protection",                               //禁用 IPC 洪水保护。
-	"--disable-default-apps",                                          //禁用默认应用
-	"--enable-webgl",                                                  //启用 WebGL。
-	"--disable-breakpad",                                              //禁用 崩溃报告
-	"--disable-component-update",                                      //禁用组件更新。
-	"--disable-domain-reliability",                                    //禁用域可靠性。
-	"--disable-sync",                                                  //禁用同步。
-	"--disable-client-side-phishing-detection",                        //禁用客户端钓鱼检测。
-	"--disable-hang-monitor",                                          //禁用挂起监视器
-	"--disable-popup-blocking",                                        //禁用弹出窗口阻止。
+	"--aggressive-cache-discard",               //启用缓存丢弃。
+	"--disable-ipc-flooding-protection",        //禁用 IPC 洪水保护。
+	"--disable-default-apps",                   //禁用默认应用
+	"--enable-webgl",                           //启用 WebGL。
+	"--disable-breakpad",                       //禁用 崩溃报告
+	"--disable-component-update",               //禁用组件更新。
+	"--disable-domain-reliability",             //禁用域可靠性。
+	"--disable-sync",                           //禁用同步。
+	"--disable-client-side-phishing-detection", //禁用客户端钓鱼检测。
+	"--disable-hang-monitor",                   //禁用挂起监视器
+	"--disable-popup-blocking",                 //禁用弹出窗口阻止。
+
 	"--disable-crash-reporter",                                        //禁用崩溃报告器。
 	"--disable-background-timer-throttling",                           //禁用后台计时器限制。
 	"--disable-backgrounding-occluded-windows",                        //禁用后台窗口。
