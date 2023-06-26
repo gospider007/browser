@@ -1,5 +1,7 @@
 gitee.com/baixudong/gospider v0.0.0-20230616131241-a4ae74430dc0 h1:5Q9bEYd5VecVdkQr4h+smPETs2jfO+ew4Z+Cz7ED40U=
 gitee.com/baixudong/gospider v0.0.0-20230616131241-a4ae74430dc0/go.mod h1:SsAtl9pz165ETr3pFj+fzmxK44eMRRNJHueJfLpCsrs=
+gitee.com/baixudong/gospider v0.0.0-20230626143811-b2254116ff78 h1:2lnEic51ugphH4i+0KWvhDVJ/I7CxPZfZH3qezec298=
+gitee.com/baixudong/gospider v0.0.0-20230626143811-b2254116ff78/go.mod h1:PPpr0RubCwOQzsvxciTuN8lJJcSm/ZO+NxjAU+rZ3qs=
 github.com/PuerkitoBio/goquery v1.8.1 h1:uQxhNlArOIdbrH1tr0UXwdVFgDcZDrZVdcpygAcwmWM=
 github.com/PuerkitoBio/goquery v1.8.1/go.mod h1:Q8ICL1kNUJ2sXGoAhPGUdYDJvgQgHzJsnnd3H7Ho5jQ=
 github.com/andybalholm/brotli v1.0.5 h1:8uQZIdzKmjc/iuPu7O2ioW48L81FgatrcpfFmiq/cCs=
