@@ -18,7 +18,7 @@ import (
 	"sync"
 	"time"
 
-	"gitee.com/baixudong/gospider/cdp"
+	"gitee.com/baixudong/browser/cdp"
 	"gitee.com/baixudong/gospider/cmd"
 	"gitee.com/baixudong/gospider/conf"
 	"gitee.com/baixudong/gospider/db"

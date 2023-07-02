@@ -8,8 +8,8 @@ import (
 	uurl "net/url"
 	"time"
 
+	"gitee.com/baixudong/browser/cdp"
 	"gitee.com/baixudong/gospider/bs4"
-	"gitee.com/baixudong/gospider/cdp"
 	"gitee.com/baixudong/gospider/db"
 	"gitee.com/baixudong/gospider/re"
 	"gitee.com/baixudong/gospider/requests"

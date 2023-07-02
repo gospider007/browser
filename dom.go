@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"gitee.com/baixudong/gospider/cdp"
+	"gitee.com/baixudong/browser/cdp"
 	"gitee.com/baixudong/gospider/tools"
 )
 
