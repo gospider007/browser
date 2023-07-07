@@ -314,7 +314,11 @@ func downLoadChrome(preCtx context.Context, dirUrl string, version int) error {
 	var fileDir string
 	var fileTime int64
 	var ver int
-	for _, dir := range resp.Json().Array() {
+	jsonData, err := resp.Json()
+	if err != nil {
+		return err
+	}
+	for _, dir := range jsonData.Array() {
 		if tempTime, err := time.Parse(fmt.Sprintf("%sT%sZ", time.DateOnly, time.TimeOnly), dir.Get("date").String()); err == nil {
 			if versionRe := re.Search(`\d+`, dir.Get("name").String()); versionRe != nil {
 				if versionInt, err := strconv.Atoi(versionRe.Group()); err == nil {
@@ -337,7 +341,11 @@ func downLoadChrome(preCtx context.Context, dirUrl string, version int) error {
 	if err != nil {
 		return err
 	}
-	fileUrl := resp.Json().Get("0.url").String()
+	if jsonData, err = resp.Json(); err != nil {
+		return err
+	}
+
+	fileUrl := jsonData.Get("0.url").String()
 	resp, err = reqCli.Request(preCtx, "get", fileUrl, requests.RequestOption{Bar: true})
 	if err != nil {
 		return err
@@ -495,7 +503,11 @@ func (obj *Client) init() (err error) {
 		}
 		return err
 	}
-	wsUrl := resp.Json().Get("webSocketDebuggerUrl").String()
+	jsonData, err := resp.Json()
+	if err != nil {
+		return err
+	}
+	wsUrl := jsonData.Get("webSocketDebuggerUrl").String()
 	if wsUrl == "" {
 		return errors.New("not fouond browser wsUrl")
 	}

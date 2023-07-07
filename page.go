@@ -68,7 +68,10 @@ func (obj *Page) domLoadMain(ctx context.Context, rd cdp.RecvData) {
 	obj.domLoad = true
 }
 func (obj *Page) frameLoadMain(ctx context.Context, rd cdp.RecvData) {
-	jsonData := tools.Any2json(rd.Params)
+	jsonData, err := tools.Any2json(rd.Params)
+	if err != nil {
+		return
+	}
 	href := jsonData.Get("frame.url").String()
 	frameId := jsonData.Get("frame.id").String()
 	if href != "" && frameId != "" {
@@ -211,7 +214,10 @@ func (obj *Page) Eval(ctx context.Context, expression string, params map[string]
 	}
 	// log.Print(fmt.Sprintf(`(async %s)(%s)`, expression, value))
 	rs, err := obj.webSock.RuntimeEvaluate(ctx, fmt.Sprintf(`(async %s)(%s)`, expression, value))
-	return tools.Any2json(rs.Result), err
+	if err != nil {
+		return gjson.Result{}, err
+	}
+	return tools.Any2json(rs.Result)
 }
 func (obj *Page) Close() error {
 	defer obj.domAfterTime.Stop()
@@ -269,7 +275,10 @@ func (obj *Page) nodeId(ctx context.Context) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	jsonData := tools.Any2json(rs.Result["root"])
+	jsonData, err := tools.Any2json(rs.Result["root"])
+	if err != nil {
+		return 0, err
+	}
 	href := jsonData.Get("baseURL").String()
 	if href != "" {
 		obj.baseUrl = href
@@ -425,8 +434,12 @@ func (obj *Page) querySelectorAll(ctx context.Context, nodeId int64, selector st
 	if err != nil {
 		return nil, err
 	}
+	jsonData, err := tools.Any2json(rs.Result["nodeIds"])
+	if err != nil {
+		return nil, err
+	}
 	doms := []*Dom{}
-	for _, nodeId := range tools.Any2json(rs.Result["nodeIds"]).Array() {
+	for _, nodeId := range jsonData.Array() {
 		dom := &Dom{
 			baseUrl: obj.baseUrl,
 			webSock: obj.webSock,
@@ -685,7 +698,10 @@ func (obj *Page) GetCookies(ctx context.Context, urls ...string) (cdp.Cookies, e
 	if err != nil {
 		return nil, err
 	}
-	jsonData := tools.Any2json(rs.Result)
+	jsonData, err := tools.Any2json(rs.Result)
+	if err != nil {
+		return nil, err
+	}
 	result := []cdp.Cookie{}
 	for _, cookie := range jsonData.Get("cookies").Array() {
 		var cook cdp.Cookie

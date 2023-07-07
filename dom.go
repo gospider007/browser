@@ -20,7 +20,10 @@ func (obj *Page) getFrameHtml(ctx context.Context, frameId string) (string, erro
 	if err != nil {
 		return "", err
 	}
-	jsonData := tools.Any2json(rs.Result)
+	jsonData, err := tools.Any2json(rs.Result)
+	if err != nil {
+		return "", err
+	}
 	if !jsonData.Get("backendNodeId").Exists() {
 		return "", errors.New("not fuond backendNodeId")
 	}
@@ -29,7 +32,9 @@ func (obj *Page) getFrameHtml(ctx context.Context, frameId string) (string, erro
 	if err != nil {
 		return "", err
 	}
-	jsonData = tools.Any2json(rs.Result)
+	if jsonData, err = tools.Any2json(rs.Result); err != nil {
+		return "", err
+	}
 	if !jsonData.Get("node.contentDocument.backendNodeId").Exists() {
 		return "", errors.New("not fuond backendNodeId")
 	}
@@ -43,7 +48,10 @@ func (obj *Dom) frame2Dom(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	jsonData := tools.Any2json(rs.Result)
+	jsonData, err := tools.Any2json(rs.Result)
+	if err != nil {
+		return err
+	}
 	var backendNodeId int64
 	if jsonData.Get("node.contentDocument.backendNodeId").Exists() {
 		backendNodeId = jsonData.Get("node.contentDocument.backendNodeId").Int()
@@ -55,12 +63,18 @@ func (obj *Dom) frame2Dom(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	objectId := tools.Any2json(rs.Result).Get("object.objectId").String()
+	if jsonData, err = tools.Any2json(rs.Result); err != nil {
+		return err
+	}
+	objectId := jsonData.Get("object.objectId").String()
 	rs, err = obj.webSock.DOMRequestNode(ctx, objectId)
 	if err != nil {
 		return err
 	}
-	obj.nodeId = tools.Any2json(rs.Result).Get("nodeId").Int()
+	if jsonData, err = tools.Any2json(rs.Result); err != nil {
+		return err
+	}
+	obj.nodeId = jsonData.Get("nodeId").Int()
 	return err
 }
 func (obj *Dom) Rect(ctx context.Context) (cdp.Rect, error) {
@@ -68,7 +82,10 @@ func (obj *Dom) Rect(ctx context.Context) (cdp.Rect, error) {
 	if err != nil {
 		return cdp.Rect{}, err
 	}
-	jsonData := tools.Any2json(rs.Result["model"])
+	jsonData, err := tools.Any2json(rs.Result["model"])
+	if err != nil {
+		return cdp.Rect{}, err
+	}
 	content := jsonData.Get("content").Array()
 	if len(content) == 0 {
 		return cdp.Rect{}, errors.New("rect没有content")

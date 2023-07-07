@@ -232,7 +232,10 @@ func (obj *Route) ResponseBody(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	jsonData := tools.Any2json(rs.Result)
+	jsonData, err := tools.Any2json(rs.Result)
+	if err != nil {
+		return "", err
+	}
 	body := jsonData.Get("body").String()
 	if body == "" {
 		return body, nil
