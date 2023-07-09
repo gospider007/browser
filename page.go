@@ -111,6 +111,9 @@ func (obj *Page) init(globalReqCli *requests.Client, option PageOption, db *db.C
 		if err = obj.AddScript(obj.ctx, stealth); err != nil {
 			return err
 		}
+		// if err = obj.AddScript(obj.ctx, stealth2); err != nil {
+		// 	return err
+		// }
 	}
 	return obj.AddScript(obj.ctx, `Object.defineProperty(window, "RTCPeerConnection",{"get":undefined});Object.defineProperty(window, "mozRTCPeerConnection",{"get":undefined});Object.defineProperty(window, "webkitRTCPeerConnection",{"get":undefined});`)
 }
@@ -142,10 +145,12 @@ func (obj *Page) Reload(ctx context.Context) error {
 	_, err := obj.webSock.PageReload(ctx)
 	return err
 }
-func (obj *Page) WaitPageStop(preCtx context.Context, waits ...int) error {
-	wait := 2
+func (obj *Page) WaitPageStop(preCtx context.Context, waits ...time.Duration) error {
+	var wait time.Duration
 	if len(waits) > 0 {
 		wait = waits[0]
+	} else {
+		wait = time.Second * 2
 	}
 	var ctx context.Context
 	var cnl context.CancelFunc
@@ -156,7 +161,7 @@ func (obj *Page) WaitPageStop(preCtx context.Context, waits ...int) error {
 	}
 	defer cnl()
 	for {
-		obj.pageAfterTime.Reset(time.Second * time.Duration(wait))
+		obj.pageAfterTime.Reset(wait)
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
@@ -169,10 +174,12 @@ func (obj *Page) WaitPageStop(preCtx context.Context, waits ...int) error {
 		}
 	}
 }
-func (obj *Page) WaitDomLoad(preCtx context.Context, waits ...int) error {
-	wait := 2
+func (obj *Page) WaitDomLoad(preCtx context.Context, waits ...time.Duration) error {
+	var wait time.Duration
 	if len(waits) > 0 {
 		wait = waits[0]
+	} else {
+		wait = time.Second * 2
 	}
 	var ctx context.Context
 	var cnl context.CancelFunc
@@ -183,7 +190,7 @@ func (obj *Page) WaitDomLoad(preCtx context.Context, waits ...int) error {
 	}
 	defer cnl()
 	for {
-		obj.domAfterTime.Reset(time.Second * time.Duration(wait))
+		obj.domAfterTime.Reset(wait)
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
@@ -321,20 +328,27 @@ func (obj *Page) html(ctx context.Context, nodeId int64) (*bs4.Client, error) {
 	}
 	return html, nil
 }
-func (obj *Page) WaitSelector(ctx context.Context, selector string, timeouts ...int64) (*Dom, error) {
+func (obj *Page) WaitSelector(ctx context.Context, selector string, timeouts ...time.Duration) (*Dom, error) {
 	nodeId, err := obj.nodeId(ctx)
 	if err != nil {
 		return nil, err
 	}
 	return obj.WaitSelectorWithNodeId(ctx, nodeId, selector, timeouts...)
 }
-func (obj *Page) WaitSelectorWithNodeId(preCtx context.Context, nodeId int64, selector string, timeouts ...int64) (*Dom, error) {
-	var timeout int64 = 30
+func (obj *Page) WaitSelectorWithNodeId(preCtx context.Context, nodeId int64, selector string, timeouts ...time.Duration) (*Dom, error) {
+	if preCtx == nil {
+		preCtx = obj.ctx
+	}
+	var timeout time.Duration
 	if len(timeouts) > 0 {
 		timeout = timeouts[0]
+	} else {
+		timeout = time.Second * 30
 	}
-	startTime := time.Now().Unix()
-	for time.Now().Unix()-startTime <= timeout {
+	startTime := time.Now()
+	t := time.NewTimer(0)
+	defer t.Stop()
+	for time.Now().Sub(startTime) <= timeout {
 		dom, err := obj.QuerySelectorWithNodeId(preCtx, nodeId, selector)
 		if err != nil {
 			return nil, err
@@ -342,7 +356,12 @@ func (obj *Page) WaitSelectorWithNodeId(preCtx context.Context, nodeId int64, se
 		if dom != nil {
 			return dom, nil
 		}
-		time.Sleep(time.Millisecond * 500)
+		t.Reset(time.Millisecond * 500)
+		select {
+		case <-t.C:
+		case <-preCtx.Done():
+			return nil, preCtx.Err()
+		}
 	}
 	return nil, errors.New("超时")
 }

@@ -3,7 +3,7 @@ module gitee.com/baixudong/browser
 go 1.20
 
 require (
-	gitee.com/baixudong/gospider v0.0.0-20230706073321-6d8facc6cf40
+	gitee.com/baixudong/gospider v0.0.0-20230709151301-a434dc86f1f6
 	github.com/tidwall/gjson v1.14.4
 	go.uber.org/atomic v1.11.0
 	golang.org/x/exp v0.0.0-20230626212559-97b1e661b5df

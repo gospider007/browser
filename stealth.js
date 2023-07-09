@@ -329,13 +329,41 @@ function changeRect(){
     },
   });
 }
+
+function changAllVert() {
+  var inject = function () {
+    // in case of broken image return random height/width
+    ['height', 'width'].forEach(property => {
+        const imageDescriptor = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, property);
+        Object.defineProperty(HTMLImageElement.prototype, property, {
+            ...imageDescriptor,
+            get: function () {
+                if (this.complete && this.naturalHeight == 0) {
+                    return 16;
+                }
+                return imageDescriptor.get.apply(this);
+            },
+        });
+    }); 
+    // hairline feature (headless can't render it normally)
+    const elementDescriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetHeight');
+    Object.defineProperty(HTMLElement.prototype, 'offsetHeight', {
+        ...elementDescriptor,
+        get: function () {
+            if (this.id == 'modernizr') {
+                return 1;
+            }
+            return elementDescriptor.get.apply(this);
+        },
+    });
+  } 
+  inject()
+}
 changeCanvasMain()
 changeWebGlMain()
 changeMime()
 changeAudio()
 changeFont()
 changeRect()
-
-  
-  
+// changAllVert()
   

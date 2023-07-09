@@ -31,6 +31,9 @@ import (
 //go:embed stealth.js
 var stealth string
 
+// //go:embed stealth2.js
+// var stealth2 string
+
 type Client struct {
 	isReplaceRequest bool //是否自定义请求
 	proxy            string
@@ -195,6 +198,7 @@ func runChrome(ctx context.Context, option *ClientOption) (*cmd.Client, bool, er
 }
 
 var chromeArgs = []string{
+	// "--virtual-time-budget=1000", //缩短setTimeout  setInterval 的时间1000秒:目前不生效，不知道以后会不会生效，等生效了再打开
 	//自动化选项禁用
 	"--useAutomationExtension=false",                //禁用自动化扩展。
 	"--excludeSwitches=enable-automation",           //禁用自动化
@@ -207,7 +211,6 @@ var chromeArgs = []string{
 	"--incognito",       //隐私模式
 	"--blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4,imagesEnabled=true", //Blink 设置。
 	"--ignore-ssl-errors=true", //忽略 SSL 错误。
-	// "--virtual-time-budget=1000", //缩短setTimeout  setInterval 的时间1000秒:目前不生效，不知道以后会不会生效，等生效了再打开
 	"--disable-setuid-sandbox", //重要headless
 	"--disable-extensions",     //禁用所有扩展程序，这可以降低Chrome对内存的占用。
 	"--disable-plugins",        //禁用所有已安装的Chrome浏览器插件。
@@ -482,14 +485,18 @@ func (obj *Client) init() (err error) {
 		requests.RequestOption{
 			Timeout:  3,
 			DisProxy: true,
-			ErrCallBack: func(ctx context.Context, err error) bool {
-				time.Sleep(time.Second)
-				if obj.cmdCli.Err() != nil {
-					return true
+			ErrCallBack: func(ctx context.Context, err error) error {
+				select {
+				case <-ctx.Done():
+					return ctx.Err()
+				case <-time.After(time.Second):
 				}
-				return false
+				if obj.cmdCli.Err() != nil {
+					return obj.cmdCli.Err()
+				}
+				return nil
 			},
-			AfterCallBack: func(ctx context.Context, r *requests.Response) error {
+			ResponseCallBack: func(ctx context.Context, r *requests.Response) error {
 				if r.StatusCode() == 200 {
 					return nil
 				}
