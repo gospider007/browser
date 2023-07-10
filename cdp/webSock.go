@@ -106,7 +106,9 @@ func (obj *WebSock) recv(ctx context.Context, rd RecvData) error {
 	}
 	methodFuncAny, ok := obj.onEvents.Load(rd.Method)
 	if ok && methodFuncAny != nil {
-		methodFuncAny.(func(ctx context.Context, rd RecvData))(ctx, rd)
+		if fun, funok := methodFuncAny.(func(ctx context.Context, rd RecvData)); funok {
+			fun(ctx, rd)
+		}
 	}
 	return nil
 }

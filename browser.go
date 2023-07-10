@@ -496,7 +496,7 @@ func (obj *Client) init() (err error) {
 				}
 				return nil
 			},
-			ResponseCallBack: func(ctx context.Context, r *requests.Response) error {
+			ResultCallBack: func(ctx context.Context, r *requests.Response) error {
 				if r.StatusCode() == 200 {
 					return nil
 				}
