@@ -323,7 +323,7 @@ func (obj *Page) html(ctx context.Context, nodeId int64) (*bs4.Client, error) {
 			if err != nil {
 				return nil, err
 			}
-			iframe.Html(frameHtml)
+			iframe.SetHtml(frameHtml)
 		}
 	}
 	return html, nil

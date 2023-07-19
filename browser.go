@@ -459,7 +459,7 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 		ctx:              ctx,
 		cnl:              cnl,
 		cmdCli:           cli,
-		db:               db.NewClient[cdp.FulData](ctx, cnl),
+		db:               db.NewClient[cdp.FulData](ctx),
 		host:             option.Host,
 		port:             option.Port,
 		globalReqCli:     globalReqCli,
@@ -483,12 +483,14 @@ func (obj *Client) init() (err error) {
 	resp, err = obj.globalReqCli.Request(obj.ctx, "get",
 		fmt.Sprintf("http://%s:%d/json/version", obj.host, obj.port),
 		requests.RequestOption{
-			Timeout:  3,
+			Timeout:  time.Second * 3,
 			DisProxy: true,
-			ErrCallBack: func(ctx context.Context, err error) error {
+			ErrCallBack: func(ctx context.Context, cl *requests.Client, err error) error {
 				select {
+				case <-obj.cmdCli.Ctx().Done():
+					return obj.cmdCli.Ctx().Err()
 				case <-ctx.Done():
-					return ctx.Err()
+					return nil
 				case <-time.After(time.Second):
 				}
 				if obj.cmdCli.Err() != nil {
@@ -496,7 +498,7 @@ func (obj *Client) init() (err error) {
 				}
 				return nil
 			},
-			ResultCallBack: func(ctx context.Context, r *requests.Response) error {
+			ResultCallBack: func(ctx context.Context, cl *requests.Client, r *requests.Response) error {
 				if r.StatusCode() == 200 {
 					return nil
 				}
