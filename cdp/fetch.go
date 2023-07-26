@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"gitee.com/baixudong/gospider/tools"
+	"gitee.com/baixudong/tools"
 )
 
 func (obj *WebSock) FetchRequestEnable(preCtx context.Context) (RecvData, error) {

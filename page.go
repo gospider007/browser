@@ -9,11 +9,11 @@ import (
 	"time"
 
 	"gitee.com/baixudong/browser/cdp"
-	"gitee.com/baixudong/gospider/bs4"
-	"gitee.com/baixudong/gospider/db"
-	"gitee.com/baixudong/gospider/re"
-	"gitee.com/baixudong/gospider/requests"
-	"gitee.com/baixudong/gospider/tools"
+	"gitee.com/baixudong/bs4"
+	"gitee.com/baixudong/db"
+	"gitee.com/baixudong/re"
+	"gitee.com/baixudong/requests"
+	"gitee.com/baixudong/tools"
 
 	"github.com/tidwall/gjson"
 )
@@ -81,9 +81,6 @@ func (obj *Page) frameLoadMain(ctx context.Context, rd cdp.RecvData) {
 
 func (obj *Page) addEvent(method string, fun func(ctx context.Context, rd cdp.RecvData)) {
 	obj.webSock.AddEvent(method, fun)
-}
-func (obj *Page) delEvent(method string) {
-	obj.webSock.DelEvent(method)
 }
 func (obj *Page) init(globalReqCli *requests.Client, option PageOption, db *db.Client[cdp.FulData]) error {
 	var err error
@@ -348,7 +345,7 @@ func (obj *Page) WaitSelectorWithNodeId(preCtx context.Context, nodeId int64, se
 	startTime := time.Now()
 	t := time.NewTimer(0)
 	defer t.Stop()
-	for time.Now().Sub(startTime) <= timeout {
+	for time.Since(startTime) <= timeout {
 		dom, err := obj.QuerySelectorWithNodeId(preCtx, nodeId, selector)
 		if err != nil {
 			return nil, err

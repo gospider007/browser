@@ -9,9 +9,9 @@ import (
 	"strconv"
 	"time"
 
-	"gitee.com/baixudong/gospider/re"
-	"gitee.com/baixudong/gospider/requests"
-	"gitee.com/baixudong/gospider/tools"
+	"gitee.com/baixudong/re"
+	"gitee.com/baixudong/requests"
+	"gitee.com/baixudong/tools"
 	"golang.org/x/exp/maps"
 )
 
@@ -118,9 +118,7 @@ func (obj *Route) PostData() string {
 	return obj.recvData.Request.PostData
 }
 func (obj *Route) Headers() http.Header {
-	if _, ok := obj.recvData.Request.Headers["If-Modified-Since"]; ok {
-		delete(obj.recvData.Request.Headers, "If-Modified-Since")
-	}
+	delete(obj.recvData.Request.Headers, "If-Modified-Since")
 	head := http.Header{}
 	for kk, vv := range obj.recvData.Request.Headers {
 		head.Add(kk, vv)
@@ -200,7 +198,7 @@ func (obj *Route) FulFill(ctx context.Context, fulDatas ...FulData) error {
 	}
 	_, err := obj.webSock.FetchFulfillRequest(ctx, obj.recvData.RequestId, fulData)
 	if err != nil {
-		obj.Fail(nil)
+		obj.Fail(ctx)
 	}
 	return err
 }

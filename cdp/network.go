@@ -55,7 +55,7 @@ func (obj Cookies) Map() map[string][]string {
 	for _, cook := range obj {
 		dds, ok := data[cook.Name]
 		if ok {
-			dds = append(dds, cook.Value)
+			data[cook.Name] = append(dds, cook.Value)
 		} else {
 			data[cook.Name] = []string{cook.Value}
 		}

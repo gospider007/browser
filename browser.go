@@ -19,13 +19,13 @@ import (
 	"time"
 
 	"gitee.com/baixudong/browser/cdp"
-	"gitee.com/baixudong/gospider/cmd"
-	"gitee.com/baixudong/gospider/conf"
-	"gitee.com/baixudong/gospider/db"
-	"gitee.com/baixudong/gospider/ja3"
-	"gitee.com/baixudong/gospider/re"
-	"gitee.com/baixudong/gospider/requests"
-	"gitee.com/baixudong/gospider/tools"
+	"gitee.com/baixudong/cmd"
+	"gitee.com/baixudong/conf"
+	"gitee.com/baixudong/db"
+	"gitee.com/baixudong/ja3"
+	"gitee.com/baixudong/re"
+	"gitee.com/baixudong/requests"
+	"gitee.com/baixudong/tools"
 )
 
 //go:embed stealth.js
@@ -43,7 +43,6 @@ type Client struct {
 	globalReqCli     *requests.Client
 	port             int
 	host             string
-	lock             sync.Mutex
 	ctx              context.Context
 	cnl              context.CancelFunc
 	webSock          *cdp.WebSock

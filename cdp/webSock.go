@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
-	"gitee.com/baixudong/gospider/db"
-	"gitee.com/baixudong/gospider/requests"
-	"gitee.com/baixudong/gospider/websocket"
+	"gitee.com/baixudong/db"
+	"gitee.com/baixudong/requests"
+	"gitee.com/baixudong/websocket"
 
 	"go.uber.org/atomic"
 )

@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"gitee.com/baixudong/browser/cdp"
-	"gitee.com/baixudong/gospider/tools"
+	"gitee.com/baixudong/tools"
 )
 
 type Dom struct {
