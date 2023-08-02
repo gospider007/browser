@@ -5,13 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"gitee.com/baixudong/db"
 	"gitee.com/baixudong/requests"
 	"gitee.com/baixudong/websocket"
-
-	"go.uber.org/atomic"
 )
 
 type commend struct {
