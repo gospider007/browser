@@ -58,7 +58,7 @@ type ClientOption struct {
 	Args       []string //启动参数
 	Headless   bool     //是否使用无头
 	DataCache  bool     //开启数据缓存
-	Ja3Spec    ja3.ClientHelloSpec
+	Ja3Spec    ja3.Ja3Spec
 	Ja3        bool
 	H2Ja3Spec  ja3.H2Ja3Spec
 	H2Ja3      bool
@@ -174,7 +174,7 @@ func runChrome(ctx context.Context, option *ClientOption) (*cmd.Client, bool, er
 
 	args = append(args, option.Args...)
 	var closeCallBack func()
-	if isDelDir && option.UserDir != "" {
+	if isDelDir {
 		closeCallBack = func() {
 			for i := 0; i < 10; i++ {
 				if os.RemoveAll(option.UserDir) == nil {
@@ -207,7 +207,6 @@ var chromeArgs = []string{
 	"--no-sandbox",      //禁用 Chrome 的沙盒模式。
 	"--set-uid-sandbox", //命令行参数用于设置 Chrome 进程运行时使用的 UID，从而提高 Chrome 浏览器的安全性
 	"--set-gid-sandbox", //命令行参数用于设置 Chrome 进程运行时使用的 GID，从而提高 Chrome 浏览器的安全性
-	"--incognito",       //隐私模式
 	"--blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4,imagesEnabled=true", //Blink 设置。
 	"--ignore-ssl-errors=true", //忽略 SSL 错误。
 	"--disable-setuid-sandbox", //重要headless
