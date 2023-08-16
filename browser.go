@@ -601,8 +601,6 @@ func (obj *Client) NewPage(preCtx context.Context, options ...PageOption) (*Page
 		globalReqCli:     obj.globalReqCli,
 		stealth:          obj.stealth,
 		isReplaceRequest: isReplaceRequest,
-		pageAfterTime:    time.NewTimer(0),
-		domAfterTime:     time.NewTimer(0),
 	}
 	if err = page.init(obj.globalReqCli, option, obj.db); err != nil {
 		return nil, err

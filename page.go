@@ -157,7 +157,11 @@ func (obj *Page) WaitPageStop(preCtx context.Context, waits ...time.Duration) er
 	}
 	defer cnl()
 	for {
-		obj.pageAfterTime.Reset(wait)
+		if obj.pageAfterTime == nil {
+			obj.pageAfterTime = time.NewTimer(wait)
+		} else {
+			obj.pageAfterTime.Reset(wait)
+		}
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
@@ -186,7 +190,11 @@ func (obj *Page) WaitDomLoad(preCtx context.Context, waits ...time.Duration) err
 	}
 	defer cnl()
 	for {
-		obj.domAfterTime.Reset(wait)
+		if obj.domAfterTime == nil {
+			obj.domAfterTime = time.NewTimer(wait)
+		} else {
+			obj.domAfterTime.Reset(wait)
+		}
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
@@ -223,8 +231,14 @@ func (obj *Page) Eval(ctx context.Context, expression string, params map[string]
 	return tools.Any2json(rs.Result)
 }
 func (obj *Page) Close() error {
-	defer obj.domAfterTime.Stop()
-	defer obj.pageAfterTime.Stop()
+	defer func() {
+		if obj.pageAfterTime != nil {
+			obj.pageAfterTime.Stop()
+		}
+		if obj.domAfterTime != nil {
+			obj.domAfterTime.Stop()
+		}
+	}()
 	defer obj.cnl()
 	_, err := obj.preWebSock.TargetCloseTarget(obj.id)
 	if err != nil {
@@ -342,8 +356,12 @@ func (obj *Page) WaitSelectorWithNodeId(preCtx context.Context, nodeId int64, se
 		timeout = time.Second * 30
 	}
 	startTime := time.Now()
-	t := time.NewTimer(0)
-	defer t.Stop()
+	var t *time.Timer
+	defer func() {
+		if t != nil {
+			t.Stop()
+		}
+	}()
 	for time.Since(startTime) <= timeout {
 		dom, err := obj.QuerySelectorWithNodeId(preCtx, nodeId, selector)
 		if err != nil {
@@ -352,7 +370,11 @@ func (obj *Page) WaitSelectorWithNodeId(preCtx context.Context, nodeId int64, se
 		if dom != nil {
 			return dom, nil
 		}
-		t.Reset(time.Millisecond * 500)
+		if t == nil {
+			t = time.NewTimer(time.Millisecond * 500)
+		} else {
+			t.Reset(time.Millisecond * 500)
+		}
 		select {
 		case <-t.C:
 		case <-preCtx.Done():
