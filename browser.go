@@ -18,7 +18,7 @@ import (
 	"sync"
 	"time"
 
-	"gitee.com/baixudong/browser/cdp"
+	"gitee.com/baixudong/cdp"
 	"gitee.com/baixudong/cmd"
 	"gitee.com/baixudong/conf"
 	"gitee.com/baixudong/db"
