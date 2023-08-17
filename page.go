@@ -343,9 +343,9 @@ func (obj *Page) WaitSelector(ctx context.Context, selector string, timeouts ...
 	if err != nil {
 		return nil, err
 	}
-	return obj.WaitSelectorWithNodeId(ctx, nodeId, selector, timeouts...)
+	return obj.WaitSelectorWithNodeId(ctx, nodeId, selector, false, timeouts...)
 }
-func (obj *Page) WaitSelectorWithNodeId(preCtx context.Context, nodeId int64, selector string, timeouts ...time.Duration) (*Dom, error) {
+func (obj *Page) WaitSelectorWithNodeId(preCtx context.Context, nodeId int64, selector string, isPage bool, timeouts ...time.Duration) (*Dom, error) {
 	if preCtx == nil {
 		preCtx = obj.ctx
 	}
@@ -363,7 +363,7 @@ func (obj *Page) WaitSelectorWithNodeId(preCtx context.Context, nodeId int64, se
 		}
 	}()
 	for time.Since(startTime) <= timeout {
-		dom, err := obj.QuerySelectorWithNodeId(preCtx, nodeId, selector)
+		dom, err := obj.QuerySelectorWithNodeId(preCtx, nodeId, selector, isPage)
 		if err != nil {
 			return nil, err
 		}
@@ -384,24 +384,20 @@ func (obj *Page) WaitSelectorWithNodeId(preCtx context.Context, nodeId int64, se
 	return nil, errors.New("超时")
 }
 func (obj *Page) QuerySelector(ctx context.Context, selector string) (*Dom, error) {
-	nodeId, err := obj.nodeId(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return obj.QuerySelectorWithNodeId(ctx, nodeId, selector)
+	return obj.QuerySelectorWithNodeId(ctx, 0, selector, true)
 }
-func (obj *Page) QuerySelectorWithNodeId(ctx context.Context, nodeId int64, selector string) (*Dom, error) {
-	dom, err := obj.querySelector(ctx, nodeId, selector)
+func (obj *Page) QuerySelectorWithNodeId(ctx context.Context, nodeId int64, selector string, isPage bool) (dom *Dom, err error) {
+	dom, err = obj.querySelector(ctx, nodeId, selector, isPage)
 	if err != nil {
 		return dom, err
 	}
 	if dom == nil && selector != "iframe" {
-		iframes, err := obj.querySelectorAll(ctx, nodeId, "iframe")
+		iframes, err := obj.querySelectorAll(ctx, nodeId, "iframe", isPage)
 		if err != nil {
 			return nil, err
 		}
 		for _, iframe := range iframes {
-			dom, err = obj.querySelector(ctx, iframe.nodeId, selector)
+			dom, err = obj.querySelector(ctx, iframe.nodeId, selector, isPage)
 			if err != nil || dom != nil {
 				return dom, err
 			}
@@ -409,7 +405,12 @@ func (obj *Page) QuerySelectorWithNodeId(ctx context.Context, nodeId int64, sele
 	}
 	return dom, err
 }
-func (obj *Page) querySelector(ctx context.Context, nodeId int64, selector string) (*Dom, error) {
+func (obj *Page) querySelector(ctx context.Context, nodeId int64, selector string, isPage bool) (dom *Dom, err error) {
+	if isPage {
+		if nodeId, err = obj.nodeId(ctx); err != nil {
+			return nil, err
+		}
+	}
 	rs, err := obj.webSock.DOMQuerySelector(ctx, nodeId, selector)
 	if err != nil {
 		return nil, err
@@ -425,7 +426,7 @@ func (obj *Page) querySelector(ctx context.Context, nodeId int64, selector strin
 	if nodeId == 0 {
 		return nil, nil
 	}
-	dom := &Dom{
+	dom = &Dom{
 		baseUrl: obj.baseUrl,
 		webSock: obj.webSock,
 		nodeId:  nodeId,
@@ -442,21 +443,21 @@ func (obj *Page) QuerySelectorAll(ctx context.Context, selector string) ([]*Dom,
 	if err != nil {
 		return nil, err
 	}
-	return obj.QuerySelectorAllWithNodeId(ctx, nodeId, selector)
+	return obj.QuerySelectorAllWithNodeId(ctx, nodeId, selector, true)
 }
-func (obj *Page) QuerySelectorAllWithNodeId(ctx context.Context, nodeId int64, selector string) ([]*Dom, error) {
-	dom, err := obj.querySelectorAll(ctx, nodeId, selector)
+func (obj *Page) QuerySelectorAllWithNodeId(ctx context.Context, nodeId int64, selector string, isPage bool) ([]*Dom, error) {
+	dom, err := obj.querySelectorAll(ctx, nodeId, selector, isPage)
 	if err != nil {
 		return dom, err
 	}
 	if dom == nil && selector != "iframe" {
-		iframes, err := obj.querySelectorAll(ctx, nodeId, "iframe")
+		iframes, err := obj.querySelectorAll(ctx, nodeId, "iframe", isPage)
 		if err != nil {
 			return nil, err
 		}
 		doms := []*Dom{}
 		for _, iframe := range iframes {
-			dom, err = obj.querySelectorAll(ctx, iframe.nodeId, selector)
+			dom, err = obj.querySelectorAll(ctx, iframe.nodeId, selector, isPage)
 			if err != nil {
 				return dom, err
 			}
@@ -466,16 +467,24 @@ func (obj *Page) QuerySelectorAllWithNodeId(ctx context.Context, nodeId int64, s
 	}
 	return dom, err
 }
-func (obj *Page) querySelectorAll(ctx context.Context, nodeId int64, selector string) ([]*Dom, error) {
+func (obj *Page) querySelectorAll(ctx context.Context, nodeId int64, selector string, isPage bool) (doms []*Dom, err error) {
+	if isPage {
+		if nodeId, err = obj.nodeId(ctx); err != nil {
+			return nil, err
+		}
+	}
 	rs, err := obj.webSock.DOMQuerySelectorAll(ctx, nodeId, selector)
 	if err != nil {
 		return nil, err
+	}
+	if rs.Result["nodeIds"] == nil {
+		return nil, nil
 	}
 	jsonData, err := tools.Any2json(rs.Result["nodeIds"])
 	if err != nil {
 		return nil, err
 	}
-	doms := []*Dom{}
+	doms = []*Dom{}
 	for _, nodeId := range jsonData.Array() {
 		dom := &Dom{
 			baseUrl: obj.baseUrl,

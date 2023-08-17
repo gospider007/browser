@@ -24,8 +24,12 @@ gitee.com/baixudong/re v0.0.0-20230809033040-360c1d945e59 h1:HtdoUzBIqepeVTeeZ0Q
 gitee.com/baixudong/re v0.0.0-20230809033040-360c1d945e59/go.mod h1:i5L3z/q42lHZvd3JSk3390XdujEY2QHXFMEcaO/uZD0=
 gitee.com/baixudong/requests v0.0.0-20230816101435-79b3960bde89 h1:W5Gzo5AiaRogiPgigqYj5UeMzcxhualHxA4HOykCx+g=
 gitee.com/baixudong/requests v0.0.0-20230816101435-79b3960bde89/go.mod h1:Bf4KWuLsENBlu0HfdVDmloIPLBtSkQp91RFY1yXSjMU=
+gitee.com/baixudong/requests v0.0.0-20230817092328-6f08dd4979a0 h1:WWXMp5inZ2WznSKSXla/VoT3Kl1WeqDCmrtu8xbv/zY=
+gitee.com/baixudong/requests v0.0.0-20230817092328-6f08dd4979a0/go.mod h1:Rpirgg42lXEJP5eoHCxbmy/FkjdjFclR2gxvpHMV2t4=
 gitee.com/baixudong/tools v0.0.0-20230817053057-332c92d681ff h1:FK+tesyMzqENZMqa0LShMTAPwuyPwyBmZ0/YvbxJRKA=
 gitee.com/baixudong/tools v0.0.0-20230817053057-332c92d681ff/go.mod h1:GWELA4g05Mtq7hx6TRYbc5Mxv+k5NlonfozaoMLhSzw=
+gitee.com/baixudong/tools v0.0.0-20230817082053-97c88f6d0fbc h1:L2ZjIN86mCbeRmBYia7AQyaWN69JJWQlt/M2onq4MUE=
+gitee.com/baixudong/tools v0.0.0-20230817082053-97c88f6d0fbc/go.mod h1:GWELA4g05Mtq7hx6TRYbc5Mxv+k5NlonfozaoMLhSzw=
 gitee.com/baixudong/websocket v0.0.0-20230816024804-f69b381d7a77 h1:1QWvmJnT+1Sml5mfhjiA4HAEYxR+VCTLSyQEB2hmcLA=
 gitee.com/baixudong/websocket v0.0.0-20230816024804-f69b381d7a77/go.mod h1:dXSOL/t3PoPARqPfmGvKA+xhySEdO8+Qs3Dq7jBoxT0=
 github.com/PuerkitoBio/goquery v1.8.1 h1:uQxhNlArOIdbrH1tr0UXwdVFgDcZDrZVdcpygAcwmWM=
@@ -122,6 +126,8 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/quic-go/quic-go v0.37.4 h1:ke8B73yMCWGq9MfrCCAw0Uzdm7GaViC3i39dsIdDlH4=
 github.com/quic-go/quic-go v0.37.4/go.mod h1:YsbH1r4mSHPJcLF4k4zruUkLBqctEMBDR6VPvcYjIsU=
+github.com/quic-go/quic-go v0.37.5 h1:pzkYe8AgaxHi+7KJrYBMF+u2rLO5a9kwyCp2dAsljzk=
+github.com/quic-go/quic-go v0.37.5/go.mod h1:YsbH1r4mSHPJcLF4k4zruUkLBqctEMBDR6VPvcYjIsU=
 github.com/refraction-networking/utls v1.4.3 h1:BdWS3BSzCwWCFfMIXP3mjLAyQkdmog7diaD/OqFbAzM=
 github.com/refraction-networking/utls v1.4.3/go.mod h1:4u9V/awOSBrRw6+federGmVJQfPtemEqLBXkML1b0bo=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=

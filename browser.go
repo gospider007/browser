@@ -61,7 +61,6 @@ type ClientOption struct {
 	Ja3Spec    ja3.Ja3Spec
 	Ja3        bool
 	H2Ja3Spec  ja3.H2Ja3Spec
-	H2Ja3      bool
 	UserAgent  string
 	Proxy      string                                                  //代理http,https,socks5,ex: http://127.0.0.1:7005
 	GetProxy   func(ctx context.Context, url *url.URL) (string, error) //代理
@@ -431,7 +430,6 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 		Ja3Spec:     option.Ja3Spec,
 		Ja3:         option.Ja3,
 		H2Ja3Spec:   option.H2Ja3Spec,
-		H2Ja3:       option.H2Ja3,
 		RedirectNum: -1,
 		DisDecode:   true,
 	})

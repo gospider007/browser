@@ -10,8 +10,8 @@ require (
 	gitee.com/baixudong/db v0.0.0-20230816024540-cd4ff38fa7ad
 	gitee.com/baixudong/ja3 v0.0.0-20230814072518-68cf0876b63f
 	gitee.com/baixudong/re v0.0.0-20230809033040-360c1d945e59
-	gitee.com/baixudong/requests v0.0.0-20230816101435-79b3960bde89
-	gitee.com/baixudong/tools v0.0.0-20230817053057-332c92d681ff
+	gitee.com/baixudong/requests v0.0.0-20230817092328-6f08dd4979a0
+	gitee.com/baixudong/tools v0.0.0-20230817082053-97c88f6d0fbc
 	github.com/tidwall/gjson v1.16.0
 )
 
@@ -32,7 +32,7 @@ require (
 	github.com/klauspost/compress v1.16.7 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
-	github.com/quic-go/quic-go v0.37.4 // indirect
+	github.com/quic-go/quic-go v0.37.5 // indirect
 	github.com/refraction-networking/utls v1.4.3 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
