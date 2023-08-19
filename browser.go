@@ -197,7 +197,8 @@ func runChrome(ctx context.Context, option *ClientOption) (*cmd.Client, bool, er
 
 var chromeArgs = []string{
 	// "--virtual-time-budget=1000", //缩短setTimeout  setInterval 的时间1000秒:目前不生效，不知道以后会不会生效，等生效了再打开
-	//自动化选项禁用
+
+	// 自动化选项禁用
 	"--useAutomationExtension=false",                //禁用自动化扩展。
 	"--excludeSwitches=enable-automation",           //禁用自动化
 	"--disable-blink-features=AutomationControlled", //禁用 Blink 引擎的自动化控制。
@@ -209,9 +210,9 @@ var chromeArgs = []string{
 	"--blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4,imagesEnabled=true", //Blink 设置。
 	"--ignore-ssl-errors=true", //忽略 SSL 错误。
 	"--disable-setuid-sandbox", //重要headless
-	"--disable-extensions",     //禁用所有扩展程序，这可以降低Chrome对内存的占用。
-	"--disable-plugins",        //禁用所有已安装的Chrome浏览器插件。
 
+	"--disable-extensions",            //禁用所有扩展程序，这可以降低Chrome对内存的占用。
+	"--disable-plugins",               //禁用所有已安装的Chrome浏览器插件。
 	"--process-per-site",              //为每个站点启动一个新的进程，这可以防止内存泄漏，并降低同一进程中多个标签页的内存占用。
 	"--disable-dev-shm-usage",         //禁用Chrome在/dev/shm文件系统中分配的共享内存，这可以减少Chrome进程的内存占用。
 	"--fast-start",                    //启用快速启动功能，这可以加快Chrome的启动速度。
@@ -228,7 +229,6 @@ var chromeArgs = []string{
 	"--mute-audio",                                //禁用音频。
 	"--no-first-run",                              //不显示欢迎页面。
 	"--no-default-browser-check",                  //不检查是否为默认浏览器。
-	"--disable-software-rasterizer",               //禁用软件光栅化器
 	"--disable-cloud-import",                      //禁用云导入。
 	"--disable-gesture-typing",                    //禁用手势输入。
 	"--disable-offer-store-unmasked-wallet-cards", //禁用钱包卡。
@@ -422,7 +422,7 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 		option.Width = 1000
 	}
 	if option.Height == 0 {
-		option.Height = 1200
+		option.Height = 800
 	}
 	globalReqCli, err := requests.NewClient(preCtx, requests.ClientOption{
 		Proxy:       option.Proxy,

@@ -685,7 +685,6 @@ func (obj *Page) TouchUp(ctx context.Context) error {
 	return err
 }
 
-// 移动操作结束
 // 设置移动设备的属性
 func (obj *Page) SetDevice(ctx context.Context, device cdp.Device) error {
 	if err := obj.SetUserAgent(ctx, device.UserAgent); err != nil {
