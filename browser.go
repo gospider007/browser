@@ -170,7 +170,6 @@ func runChrome(ctx context.Context, option *ClientOption) (*cmd.Client, bool, er
 	args = append(args, fmt.Sprintf(`--user-data-dir=%s`, option.UserDir))
 	args = append(args, fmt.Sprintf("--remote-debugging-port=%d", option.Port))
 	args = append(args, fmt.Sprintf("--window-size=%d,%d", option.Width, option.Height))
-
 	args = append(args, option.Args...)
 	var closeCallBack func()
 	if isDelDir {
@@ -196,6 +195,7 @@ func runChrome(ctx context.Context, option *ClientOption) (*cmd.Client, bool, er
 }
 
 var chromeArgs = []string{
+	// "--disable-site-isolation-trials", //被识别
 	// "--virtual-time-budget=1000", //缩短setTimeout  setInterval 的时间1000秒:目前不生效，不知道以后会不会生效，等生效了再打开
 
 	// 自动化选项禁用
@@ -218,9 +218,8 @@ var chromeArgs = []string{
 	"--fast-start",                    //启用快速启动功能，这可以加快Chrome的启动速度。
 	"--disable-hardware-acceleration", //禁用硬件加速功能，这可以在某些旧的计算机和旧的显卡上降低Chrome的资源消耗，但可能会影响一些图形性能和视频播放。
 
-	"--browser-test",                  //启用浏览器测试模式，这可以对Chrome进行优化以实现更低的内存占用率。
 	"--disable-background-networking", // 禁用Chrome的后台网络请求，可以降低Chrome对内存的占用。
-	"--disable-site-isolation-trials", //禁用站点隔离特性试验，这可以提高Chrome的性能并降低其内存占用。
+	"--browser-test",                  //启用浏览器测试模式，这可以对Chrome进行优化以实现更低的内存占用率。
 	"--disable-gpu",                   //禁用硬件加速功能，这可以降低一些GPU相关任务的CPU占用，但可能降低图形性能和视频播放能力。
 	"--process-per-tab",               //为每个标签页启动一个新的进程，这可以有效防止内存泄漏，并大幅度降低Chrome进程的内存占用。
 	"--no-pings",                      //禁用 ping。
@@ -282,12 +281,12 @@ var chromeArgs = []string{
 	"--font-render-hinting=none",       //禁用字体渲染提示
 	"--disable-logging",                //禁用日志记录。
 
-	"--ssl-protocol=any",                                   //使用任何 SSL 协议。
 	"--disable-partial-raster",                             //禁用部分光栅化
 	"--disable-component-extensions-with-background-pages", //禁用具有后台页面的组件扩展。
 	"--disable-translate",                                  //禁用翻译。
 	"--password-store=basic",                               //使用基本密码存储。
 	"--disable-image-animation-resync",                     //禁用图像动画重新
+	"--window-position=0,0",                                //窗口起始位置
 }
 
 //go:embed devices.json
@@ -419,10 +418,10 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 		}
 	}()
 	if option.Width == 0 {
-		option.Width = 1000
+		option.Width = 1200
 	}
 	if option.Height == 0 {
-		option.Height = 800
+		option.Height = 605
 	}
 	globalReqCli, err := requests.NewClient(preCtx, requests.ClientOption{
 		Proxy:       option.Proxy,
