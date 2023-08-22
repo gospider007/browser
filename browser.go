@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"context"
 	_ "embed"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -289,18 +288,6 @@ var chromeArgs = []string{
 	"--window-position=0,0",                                //窗口起始位置
 }
 
-//go:embed devices.json
-var devicesData []byte
-
-var Devices = loadDevicesData()
-
-func loadDevicesData() map[string]cdp.Device {
-	var result map[string]cdp.Device
-	if err := json.Unmarshal(devicesData, &result); err != nil {
-		log.Panic(err)
-	}
-	return result
-}
 func downLoadChrome(preCtx context.Context, dirUrl string, version int) error {
 	reqCli, err := requests.NewClient(preCtx)
 	if err != nil {
