@@ -1,13 +1,13 @@
 function setDefaultAttr(key, name, l) {
   Object.defineProperty(key, "length", {
-    "value": l
+    value: l
   });
   Object.defineProperty(key, "toString", {
-    "value": () => `function ${name}() { [native code] }`
+    value: () => `function ${name}() { [native code] }`
   });
 
   Object.defineProperty(key, "name", {
-    "value": name
+    value: name
   });
 }
 function changeCanvasMain() {
@@ -48,7 +48,7 @@ function changeCanvasMain() {
 
   Object.defineProperty(CanvasRenderingContext2D.prototype, "getImageData", {
     ...rawGetImageData,
-    "value": function () {
+    value: function () {
       noisify(this.canvas, this);
       return rawGetImageData.value.apply(this, arguments);
     }
@@ -58,7 +58,7 @@ function changeCanvasMain() {
   const rawGetContext = Object.getOwnPropertyDescriptor(HTMLCanvasElement.prototype, 'getContext');
   Object.defineProperty(HTMLCanvasElement.prototype, "getContext", {
     ...rawGetContext,
-    "value": function () {
+    value: function () {
       let result = rawGetContext.value.apply(this, arguments);
       if (arguments[0] === '2d' && result) {
         ctxArr.push(result)
@@ -72,7 +72,7 @@ function changeCanvasMain() {
   const rawArc = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'arc');
   Object.defineProperty(CanvasRenderingContext2D.prototype, "arc", {
     ...rawArc,
-    "value": function () {
+    value: function () {
       let ctxIdx = ctxArr.indexOf(this);
       ctxInf[ctxIdx].useArc = true;
       return rawArc.value.apply(this, arguments);
@@ -83,7 +83,7 @@ function changeCanvasMain() {
   const rawFillText = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillText');
   Object.defineProperty(CanvasRenderingContext2D.prototype, "fillText", {
     ...rawFillText,
-    "value": function () {
+    value: function () {
       let ctxIdx = ctxArr.indexOf(this);
       ctxInf[ctxIdx].useFillText = true;
       return rawFillText.value.apply(this, arguments);
@@ -95,7 +95,7 @@ function changeCanvasMain() {
   const toBlob = Object.getOwnPropertyDescriptor(HTMLCanvasElement.prototype, 'toBlob');
   Object.defineProperty(HTMLCanvasElement.prototype, "toBlob", {
     ...toBlob,
-    "value": function () {
+    value: function () {
       noisify(this, this.getContext("2d"));
       return toBlob.value.apply(this, arguments);
     }
@@ -105,7 +105,7 @@ function changeCanvasMain() {
   const toDataURL = Object.getOwnPropertyDescriptor(HTMLCanvasElement.prototype, 'toDataURL');
   Object.defineProperty(HTMLCanvasElement.prototype, "toDataURL", {
     ...toDataURL,
-    "value": function () {
+    value: function () {
       noisify(this, this.getContext("2d"));
       return toDataURL.value.apply(this, arguments);
     }
@@ -116,7 +116,7 @@ function changeCanvasMain() {
 function changeWebGlMain() {
   var config = {
     "random": {
-      "value": function () {
+      value: function () {
         return Math.random();
       },
       "item": function (e) {
@@ -156,7 +156,7 @@ function changeWebGlMain() {
           const bufferData = Object.getOwnPropertyDescriptor(target.prototype, 'bufferData');
           Object.defineProperty(target.prototype, "bufferData", {
             ...bufferData,
-            "value": function () {
+            value: function () {
               var index = Math.floor(config.random.value() * arguments[1].length);
               var noise = arguments[1][index] !== undefined ? 0.1 * config.random.value() * arguments[1][index] : 0;
               arguments[1][index] = arguments[1][index] + noise;
@@ -169,7 +169,7 @@ function changeWebGlMain() {
           const getParameter = Object.getOwnPropertyDescriptor(target.prototype, 'getParameter');
           Object.defineProperty(target.prototype, "getParameter", {
             ...getParameter,
-            "value": function () {
+            value: function () {
               if (arguments[0] === 3415) return 0;
               else if (arguments[0] === 3414) return 24;
               else if (arguments[0] === 36348) return 30;
@@ -233,7 +233,7 @@ function changeAudio() {
       const getChannelData = Object.getOwnPropertyDescriptor(e.prototype, 'getChannelData');
       Object.defineProperty(e.prototype, "getChannelData", {
         ...getChannelData,
-        "value": function () {
+        value: function () {
           const results_1 = getChannelData.value.apply(this, arguments);
           if (context.BUFFER !== results_1) {
             context.BUFFER = results_1;
@@ -251,12 +251,12 @@ function changeAudio() {
       const createAnalyser = Object.getOwnPropertyDescriptor(e.prototype.__proto__, 'createAnalyser');
       Object.defineProperty(e.prototype.__proto__, "createAnalyser", {
         ...createAnalyser,
-        "value": function () {
+        value: function () {
           const results_2 = createAnalyser.value.apply(this, arguments);
           const getFloatFrequencyData = Object.getOwnPropertyDescriptor(results_2.__proto__, 'getFloatFrequencyData');
           Object.defineProperty(results_2.__proto__, "getFloatFrequencyData", {
             ...getFloatFrequencyData,
-            "value": function () {
+            value: function () {
               const results_3 = getFloatFrequencyData.value.apply(this, arguments);
               for (var i = 0; i < arguments[0].length; i += 100) {
                 let index = Math.floor(Math.random() * i);
@@ -289,9 +289,7 @@ function changeFont() {
       return tmp[index];
     }
   };
-  //
   const offsetHeight = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetHeight');
-
   Object.defineProperty(HTMLElement.prototype, "offsetHeight", {
     ...offsetHeight,
     get() {
@@ -318,14 +316,14 @@ function changeRect() {
   Object.defineProperty(DOMRect.prototype, "height", {
     ...height,
     get() {
-      return this.toJSON()["height"] + Math.random();
+      return Math.floor(this.toJSON()["height"]) + Math.random();
     },
   });
   const width = Object.getOwnPropertyDescriptor(DOMRect.prototype, 'width');
   Object.defineProperty(DOMRect.prototype, "width", {
     ...width,
     get() {
-      return this.toJSON()["width"] + Math.random();
+      return Math.floor(this.toJSON()["width"]) + Math.random();
     },
   });
 }

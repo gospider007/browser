@@ -74,7 +74,14 @@ type downClient struct {
 
 var oneDown = &downClient{}
 
-var chromeVersion = 1132420
+// https://storage.googleapis.com/chromium-browser-snapshots/Win_x64/LAST_CHANGE
+var winVersion = "1187053"
+
+// https://storage.googleapis.com/chromium-browser-snapshots/Mac/LAST_CHANGE
+var macVersion = "1187067"
+
+// https://storage.googleapis.com/chromium-browser-snapshots/Linux_x64/LAST_CHANGE
+var linuxVersion = "1187079"
 
 func verifyEvalPath(path string) error {
 	if strings.HasSuffix(path, "chrome.exe") || strings.HasSuffix(path, "Chromium.app") || strings.HasSuffix(path, "chrome") || strings.HasSuffix(path, "chromium") {
@@ -88,25 +95,30 @@ func verifyEvalPath(path string) error {
 func (obj *downClient) getChromePath(preCtx context.Context) (string, error) {
 	obj.Lock()
 	defer obj.Unlock()
-	chromDir, err := conf.GetMainDirPath()
+	chromeDir, err := conf.GetMainDirPath()
 	if err != nil {
 		return "", err
 	}
-	chromDir = tools.PathJoin(chromDir, strconv.Itoa(chromeVersion))
-
 	var chromePath string
+	var chromeDownUrl string
 	switch runtime.GOOS {
 	case "windows":
-		chromePath = tools.PathJoin(chromDir, "chrome-win", "chrome.exe")
+		chromeDir = tools.PathJoin(chromeDir, winVersion)
+		chromePath = tools.PathJoin(chromeDir, "chrome-win", "chrome.exe")
+		chromeDownUrl = fmt.Sprintf("https://storage.googleapis.com/chromium-browser-snapshots/Win_x64/%s/chrome-win.zip", winVersion)
 	case "darwin":
-		chromePath = tools.PathJoin(chromDir, "chrome-mac", "Chromium.app")
+		chromeDir = tools.PathJoin(chromeDir, macVersion)
+		chromePath = tools.PathJoin(chromeDir, "chrome-mac", "Chromium.app")
+		chromeDownUrl = fmt.Sprintf("https://storage.googleapis.com/chromium-browser-snapshots/Mac/%s/chrome-mac.zip", macVersion)
 	case "linux":
-		chromePath = tools.PathJoin(chromDir, "chrome-linux", "chrome")
+		chromeDir = tools.PathJoin(chromeDir, linuxVersion)
+		chromePath = tools.PathJoin(chromeDir, "chrome-linux", "chrome")
+		chromeDownUrl = fmt.Sprintf("https://storage.googleapis.com/chromium-browser-snapshots/Linux_x64/%s/chrome-linux.zip", linuxVersion)
 	default:
 		return "", errors.New("dont know goos")
 	}
 	if !tools.PathExist(chromePath) {
-		if err = DownChrome(preCtx, chromeVersion); err != nil {
+		if err = downChrome(preCtx, chromeDir, chromeDownUrl); err != nil {
 			return "", err
 		}
 		if !tools.PathExist(chromePath) {
@@ -285,54 +297,12 @@ var chromeArgs = []string{
 	"--disable-translate",                                  //禁用翻译。
 	"--password-store=basic",                               //使用基本密码存储。
 	"--disable-image-animation-resync",                     //禁用图像动画重新
+	"--use-gl=swiftshader",                                 //可以在不支持硬件加速的系统或设备上提供基本的图形渲染功能。
 	"--window-position=0,0",                                //窗口起始位置
 }
 
-func downLoadChrome(preCtx context.Context, dirUrl string, version int) error {
-	reqCli, err := requests.NewClient(preCtx)
-	if err != nil {
-		return err
-	}
-	resp, err := reqCli.Request(preCtx, "get", dirUrl)
-	if err != nil {
-		return err
-	}
-	var fileDir string
-	var fileTime int64
-	var ver int
-	jsonData, err := resp.Json()
-	if err != nil {
-		return err
-	}
-	for _, dir := range jsonData.Array() {
-		if tempTime, err := time.Parse(fmt.Sprintf("%sT%sZ", time.DateOnly, time.TimeOnly), dir.Get("date").String()); err == nil {
-			if versionRe := re.Search(`\d+`, dir.Get("name").String()); versionRe != nil {
-				if versionInt, err := strconv.Atoi(versionRe.Group()); err == nil {
-					if versionInt == version || tempTime.Unix() > fileTime {
-						fileDir = dir.Get("url").String()
-						fileTime = tempTime.Unix()
-						ver = versionInt
-						if versionInt == version {
-							break
-						}
-					}
-				}
-			}
-		}
-	}
-	if fileTime == 0 {
-		return errors.New("not found chrome dir")
-	}
-	resp, err = reqCli.Request(preCtx, "get", fileDir)
-	if err != nil {
-		return err
-	}
-	if jsonData, err = resp.Json(); err != nil {
-		return err
-	}
-
-	fileUrl := jsonData.Get("0.url").String()
-	resp, err = reqCli.Request(preCtx, "get", fileUrl, requests.RequestOption{Bar: true})
+func downChrome(preCtx context.Context, chromeDir, chromeDownUrl string) error {
+	resp, err := requests.Get(preCtx, chromeDownUrl, requests.RequestOption{Bar: true})
 	if err != nil {
 		return err
 	}
@@ -340,13 +310,8 @@ func downLoadChrome(preCtx context.Context, dirUrl string, version int) error {
 	if err != nil {
 		return err
 	}
-	mainDir, err := conf.GetMainDirPath()
-	if err != nil {
-		return err
-	}
-	mainDir = tools.PathJoin(mainDir, strconv.Itoa(ver))
 	for _, file := range zipData.File {
-		filePath := tools.PathJoin(mainDir, file.Name)
+		filePath := tools.PathJoin(chromeDir, file.Name)
 		log.Printf("解压文件: %s", filePath)
 		if file.FileInfo().IsDir() {
 			os.MkdirAll(filePath, 0777)
@@ -371,22 +336,6 @@ func downLoadChrome(preCtx context.Context, dirUrl string, version int) error {
 		}
 	}
 	return err
-}
-func DownChrome(preCtx context.Context, versions ...int) error {
-	var version int
-	if len(versions) > 0 {
-		version = versions[0]
-	}
-	switch runtime.GOOS {
-	case "windows":
-		return downLoadChrome(preCtx, "https://registry.npmmirror.com/-/binary/chromium-browser-snapshots/Win_x64/", version)
-	case "darwin":
-		return downLoadChrome(preCtx, "https://registry.npmmirror.com/-/binary/chromium-browser-snapshots/Mac/", version)
-	case "linux":
-		return downLoadChrome(preCtx, "https://registry.npmmirror.com/-/binary/chromium-browser-snapshots/Linux_x64/", version)
-	default:
-		return errors.New("dont know goos")
-	}
 }
 
 // 新建浏览器
