@@ -252,7 +252,9 @@ var chromeArgs = []string{
 	"--enable-simple-cache-backend",               //启用简单缓存后端
 	"--enable-tcp-fast-open",                      //启用 TCP 快速打开。
 	"--prerender-from-omnibox=disabled",           //用于禁用从地址栏预渲染页面
-	"--disable-features=AutoUpdate,site-per-process,Profiles,EasyBakeWebBundler,MultipleCompositingThreads,AudioServiceOutOfProcess,TranslateUI,BackgroundSync,ClientHints,NetworkQualityEstimator,PasswordGeneration,PrefetchPrivacyChanges,TabHoverCards,ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate", // 禁用一些 Chrome 功能。
+
+	"--enable-features=NetworkService,NetworkServiceInProcess",
+	"--disable-features=EnablePasswordsAccountStorage,FlashDeprecationWarning,UserAgentClientHint,AutoUpdate,site-per-process,Profiles,EasyBakeWebBundler,MultipleCompositingThreads,AudioServiceOutOfProcess,TranslateUI,BackgroundSync,ClientHints,NetworkQualityEstimator,PasswordGeneration,PrefetchPrivacyChanges,TabHoverCards,ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate", // 禁用一些 Chrome 功能。
 
 	"--disable-field-trial-config", //禁用实验室配置，在禁用情况下，不会向远程服务器报告任何配置或默认设置。
 	"--disable-back-forward-cache", //禁用后退/前进缓存。
@@ -299,6 +301,9 @@ var chromeArgs = []string{
 	"--disable-image-animation-resync",                     //禁用图像动画重新
 	"--use-gl=swiftshader",                                 //可以在不支持硬件加速的系统或设备上提供基本的图形渲染功能。
 	"--window-position=0,0",                                //窗口起始位置
+
+	"--force-color-profile=srgb",
+	"--disable-background-mode", // 禁用后台模式。
 }
 
 func downChrome(preCtx context.Context, chromeDir, chromeDownUrl string) error {
