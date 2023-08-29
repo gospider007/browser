@@ -107,9 +107,9 @@ func (obj *Page) init(globalReqCli *requests.Client, option PageOption, db *db.C
 		if err = obj.AddScript(obj.ctx, stealth); err != nil {
 			return err
 		}
-		// if err = obj.AddScript(obj.ctx, stealth2); err != nil {
-		// 	return err
-		// }
+		if err = obj.AddScript(obj.ctx, stealth2); err != nil {
+			return err
+		}
 	}
 	return obj.AddScript(obj.ctx, `Object.defineProperty(window, "RTCPeerConnection",{"get":undefined});Object.defineProperty(window, "mozRTCPeerConnection",{"get":undefined});Object.defineProperty(window, "webkitRTCPeerConnection",{"get":undefined});`)
 }

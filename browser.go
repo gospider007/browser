@@ -30,8 +30,8 @@ import (
 //go:embed stealth.js
 var stealth string
 
-// //go:embed stealth2.js
-// var stealth2 string
+//go:embed stealth2.js
+var stealth2 string
 
 type Client struct {
 	isReplaceRequest bool //是否自定义请求

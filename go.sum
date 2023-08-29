@@ -16,6 +16,8 @@ gitee.com/baixudong/db v0.0.0-20230816024540-cd4ff38fa7ad h1:xM19OPvfWt+7TTUSm4C
 gitee.com/baixudong/db v0.0.0-20230816024540-cd4ff38fa7ad/go.mod h1:99eVr0Kusp6LLRcYjruFL6YZdUiez0+D0P4yXxRSbto=
 gitee.com/baixudong/ja3 v0.0.0-20230819150415-70ad3a34ab61 h1:QsT1uqTnFwTv5Q0JK+9UEslDS/bOzTeTZYhIPjcQxYQ=
 gitee.com/baixudong/ja3 v0.0.0-20230819150415-70ad3a34ab61/go.mod h1:4BFuTAkB88TbvkXdT3m3MlsG6uhsZ+zzmG5H4I1upBg=
+gitee.com/baixudong/ja3 v0.0.0-20230829015831-02d9ec0c9f91 h1:0I5G0ifMf0FrI8dEcKiRy3dRCTy53Yz3xomA2tUYiEY=
+gitee.com/baixudong/ja3 v0.0.0-20230829015831-02d9ec0c9f91/go.mod h1:0/mVl1zo674mlVEMKpWGsDtN11MEMkg/e2JbhLZ+F6U=
 gitee.com/baixudong/kinds v0.0.0-20230809033013-c3d6d3479f8c h1:MZewpjU0+82TcA+nHrcAbbgZhTCqVH2I5zwYBWJ4v54=
 gitee.com/baixudong/kinds v0.0.0-20230809033013-c3d6d3479f8c/go.mod h1:J3r4FWnZOMgk7/1EWEEDaPQnx5uH4OLCRzpTOyKg5cA=
 gitee.com/baixudong/net v0.0.0-20230821075807-0a284fde7633 h1:GB/Bzofv5A5Mygezvz/kcXNfdog9llcqg4bKwjg2HF8=
@@ -24,6 +26,8 @@ gitee.com/baixudong/re v0.0.0-20230809033040-360c1d945e59 h1:HtdoUzBIqepeVTeeZ0Q
 gitee.com/baixudong/re v0.0.0-20230809033040-360c1d945e59/go.mod h1:i5L3z/q42lHZvd3JSk3390XdujEY2QHXFMEcaO/uZD0=
 gitee.com/baixudong/requests v0.0.0-20230828035833-d1bf27598b97 h1:rk9tTJt2y3d2pP1Rpr4bYHlaI4zg7dvG1X9e+R9bwb8=
 gitee.com/baixudong/requests v0.0.0-20230828035833-d1bf27598b97/go.mod h1:LlmAwqCvPBtz9OCQhgGyl0Y3d0VhRAd/KNrRPkuXjdc=
+gitee.com/baixudong/requests v0.0.0-20230829015933-8931672ec03f h1:JcwBjSoVdSCqzMZh2Dyw0xAX3ByMxI2mt0ARlQZ31H0=
+gitee.com/baixudong/requests v0.0.0-20230829015933-8931672ec03f/go.mod h1:dddommYNxxDAb3TrhKlRyUSp006mVkLGYBCADErOfA0=
 gitee.com/baixudong/tools v0.0.0-20230821075140-7422c51fd918 h1:2X5AmuHDIPCZ1HGnBOxJoBMpFMi9rcWi7uzNtKP23jg=
 gitee.com/baixudong/tools v0.0.0-20230821075140-7422c51fd918/go.mod h1:GWELA4g05Mtq7hx6TRYbc5Mxv+k5NlonfozaoMLhSzw=
 gitee.com/baixudong/websocket v0.0.0-20230821075043-d36a43fd76a3 h1:NifiYlEzspCTbJeI9UGSJftr0gDLw15LSwkCQDNql1g=
@@ -126,6 +130,8 @@ github.com/quic-go/quic-go v0.38.1 h1:M36YWA5dEhEeT+slOu/SwMEucbYd0YFidxG3KlGPZa
 github.com/quic-go/quic-go v0.38.1/go.mod h1:ijnZM7JsFIkp4cRyjxJNIzdSfCLmUMg9wdyhGmg+SN4=
 github.com/refraction-networking/utls v1.5.0 h1:Ucbojt9Wc4yFc3oyQyCmmuvPUFmTdb3AXaCWYTUlyZA=
 github.com/refraction-networking/utls v1.5.0/go.mod h1:SPuDbBmgLGp8s+HLNc83FuavwZCFoMmExj+ltUHiHUw=
+github.com/refraction-networking/utls v1.5.2 h1:l6diiLbEoRqdQ+/osPDO0z0lTc8O8VZV+p82N+Hi+ws=
+github.com/refraction-networking/utls v1.5.2/go.mod h1:SPuDbBmgLGp8s+HLNc83FuavwZCFoMmExj+ltUHiHUw=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
