@@ -30,8 +30,12 @@ gitee.com/baixudong/requests v0.0.0-20230829015933-8931672ec03f h1:JcwBjSoVdSCqz
 gitee.com/baixudong/requests v0.0.0-20230829015933-8931672ec03f/go.mod h1:dddommYNxxDAb3TrhKlRyUSp006mVkLGYBCADErOfA0=
 gitee.com/baixudong/requests v0.0.0-20230905023058-3d409e7fa008 h1:7vqEwe/h7c/j855EkeqbJMVLTTfXUmZJQVcuczqheTw=
 gitee.com/baixudong/requests v0.0.0-20230905023058-3d409e7fa008/go.mod h1:0yYGWWoFJtpobz905k6C3Qm364bU6okGuhp4AK0sM6o=
+gitee.com/baixudong/requests v0.0.0-20230905093159-4e1b26d4bf9d h1:+ILgUE7AKX7T4+SWIb0/UYyFS2jBYvp6KjRjwNEPUy0=
+gitee.com/baixudong/requests v0.0.0-20230905093159-4e1b26d4bf9d/go.mod h1:ZH74Orda6IBW/ur+14/vEcx2M3/3x7JRBlFMGxGiTJU=
 gitee.com/baixudong/tools v0.0.0-20230821075140-7422c51fd918 h1:2X5AmuHDIPCZ1HGnBOxJoBMpFMi9rcWi7uzNtKP23jg=
 gitee.com/baixudong/tools v0.0.0-20230821075140-7422c51fd918/go.mod h1:GWELA4g05Mtq7hx6TRYbc5Mxv+k5NlonfozaoMLhSzw=
+gitee.com/baixudong/tools v0.0.0-20230905085451-d080a77e3eb5 h1:CEXI3HSiYtLwqxAhXBRAO4hZytrdfU/Tddt1dRWlJkI=
+gitee.com/baixudong/tools v0.0.0-20230905085451-d080a77e3eb5/go.mod h1:PWkrwws4GU5x9uXZ5SWvIO9m/2X9mBm7hlqdspWvyG0=
 gitee.com/baixudong/websocket v0.0.0-20230821075043-d36a43fd76a3 h1:NifiYlEzspCTbJeI9UGSJftr0gDLw15LSwkCQDNql1g=
 gitee.com/baixudong/websocket v0.0.0-20230821075043-d36a43fd76a3/go.mod h1:oyckF4xv35MXCaMp9k/Rs5FOaRPuLUs2MBo6Flgz9Ro=
 github.com/PuerkitoBio/goquery v1.8.1 h1:uQxhNlArOIdbrH1tr0UXwdVFgDcZDrZVdcpygAcwmWM=

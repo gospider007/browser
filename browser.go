@@ -323,7 +323,7 @@ func downChrome(preCtx context.Context, chromeDir, chromeDownUrl string) error {
 			return err
 		}
 		tempBody := bytes.NewBuffer(nil)
-		if err = tools.CopyWitchContext(preCtx, tempBody, readBody); err != nil {
+		if err = tools.CopyWitchContext(preCtx, tempBody, readBody, true); err != nil {
 			return err
 		}
 		if err = os.WriteFile(filePath, tempBody.Bytes(), 0777); err != nil {
