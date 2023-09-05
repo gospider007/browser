@@ -21,17 +21,10 @@ import (
 	"gitee.com/baixudong/cmd"
 	"gitee.com/baixudong/conf"
 	"gitee.com/baixudong/db"
-	"gitee.com/baixudong/ja3"
 	"gitee.com/baixudong/re"
 	"gitee.com/baixudong/requests"
 	"gitee.com/baixudong/tools"
 )
-
-//go:embed stealth.js
-var stealth string
-
-//go:embed stealth2.js
-var stealth2 string
 
 type Client struct {
 	isReplaceRequest bool //是否自定义请求
@@ -57,9 +50,6 @@ type ClientOption struct {
 	Args       []string //启动参数
 	Headless   bool     //是否使用无头
 	DataCache  bool     //开启数据缓存
-	Ja3Spec    ja3.Ja3Spec
-	Ja3        bool
-	H2Ja3Spec  ja3.H2Ja3Spec
 	UserAgent  string
 	Proxy      string                                                  //代理http,https,socks5,ex: http://127.0.0.1:7005
 	GetProxy   func(ctx context.Context, url *url.URL) (string, error) //代理
@@ -367,9 +357,7 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 	globalReqCli, err := requests.NewClient(preCtx, requests.ClientOption{
 		Proxy:       option.Proxy,
 		GetProxy:    option.GetProxy,
-		Ja3Spec:     option.Ja3Spec,
-		Ja3:         option.Ja3,
-		H2Ja3Spec:   option.H2Ja3Spec,
+		Ja3:         true,
 		RedirectNum: -1,
 		DisDecode:   true,
 	})
@@ -383,7 +371,7 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 			return
 		}
 	}
-	if option.Ja3Spec.IsSet() || option.H2Ja3Spec.IsSet() || option.DataCache {
+	if option.DataCache {
 		isReplaceRequest = true
 	}
 	client = &Client{

@@ -207,6 +207,7 @@ function changeWebGlMain() {
   };
   config.spoof.webgl.buffer(WebGLRenderingContext);
   config.spoof.webgl.buffer(WebGL2RenderingContext);
+
   config.spoof.webgl.parameter(WebGLRenderingContext);
   config.spoof.webgl.parameter(WebGL2RenderingContext);
 };
@@ -273,8 +274,9 @@ function changeAudio() {
     }
   };
   context.getChannelData(AudioBuffer);
-  context.createAnalyser(AudioContext);
   context.getChannelData(OfflineAudioContext);
+  
+  context.createAnalyser(AudioContext);
   context.createAnalyser(OfflineAudioContext);
 };
 function changeFont() {

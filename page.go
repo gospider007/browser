@@ -2,6 +2,7 @@ package browser
 
 import (
 	"context"
+	_ "embed"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 
 	"gitee.com/baixudong/bs4"
 	"gitee.com/baixudong/cdp"
+	"gitee.com/baixudong/cmd"
 	"gitee.com/baixudong/db"
 	"gitee.com/baixudong/re"
 	"gitee.com/baixudong/requests"
@@ -81,6 +83,13 @@ func (obj *Page) frameLoadMain(ctx context.Context, rd cdp.RecvData) {
 func (obj *Page) addEvent(method string, fun func(ctx context.Context, rd cdp.RecvData)) {
 	obj.webSock.AddEvent(method, fun)
 }
+
+//go:embed getInjectableScript.js
+var getInjectableScript string
+
+//go:embed stealthNew.js
+var stealth string
+
 func (obj *Page) init(globalReqCli *requests.Client, option PageOption, db *db.Client[cdp.FulData]) error {
 	var err error
 	if obj.webSock, err = cdp.NewWebSock(
@@ -107,11 +116,33 @@ func (obj *Page) init(globalReqCli *requests.Client, option PageOption, db *db.C
 		if err = obj.AddScript(obj.ctx, stealth); err != nil {
 			return err
 		}
-		if err = obj.AddScript(obj.ctx, stealth2); err != nil {
-			return err
-		}
 	}
 	return obj.AddScript(obj.ctx, `Object.defineProperty(window, "RTCPeerConnection",{"get":undefined});Object.defineProperty(window, "mozRTCPeerConnection",{"get":undefined});Object.defineProperty(window, "webkitRTCPeerConnection",{"get":undefined});`)
+}
+func CreateDesktopEdgeFp() (string, error) {
+	params := map[string]any{
+		"browsers":         []string{"edge"},
+		"devices":          []string{"desktop"},
+		"operatingSystems": []string{"windows"},
+		"userAgent":        []string{requests.UserAgent},
+		"locales":          []string{"zh-CN", "en", "en-GB", "en-US"},
+		"locale":           []string{"zh-CN"},
+	}
+	headers := map[string]any{
+		"User-Agent": requests.UserAgent,
+	}
+	cli, err := cmd.NewJsClient(nil, cmd.JsClientOption{
+		Script: getInjectableScript,
+		Names:  []string{"createFp"},
+	})
+	if err != nil {
+		return "", err
+	}
+	result, err := cli.Call("createFp", params, headers)
+	if err != nil {
+		return "", err
+	}
+	return result.Get("result").String(), nil
 }
 func (obj *Page) AddScript(ctx context.Context, script string) error {
 	_, err := obj.webSock.PageAddScriptToEvaluateOnNewDocument(ctx, script)
