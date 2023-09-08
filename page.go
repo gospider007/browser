@@ -744,15 +744,18 @@ func (obj *Page) SetTouch(ctx context.Context, hasTouch bool) error {
 	return err
 }
 
-func (obj *Page) SetCookies(ctx context.Context, cookies ...cdp.Cookie) error {
+func (obj *Page) SetCookies(ctx context.Context, href string, cookies ...cdp.Cookie) error {
 	if len(cookies) == 0 {
 		return nil
+	}
+	if href == "" {
+		href = obj.baseUrl
 	}
 	var err error
 	for i := 0; i < len(cookies); i++ {
 		if cookies[i].Domain == "" {
 			if cookies[i].Url == "" {
-				cookies[i].Url = obj.baseUrl
+				cookies[i].Url = href
 			}
 			if cookies[i].Url != "" {
 				us, err := uurl.Parse(cookies[i].Url)

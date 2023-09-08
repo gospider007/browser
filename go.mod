@@ -4,12 +4,12 @@ go 1.21.0
 
 require (
 	gitee.com/baixudong/bs4 v0.0.0-20230814072447-945ab1fd97ed
-	gitee.com/baixudong/cdp v0.0.0-20230819122857-13989d5578e2
+	gitee.com/baixudong/cdp v0.0.0-20230908015956-0cae613abbd3
 	gitee.com/baixudong/cmd v0.0.0-20230813075810-85a925880734
 	gitee.com/baixudong/conf v0.0.0-20230813075811-66b5157d9761
 	gitee.com/baixudong/db v0.0.0-20230816024540-cd4ff38fa7ad
 	gitee.com/baixudong/re v0.0.0-20230809033040-360c1d945e59
-	gitee.com/baixudong/requests v0.0.0-20230905093159-4e1b26d4bf9d
+	gitee.com/baixudong/requests v0.0.0-20230908014908-cd577fa5422e
 	gitee.com/baixudong/tools v0.0.0-20230905085451-d080a77e3eb5
 	github.com/tidwall/gjson v1.16.0
 )
@@ -38,10 +38,10 @@ require (
 	github.com/tidwall/pretty v1.2.1 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.25.0 // indirect
-	golang.org/x/crypto v0.12.0 // indirect
-	golang.org/x/exp v0.0.0-20230817173708-d852ddb80c63 // indirect
+	golang.org/x/crypto v0.13.0 // indirect
+	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
 	golang.org/x/image v0.12.0 // indirect
-	golang.org/x/net v0.14.0 // indirect
+	golang.org/x/net v0.15.0 // indirect
 	golang.org/x/sys v0.12.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
 	nhooyr.io/websocket v1.8.7 // indirect
