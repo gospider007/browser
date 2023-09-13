@@ -245,7 +245,7 @@ var chromeArgs = []string{
 	"--prerender-from-omnibox=disabled",           //用于禁用从地址栏预渲染页面
 
 	"--enable-features=NetworkService,NetworkServiceInProcess",
-	"--disable-features=EnablePasswordsAccountStorage,FlashDeprecationWarning,UserAgentClientHint,AutoUpdate,site-per-process,Profiles,EasyBakeWebBundler,MultipleCompositingThreads,AudioServiceOutOfProcess,TranslateUI,BackgroundSync,ClientHints,NetworkQualityEstimator,PasswordGeneration,PrefetchPrivacyChanges,TabHoverCards,ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate", // 禁用一些 Chrome 功能。
+	"--disable-features=WebRtcHideLocalIpsWithMdns,EnablePasswordsAccountStorage,FlashDeprecationWarning,UserAgentClientHint,AutoUpdate,site-per-process,Profiles,EasyBakeWebBundler,MultipleCompositingThreads,AudioServiceOutOfProcess,TranslateUI,BackgroundSync,ClientHints,NetworkQualityEstimator,PasswordGeneration,PrefetchPrivacyChanges,TabHoverCards,ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate", // 禁用一些 Chrome 功能。
 
 	"--disable-field-trial-config", //禁用实验室配置，在禁用情况下，不会向远程服务器报告任何配置或默认设置。
 	"--disable-back-forward-cache", //禁用后退/前进缓存。

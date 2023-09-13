@@ -9,7 +9,7 @@ require (
 	gitee.com/baixudong/conf v0.0.0-20230813075811-66b5157d9761
 	gitee.com/baixudong/db v0.0.0-20230913035524-f73eea9bc2e0
 	gitee.com/baixudong/re v0.0.0-20230809033040-360c1d945e59
-	gitee.com/baixudong/requests v0.0.0-20230913035344-d28a6d30b6c0
+	gitee.com/baixudong/requests v0.0.0-20230913085841-24f5a7a650ea
 	gitee.com/baixudong/tools v0.0.0-20230905085451-d080a77e3eb5
 	github.com/tidwall/gjson v1.16.0
 )
@@ -17,7 +17,7 @@ require (
 require (
 	gitee.com/baixudong/bar v0.0.0-20230814072341-e111c30a1386 // indirect
 	gitee.com/baixudong/blog v0.0.0-20230814072403-43ebd899d6fd // indirect
-	gitee.com/baixudong/ja3 v0.0.0-20230905022841-a30a5742bdb7 // indirect
+	gitee.com/baixudong/ja3 v0.0.0-20230913080728-e3b7c48ce24d // indirect
 	gitee.com/baixudong/kinds v0.0.0-20230809033013-c3d6d3479f8c // indirect
 	gitee.com/baixudong/net v0.0.0-20230905022950-d3a73f7bf4cc // indirect
 	gitee.com/baixudong/websocket v0.0.0-20230821075043-d36a43fd76a3 // indirect
