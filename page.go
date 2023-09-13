@@ -90,7 +90,7 @@ var getInjectableScript string
 //go:embed stealthNew.js
 var stealth string
 
-func (obj *Page) init(globalReqCli *requests.Client, option PageOption, db *db.Client[cdp.FulData]) error {
+func (obj *Page) init(globalReqCli *requests.Client, option PageOption, db *db.Client) error {
 	var err error
 	if obj.webSock, err = cdp.NewWebSock(
 		obj.ctx,
@@ -99,7 +99,6 @@ func (obj *Page) init(globalReqCli *requests.Client, option PageOption, db *db.C
 		cdp.WebSockOption{
 			IsReplaceRequest: obj.isReplaceRequest,
 			Proxy:            option.Proxy,
-			DataCache:        option.DataCache,
 		},
 		db,
 	); err != nil {

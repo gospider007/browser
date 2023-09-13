@@ -30,7 +30,7 @@ type Client struct {
 	isReplaceRequest bool //是否自定义请求
 	proxy            string
 	getProxy         func(ctx context.Context, url *url.URL) (string, error)
-	db               *db.Client[cdp.FulData]
+	db               *db.Client
 	cmdCli           *cmd.Client
 	globalReqCli     *requests.Client
 	port             int
@@ -38,24 +38,25 @@ type Client struct {
 	ctx              context.Context
 	cnl              context.CancelFunc
 	webSock          *cdp.WebSock
-	dataCache        bool
-	headless         bool
-	stealth          bool //是否开启随机指纹
+	// dataCache        bool
+	headless bool
+	stealth  bool //是否开启随机指纹
 }
 type ClientOption struct {
+	DbOption   db.ClientOption
 	ChromePath string   //chrome浏览器执行路径
 	Host       string   //连接host
 	Port       int      //连接port
 	UserDir    string   //设置用户目录
 	Args       []string //启动参数
 	Headless   bool     //是否使用无头
-	DataCache  bool     //开启数据缓存
-	UserAgent  string
-	Proxy      string                                                  //代理http,https,socks5,ex: http://127.0.0.1:7005
-	GetProxy   func(ctx context.Context, url *url.URL) (string, error) //代理
-	Width      int64                                                   //浏览器的宽
-	Height     int64                                                   //浏览器的高
-	Stealth    bool                                                    //是否开启随机指纹
+	// DataCache  bool     //开启数据缓存
+	UserAgent string
+	Proxy     string                                                  //代理http,https,socks5,ex: http://127.0.0.1:7005
+	GetProxy  func(ctx context.Context, url *url.URL) (string, error) //代理
+	Width     int64                                                   //浏览器的宽
+	Height    int64                                                   //浏览器的高
+	Stealth   bool                                                    //是否开启随机指纹
 }
 
 type downClient struct {
@@ -360,6 +361,7 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 		Ja3:         true,
 		RedirectNum: -1,
 		DisDecode:   true,
+		DisCookie:   true,
 	})
 	if err != nil {
 		return nil, err
@@ -371,23 +373,24 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 			return
 		}
 	}
-	if option.DataCache {
-		isReplaceRequest = true
-	}
 	client = &Client{
 		isReplaceRequest: isReplaceRequest,
 		proxy:            option.Proxy,
 		getProxy:         option.GetProxy,
-		dataCache:        option.DataCache,
 		headless:         option.Headless,
 		ctx:              ctx,
 		cnl:              cnl,
 		cmdCli:           cli,
-		db:               db.NewClient[cdp.FulData](ctx),
 		host:             option.Host,
 		port:             option.Port,
 		globalReqCli:     globalReqCli,
 		stealth:          option.Stealth,
+	}
+	if option.DbOption.Dir != "" || option.DbOption.Ttl != 0 {
+		if client.db, err = db.NewClient(option.DbOption); err != nil {
+			return nil, err
+		}
+		client.isReplaceRequest = true
 	}
 	go tools.Signal(ctx, client.Close)
 	return client, client.init()
@@ -484,9 +487,8 @@ func (obj *Client) Close() {
 }
 
 type PageOption struct {
-	Proxy     string
-	DataCache bool //开启数据缓存
-	Stealth   bool //是否开启随机指纹
+	Proxy   string
+	Stealth bool //是否开启随机指纹
 }
 
 // 新建标签页
@@ -495,18 +497,12 @@ func (obj *Client) NewPage(preCtx context.Context, options ...PageOption) (*Page
 	if len(options) > 0 {
 		option = options[0]
 	}
-	if !option.DataCache {
-		option.DataCache = obj.dataCache
-	}
 	isReplaceRequest := obj.isReplaceRequest
 	if !isReplaceRequest {
-		if option.DataCache {
-			isReplaceRequest = true
-		} else if option.Proxy != "" && option.Proxy != obj.proxy {
+		if option.Proxy != "" && option.Proxy != obj.proxy {
 			isReplaceRequest = true
 		}
 	}
-
 	rs, err := obj.webSock.TargetCreateTarget(preCtx, "")
 	if err != nil {
 		return nil, err
