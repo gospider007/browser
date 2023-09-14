@@ -356,6 +356,7 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 		option.Height = 605
 	}
 	globalReqCli, err := requests.NewClient(preCtx, requests.ClientOption{
+		TryNum:      2,
 		Proxy:       option.Proxy,
 		GetProxy:    option.GetProxy,
 		Ja3:         true,
@@ -482,7 +483,9 @@ func (obj *Client) Close() {
 	if obj.cmdCli != nil {
 		obj.cmdCli.Close()
 	}
-	obj.db.Close()
+	if obj.db != nil {
+		obj.db.Close()
+	}
 	obj.cnl()
 }
 

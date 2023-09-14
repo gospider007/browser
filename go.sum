@@ -7,6 +7,8 @@ gitee.com/baixudong/bs4 v0.0.0-20230814072447-945ab1fd97ed h1:O8nap6QSUFjFBqWPkD
 gitee.com/baixudong/bs4 v0.0.0-20230814072447-945ab1fd97ed/go.mod h1:4P5XqpU1QTr7CcdpgMmj9njFSx8nxfnFwRT2wptowM4=
 gitee.com/baixudong/cdp v0.0.0-20230913053605-473fb9e59789 h1:JnhWo84yELW2NnsT39BGpdNbO86rkW83+5K55q3BAII=
 gitee.com/baixudong/cdp v0.0.0-20230913053605-473fb9e59789/go.mod h1:hoxdrS9+duQmpvunXeu36UtibtyhqhgdjAnQTLuK9Vw=
+gitee.com/baixudong/cdp v0.0.0-20230914072226-e4b78b11b701 h1:b/+yxNMFtfxSw02OTWZZYVlU9Ip7ugHJ8qaZfJR+F7I=
+gitee.com/baixudong/cdp v0.0.0-20230914072226-e4b78b11b701/go.mod h1:6niGxijOUqb4LtJIeoxKWXDLsYj7rFNYVyzagyHHu90=
 gitee.com/baixudong/cmd v0.0.0-20230813075810-85a925880734 h1:BTlOIqnOXTi5wCmT9LakP39ZQQir4shHKGRUNvQYNgM=
 gitee.com/baixudong/cmd v0.0.0-20230813075810-85a925880734/go.mod h1:PSS2/aS8f3dhmnKZ7XKDb38DArTcUcpW7LcyLgwCPks=
 gitee.com/baixudong/conf v0.0.0-20230813075811-66b5157d9761 h1:AGfqEjEVL7rT13p5z4LWaPbd0icKIm1D5sRDsMQjkBM=

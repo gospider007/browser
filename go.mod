@@ -4,7 +4,7 @@ go 1.21.0
 
 require (
 	gitee.com/baixudong/bs4 v0.0.0-20230814072447-945ab1fd97ed
-	gitee.com/baixudong/cdp v0.0.0-20230913053605-473fb9e59789
+	gitee.com/baixudong/cdp v0.0.0-20230914072226-e4b78b11b701
 	gitee.com/baixudong/cmd v0.0.0-20230813075810-85a925880734
 	gitee.com/baixudong/conf v0.0.0-20230813075811-66b5157d9761
 	gitee.com/baixudong/db v0.0.0-20230913035524-f73eea9bc2e0
