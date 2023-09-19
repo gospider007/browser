@@ -34,8 +34,6 @@ function inject() {
         clientWidth,
     };
     runHeadlessFixes();
-    overrideIntlAPI(navigatorProps.language);
-    overrideStatic();
     if (userAgentData) {
         overrideUserAgentData(userAgentData);
     }
@@ -184,6 +182,7 @@ const fp=${JSON.stringify(fingerprint,null,2)};
 })()`;
 }
 function createFp(params,headers) {
+    //以下这些函数禁止使用, overrideIntlAPI , overrideStatic
     const { fingerprint } = generator.getFingerprint(params,headers);
     injectable_code=getInjectableFingerprintFunction(injector._enhanceFingerprint(fingerprint));
     return {result:injectable_code}

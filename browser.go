@@ -38,9 +38,8 @@ type Client struct {
 	ctx              context.Context
 	cnl              context.CancelFunc
 	webSock          *cdp.WebSock
-	// dataCache        bool
-	headless bool
-	stealth  bool //是否开启随机指纹
+	headless         bool
+	stealth          bool //是否开启随机指纹
 }
 type ClientOption struct {
 	DbOption   db.ClientOption
@@ -295,6 +294,7 @@ var chromeArgs = []string{
 
 	"--force-color-profile=srgb",
 	"--disable-background-mode", // 禁用后台模式。
+	"--disable-web-security",    //关闭同源策略，抖音需要
 }
 
 func downChrome(preCtx context.Context, chromeDir, chromeDownUrl string) error {
@@ -362,7 +362,6 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 		Ja3:         true,
 		RedirectNum: -1,
 		DisDecode:   true,
-		DisCookie:   true,
 	})
 	if err != nil {
 		return nil, err

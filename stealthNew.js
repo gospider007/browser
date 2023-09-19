@@ -889,8 +889,6 @@ const fp={
         clientWidth,
     };
     runHeadlessFixes();
-    overrideIntlAPI(navigatorProps.language);
-    overrideStatic();
     if (userAgentData) {
         overrideUserAgentData(userAgentData);
     }
