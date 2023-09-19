@@ -399,9 +399,19 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 	if err = client.init(); err != nil {
 		return client, err
 	}
+	var proxyHost string
+	for _, addr := range tools.GetHosts(4) {
+		if addr.IsGlobalUnicast() {
+			proxyHost = addr.String()
+			break
+		}
+	}
+	if proxyHost == "" {
+		return client, errors.New("获取内网地址失败")
+	}
 	client.proxyClient, err = proxy.NewClient(nil, proxy.ClientOption{
 		Port:      client.port,
-		Host:      "0.0.0.0",
+		Host:      proxyHost,
 		DisVerify: true,
 		HttpConnectCallBack: func(r *http.Request) error {
 			r.Host = fmt.Sprintf("127.0.0.1:%d", client.port)
