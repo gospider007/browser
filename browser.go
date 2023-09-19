@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/http"
 	"net/url"
 	"os"
 	"runtime"
@@ -21,6 +22,7 @@ import (
 	"gitee.com/baixudong/cmd"
 	"gitee.com/baixudong/conf"
 	"gitee.com/baixudong/db"
+	"gitee.com/baixudong/proxy"
 	"gitee.com/baixudong/re"
 	"gitee.com/baixudong/requests"
 	"gitee.com/baixudong/tools"
@@ -28,6 +30,7 @@ import (
 
 type Client struct {
 	isReplaceRequest bool //是否自定义请求
+	proxyClient      *proxy.Client
 	proxy            string
 	getProxy         func(ctx context.Context, url *url.URL) (string, error)
 	db               *db.Client
@@ -393,7 +396,20 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 		client.isReplaceRequest = true
 	}
 	go tools.Signal(ctx, client.Close)
-	return client, client.init()
+	if err = client.init(); err != nil {
+		return client, err
+	}
+	client.proxyClient, err = proxy.NewClient(nil, proxy.ClientOption{
+		Port:      client.port,
+		Host:      "0.0.0.0",
+		DisVerify: true,
+		HttpConnectCallBack: func(r *http.Request) error {
+			r.Host = fmt.Sprintf("127.0.0.1:%d", client.port)
+			return nil
+		},
+	})
+	go client.proxyClient.Run()
+	return client, err
 }
 func (obj *Client) RequestClient() *requests.Client {
 	return obj.globalReqCli
