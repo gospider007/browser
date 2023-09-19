@@ -413,8 +413,10 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 		Port:      client.port,
 		Host:      proxyHost,
 		DisVerify: true,
+		Debug:     true,
 		HttpConnectCallBack: func(r *http.Request) error {
 			r.Host = fmt.Sprintf("127.0.0.1:%d", client.port)
+			r.Header.Del("Origin")
 			return nil
 		},
 	})
@@ -499,6 +501,9 @@ func (obj *Client) Addr() string {
 
 // 关闭浏览器
 func (obj *Client) Close() {
+	if obj.proxyClient != nil {
+		obj.proxyClient.Close()
+	}
 	if obj.globalReqCli != nil {
 		obj.globalReqCli.Close()
 	}

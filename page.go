@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	uurl "net/url"
 	"time"
 
@@ -91,6 +92,7 @@ var getInjectableScript string
 var stealth string
 
 func (obj *Page) init(globalReqCli *requests.Client, option PageOption, db *db.Client) error {
+	log.Print("page id: ", obj.id)
 	var err error
 	if obj.webSock, err = cdp.NewWebSock(
 		obj.ctx,

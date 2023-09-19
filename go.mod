@@ -8,7 +8,7 @@ require (
 	gitee.com/baixudong/cmd v0.0.0-20230813075810-85a925880734
 	gitee.com/baixudong/conf v0.0.0-20230813075811-66b5157d9761
 	gitee.com/baixudong/db v0.0.0-20230913035524-f73eea9bc2e0
-	gitee.com/baixudong/proxy v0.0.0-20230919052957-155d30276b85
+	gitee.com/baixudong/proxy v0.0.0-20230919080603-fcf684a2aecf
 	gitee.com/baixudong/re v0.0.0-20230809033040-360c1d945e59
 	gitee.com/baixudong/requests v0.0.0-20230919022448-e6a7bdbfa7ba
 	gitee.com/baixudong/tools v0.0.0-20230919022534-a35f70b56721
