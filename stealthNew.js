@@ -606,257 +606,118 @@ function overrideStatic() {
 //# sourceMappingURL=utils.js.map
 ; 
 const fp={
-  "screen": {
-    "availHeight": 1392,
-    "availWidth": 2560,
-    "pixelDepth": 24,
-    "height": 1440,
-    "width": 2560,
-    "availTop": 0,
-    "availLeft": 0,
-    "colorDepth": 24,
-    "innerHeight": 0,
-    "outerHeight": 1392,
-    "outerWidth": 2560,
-    "innerWidth": 0,
-    "screenX": 0,
-    "pageXOffset": 0,
-    "pageYOffset": 0,
-    "devicePixelRatio": 1,
-    "clientWidth": 0,
-    "clientHeight": 18,
-    "hasHDR": false
-  },
   "audioCodecs": {
-    "ogg": "probably",
-    "mp3": "probably",
-    "wav": "probably",
+    "aac": "probably",
     "m4a": "maybe",
-    "aac": "probably"
-  },
-  "videoCodecs": {
+    "mp3": "probably",
     "ogg": "probably",
-    "h264": "probably",
-    "webm": "probably"
-  },
-  "pluginsData": {
-    "plugins": [
-      {
-        "name": "PDF Viewer",
-        "description": "Portable Document Format",
-        "filename": "internal-pdf-viewer",
-        "mimeTypes": [
-          {
-            "type": "application/pdf",
-            "suffixes": "pdf",
-            "description": "Portable Document Format",
-            "enabledPlugin": "PDF Viewer"
-          },
-          {
-            "type": "text/pdf",
-            "suffixes": "pdf",
-            "description": "Portable Document Format",
-            "enabledPlugin": "PDF Viewer"
-          }
-        ]
-      },
-      {
-        "name": "Chrome PDF Viewer",
-        "description": "Portable Document Format",
-        "filename": "internal-pdf-viewer",
-        "mimeTypes": [
-          {
-            "type": "application/pdf",
-            "suffixes": "pdf",
-            "description": "Portable Document Format",
-            "enabledPlugin": "Chrome PDF Viewer"
-          },
-          {
-            "type": "text/pdf",
-            "suffixes": "pdf",
-            "description": "Portable Document Format",
-            "enabledPlugin": "Chrome PDF Viewer"
-          }
-        ]
-      },
-      {
-        "name": "Chromium PDF Viewer",
-        "description": "Portable Document Format",
-        "filename": "internal-pdf-viewer",
-        "mimeTypes": [
-          {
-            "type": "application/pdf",
-            "suffixes": "pdf",
-            "description": "Portable Document Format",
-            "enabledPlugin": "Chromium PDF Viewer"
-          },
-          {
-            "type": "text/pdf",
-            "suffixes": "pdf",
-            "description": "Portable Document Format",
-            "enabledPlugin": "Chromium PDF Viewer"
-          }
-        ]
-      },
-      {
-        "name": "Microsoft Edge PDF Viewer",
-        "description": "Portable Document Format",
-        "filename": "internal-pdf-viewer",
-        "mimeTypes": [
-          {
-            "type": "application/pdf",
-            "suffixes": "pdf",
-            "description": "Portable Document Format",
-            "enabledPlugin": "Microsoft Edge PDF Viewer"
-          },
-          {
-            "type": "text/pdf",
-            "suffixes": "pdf",
-            "description": "Portable Document Format",
-            "enabledPlugin": "Microsoft Edge PDF Viewer"
-          }
-        ]
-      },
-      {
-        "name": "WebKit built-in PDF",
-        "description": "Portable Document Format",
-        "filename": "internal-pdf-viewer",
-        "mimeTypes": [
-          {
-            "type": "application/pdf",
-            "suffixes": "pdf",
-            "description": "Portable Document Format",
-            "enabledPlugin": "WebKit built-in PDF"
-          },
-          {
-            "type": "text/pdf",
-            "suffixes": "pdf",
-            "description": "Portable Document Format",
-            "enabledPlugin": "WebKit built-in PDF"
-          }
-        ]
-      }
-    ],
-    "mimeTypes": [
-      "Portable Document Format~~application/pdf~~pdf",
-      "Portable Document Format~~text/pdf~~pdf"
-    ]
+    "wav": "probably"
   },
   "battery": {
     "charging": true,
-    "chargingTime": null,
+    "chargingTime": 0,
     "dischargingTime": null,
-    "level": 0.99
+    "level": 1
   },
-  "videoCard": {
-    "vendor": "Google Inc. (AMD)",
-    "renderer": "ANGLE (AMD, AMD Radeon RX 6400 Direct3D11 vs_5_0 ps_5_0, D3D11)"
-  },
+  "historyLength": 5,
   "multimediaDevices": {
-    "speakers": [
-      {
-        "deviceId": "",
-        "kind": "audiooutput",
-        "label": "",
-        "groupId": ""
-      }
-    ],
     "micros": [
       {
         "deviceId": "",
+        "groupId": "",
         "kind": "audioinput",
-        "label": "",
-        "groupId": ""
+        "label": ""
+      }
+    ],
+    "speakers": [
+      {
+        "deviceId": "",
+        "groupId": "",
+        "kind": "audiooutput",
+        "label": ""
       }
     ],
     "webcams": [
       {
         "deviceId": "",
+        "groupId": "",
         "kind": "videoinput",
-        "label": "",
-        "groupId": ""
+        "label": ""
       }
     ]
   },
-  "fonts": [
-    "Calibri",
-    "Franklin Gothic",
-    "MS UI Gothic",
-    "Marlett",
-    "Segoe UI Light"
-  ],
   "navigator": {
-    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36 Edg/115.0.1901.188",
-    "userAgentData": {
-      "brands": [
-        {
-          "brand": "Not/A)Brand",
-          "version": "99"
-        },
-        {
-          "brand": "Microsoft Edge",
-          "version": "115"
-        },
-        {
-          "brand": "Chromium",
-          "version": "115"
-        }
-      ],
-      "mobile": false,
-      "platform": "Windows",
-      "architecture": "x86",
-      "bitness": "64",
-      "fullVersionList": [
-        {
-          "brand": "Not/A)Brand",
-          "version": "99.0.0.0"
-        },
-        {
-          "brand": "Microsoft Edge",
-          "version": "115.0.1901.188"
-        },
-        {
-          "brand": "Chromium",
-          "version": "115.0.5790.114"
-        }
-      ],
-      "model": "",
-      "platformVersion": "10.0.0",
-      "uaFullVersion": "115.0.1901.188"
-    },
+    "appCodeName": "Mozilla",
+    "appName": "Netscape",
+    "appVersion": "5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36 Edg/117.0.2045.31",
+    "deviceMemory": 8,
+    "doNotTrack": null,
+    "hardwareConcurrency": 8,
     "language": "zh-CN",
     "languages": [
       "zh-CN",
+      "en",
       "en-GB",
-      "en-US",
-      "en"
+      "en-US"
     ],
+    "maxTouchPoints": 10,
     "platform": "Win32",
-    "deviceMemory": 8,
-    "hardwareConcurrency": 8,
-    "maxTouchPoints": 0,
     "product": "Gecko",
     "productSub": "20030107",
-    "vendor": "Google Inc.",
-    "vendorSub": null,
-    "doNotTrack": null,
-    "appCodeName": "Mozilla",
-    "appName": "Netscape",
-    "appVersion": "5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36 Edg/115.0.1901.188",
-    "oscpu": null,
-    "extraProperties": {
-      "vendorFlavors": [
-        "chrome"
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36 Edg/117.0.2045.31",
+    "userAgentData": {
+      "brands": [
+        {
+          "brand": "Microsoft Edge",
+          "version": "117"
+        },
+        {
+          "brand": "Not;A=Brand",
+          "version": "8"
+        },
+        {
+          "brand": "Chromium",
+          "version": "117"
+        }
       ],
-      "isBluetoothSupported": false,
-      "globalPrivacyControl": null,
-      "pdfViewerEnabled": true,
-      "installedApps": []
+      "mobile": false,
+      "platform": "Windows"
     },
+    "vendor": "Google Inc.",
+    "vendorSub": "",
     "webdriver": false
   },
-  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36 Edg/115.0.1901.188",
-  "historyLength": 4
+  "screen": {
+    "availHeight": 672,
+    "availLeft": 0,
+    "availTop": 0,
+    "availWidth": 1280,
+    "clientHeight": 18,
+    "clientWidth": 0,
+    "colorDepth": 24,
+    "devicePixelRatio": 1.5,
+    "hasHDR": false,
+    "height": 720,
+    "innerHeight": 0,
+    "innerWidth": 0,
+    "outerHeight": 672,
+    "outerWidth": 1280,
+    "pageXOffset": 0,
+    "pageYOffset": 0,
+    "pixelDepth": 24,
+    "screenX": 0,
+    "width": 1280
+  },
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36 Edg/117.0.2045.31",
+  "videoCard": {
+    "renderer": "ANGLE (Intel, Intel(R) UHD Graphics Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "vendor": "Google Inc. (Intel)"
+  },
+  "videoCodecs": {
+    "h264": "probably",
+    "ogg": "probably",
+    "webm": "probably"
+  }
 }; 
 (function inject() {
     const { battery, navigator: { 

@@ -10,7 +10,7 @@ require (
 	gitee.com/baixudong/db v0.0.0-20230913035524-f73eea9bc2e0
 	gitee.com/baixudong/proxy v0.0.0-20230920015306-59de70238c8c
 	gitee.com/baixudong/re v0.0.0-20230809033040-360c1d945e59
-	gitee.com/baixudong/requests v0.0.0-20230919022448-e6a7bdbfa7ba
+	gitee.com/baixudong/requests v0.0.0-20230920033956-dbdc359600be
 	gitee.com/baixudong/tools v0.0.0-20230919022534-a35f70b56721
 	github.com/tidwall/gjson v1.16.0
 )

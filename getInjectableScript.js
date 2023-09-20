@@ -181,10 +181,8 @@ const fp=${JSON.stringify(fingerprint,null,2)};
 (${mainFunctionString2})();
 })()`;
 }
-function createFp(params,headers) {
+function createFp(params) {
     //以下这些函数禁止使用, overrideIntlAPI , overrideStatic
-    const { fingerprint } = generator.getFingerprint(params,headers);
-    injectable_code=getInjectableFingerprintFunction(injector._enhanceFingerprint(fingerprint));
+    injectable_code=getInjectableFingerprintFunction(params);
     return {result:injectable_code}
 }
-
