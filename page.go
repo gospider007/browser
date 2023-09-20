@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	uurl "net/url"
 	"time"
 
@@ -92,7 +91,6 @@ var getInjectableScript string
 var stealth string
 
 func (obj *Page) init(globalReqCli *requests.Client, option PageOption, db *db.Client) error {
-	log.Print("page id: ", obj.id)
 	var err error
 	if obj.webSock, err = cdp.NewWebSock(
 		obj.ctx,
@@ -120,17 +118,61 @@ func (obj *Page) init(globalReqCli *requests.Client, option PageOption, db *db.C
 	}
 	return obj.AddScript(obj.ctx, `Object.defineProperty(window, "RTCPeerConnection",{"get":undefined});Object.defineProperty(window, "mozRTCPeerConnection",{"get":undefined});Object.defineProperty(window, "webkitRTCPeerConnection",{"get":undefined});`)
 }
-func CreateDesktopEdgeFp() (string, error) {
+
+type FpOption struct {
+	Browser         string //("chrome" | "firefox" | "safari" | "edge")
+	Device          string //"mobile" | "desktop"
+	OperatingSystem string //"windows" | "macos" | "linux" | "android" | "ios"
+	UserAgent       string
+	Locales         []string
+	Locale          string
+}
+
+func CreateFp(options ...FpOption) (string, error) {
+	var option FpOption
+	if len(options) > 0 {
+		option = options[0]
+	}
+	if option.Browser == "" {
+		if option.OperatingSystem == "ios" {
+			option.Browser = "safari"
+		} else {
+			option.Browser = "edge"
+		}
+	}
+	if option.Device == "" {
+		option.Device = "desktop"
+	}
+	if option.OperatingSystem == "" {
+		if option.Browser == "safari" {
+			option.OperatingSystem = "ios"
+		} else {
+			option.OperatingSystem = "windows"
+		}
+	}
+	if option.UserAgent == "" {
+		if option.Browser == "edge" {
+			option.UserAgent = requests.UserAgent
+		} else {
+			option.UserAgent = re.Sub(` Edg/\d\d\d.*?$`, "", requests.UserAgent)
+		}
+	}
+	if option.Locales == nil {
+		option.Locales = []string{"zh-CN", "en", "en-GB", "en-US"}
+	}
+	if option.Locale == "" {
+		option.Locale = option.Locales[0]
+	}
 	params := map[string]any{
-		"browsers":         []string{"edge"},
-		"devices":          []string{"desktop"},
-		"operatingSystems": []string{"windows"},
-		"userAgent":        []string{requests.UserAgent},
-		"locales":          []string{"zh-CN", "en", "en-GB", "en-US"},
-		"locale":           []string{"zh-CN"},
+		"browsers":         []string{option.Browser},         // ("chrome" | "firefox" | "safari" | "edge")
+		"devices":          []string{option.Device},          // "mobile" | "desktop"
+		"operatingSystems": []string{option.OperatingSystem}, //"windows" | "macos" | "linux" | "android" | "ios"
+		"userAgent":        []string{option.UserAgent},
+		"locales":          option.Locales,
+		"locale":           []string{option.Locale},
 	}
 	headers := map[string]any{
-		"User-Agent": requests.UserAgent,
+		"User-Agent": option.UserAgent,
 	}
 	cli, err := cmd.NewJsClient(nil, cmd.JsClientOption{
 		Script: getInjectableScript,
@@ -634,7 +676,23 @@ func (obj *Page) move(ctx context.Context, point cdp.Point) error {
 	obj.mouseY = point.Y
 	return nil
 }
-
+func (obj *Page) TouchMove(ctx context.Context, x, y float64, steps ...int) error {
+	return obj.baseMove(ctx, x, y, 1, steps...)
+}
+func (obj *Page) touchMove(ctx context.Context, point cdp.Point) error { //不需要delta
+	_, err := obj.webSock.InputDispatchTouchEvent(ctx, "touchMove", []cdp.Point{
+		{
+			X: point.X,
+			Y: point.Y,
+		},
+	})
+	if err != nil {
+		return err
+	}
+	obj.mouseX = point.X
+	obj.mouseY = point.Y
+	return nil
+}
 func (obj *Page) Wheel(ctx context.Context, x, y float64) error {
 	_, err := obj.webSock.InputDispatchMouseEvent(ctx,
 		cdp.DispatchMouseEventOption{
@@ -660,46 +718,6 @@ func (obj *Page) Down(ctx context.Context, point cdp.Point) error {
 	obj.mouseY = point.Y
 	return err
 }
-func (obj *Page) Up(ctx context.Context) error {
-	_, err := obj.webSock.InputDispatchMouseEvent(ctx, cdp.DispatchMouseEventOption{
-		Type:       "mouseReleased",
-		Button:     "left",
-		X:          obj.mouseX,
-		Y:          obj.mouseY,
-		ClickCount: 1,
-	})
-	return err
-}
-func (obj *Page) Click(ctx context.Context, point cdp.Point) error {
-	if err := obj.Down(ctx, point); err != nil {
-		return err
-	}
-	return obj.Up(ctx)
-}
-func (obj *Page) TouchClick(ctx context.Context, point cdp.Point) error {
-	if err := obj.TouchDown(ctx, point); err != nil {
-		return err
-	}
-	return obj.TouchUp(ctx)
-}
-
-func (obj *Page) TouchMove(ctx context.Context, x, y float64, steps ...int) error {
-	return obj.baseMove(ctx, x, y, 1, steps...)
-}
-func (obj *Page) touchMove(ctx context.Context, point cdp.Point) error { //不需要delta
-	_, err := obj.webSock.InputDispatchTouchEvent(ctx, "touchMove", []cdp.Point{
-		{
-			X: point.X,
-			Y: point.Y,
-		},
-	})
-	if err != nil {
-		return err
-	}
-	obj.mouseX = point.X
-	obj.mouseY = point.Y
-	return nil
-}
 func (obj *Page) TouchDown(ctx context.Context, point cdp.Point) error {
 	_, err := obj.webSock.InputDispatchTouchEvent(ctx, "touchStart",
 		[]cdp.Point{
@@ -715,11 +733,33 @@ func (obj *Page) TouchDown(ctx context.Context, point cdp.Point) error {
 	obj.mouseY = point.Y
 	return nil
 }
+func (obj *Page) Up(ctx context.Context) error {
+	_, err := obj.webSock.InputDispatchMouseEvent(ctx, cdp.DispatchMouseEventOption{
+		Type:       "mouseReleased",
+		Button:     "left",
+		X:          obj.mouseX,
+		Y:          obj.mouseY,
+		ClickCount: 1,
+	})
+	return err
+}
 func (obj *Page) TouchUp(ctx context.Context) error {
 	_, err := obj.webSock.InputDispatchTouchEvent(ctx,
 		"touchEnd",
 		[]cdp.Point{})
 	return err
+}
+func (obj *Page) Click(ctx context.Context, point cdp.Point) error {
+	if err := obj.Down(ctx, point); err != nil {
+		return err
+	}
+	return obj.Up(ctx)
+}
+func (obj *Page) TouchClick(ctx context.Context, point cdp.Point) error {
+	if err := obj.TouchDown(ctx, point); err != nil {
+		return err
+	}
+	return obj.TouchUp(ctx)
 }
 
 // 设置移动设备的属性

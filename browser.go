@@ -52,13 +52,12 @@ type ClientOption struct {
 	UserDir    string   //设置用户目录
 	Args       []string //启动参数
 	Headless   bool     //是否使用无头
-	// DataCache  bool     //开启数据缓存
-	UserAgent string
-	Proxy     string                                                  //代理http,https,socks5,ex: http://127.0.0.1:7005
-	GetProxy  func(ctx context.Context, url *url.URL) (string, error) //代理
-	Width     int64                                                   //浏览器的宽
-	Height    int64                                                   //浏览器的高
-	Stealth   bool                                                    //是否开启随机指纹
+	UserAgent  string
+	Proxy      string                                                  //代理http,https,socks5,ex: http://127.0.0.1:7005
+	GetProxy   func(ctx context.Context, url *url.URL) (string, error) //代理
+	Width      int64                                                   //浏览器的宽,1200
+	Height     int64                                                   //浏览器的高,605
+	Stealth    bool                                                    //是否开启随机指纹
 }
 
 type downClient struct {
@@ -413,7 +412,6 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 		Port:      client.port,
 		Host:      proxyHost,
 		DisVerify: true,
-		Debug:     true,
 		HttpConnectCallBack: func(r *http.Request) error {
 			r.Host = fmt.Sprintf("127.0.0.1:%d", client.port)
 			r.Header.Del("Origin")
