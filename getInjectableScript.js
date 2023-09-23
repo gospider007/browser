@@ -172,17 +172,25 @@ function inject2() {
     changeWebGlMain()
     changeAudio()
 }
-function getInjectableFingerprintFunction(fingerprint) {
+function getInjectableFingerprintFunction() {
     const mainFunctionString = inject.toString();
     const mainFunctionString2 = inject2.toString();
     return `(()=>{${injector.utilsJs}; 
-const fp=${JSON.stringify(fingerprint,null,2)}; 
+const fp="@@__gospiderFpData__@@"; 
 (${mainFunctionString})();
 (${mainFunctionString2})();
 })()`;
 }
-function createFp(params) {
-    //以下这些函数禁止使用, overrideIntlAPI , overrideStatic
-    injectable_code=getInjectableFingerprintFunction(params);
-    return {result:injectable_code}
-}
+
+const fs = require('fs');
+const data =getInjectableFingerprintFunction()
+
+fs.writeFile('browser/stealthRaw.js', data, (err) => {
+  if (err) {
+    console.error(err);
+    return;
+  }
+  console.log('文件写入成功！');
+});
+
+

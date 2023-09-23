@@ -7,11 +7,11 @@ import (
 	"errors"
 	"fmt"
 	uurl "net/url"
+	"strings"
 	"time"
 
 	"gitee.com/baixudong/bs4"
 	"gitee.com/baixudong/cdp"
-	"gitee.com/baixudong/cmd"
 	"gitee.com/baixudong/db"
 	"gitee.com/baixudong/re"
 	"gitee.com/baixudong/requests"
@@ -84,11 +84,8 @@ func (obj *Page) addEvent(method string, fun func(ctx context.Context, rd cdp.Re
 	obj.webSock.AddEvent(method, fun)
 }
 
-//go:embed getInjectableScript.js
-var getInjectableScript string
-
-//go:embed stealthNew.js
-var stealth string
+//go:embed stealthRaw.js
+var stealthRaw string
 
 func (obj *Page) init(globalReqCli *requests.Client, option PageOption, db *db.Client) error {
 	var err error
@@ -112,7 +109,7 @@ func (obj *Page) init(globalReqCli *requests.Client, option PageOption, db *db.C
 		return err
 	}
 	if option.Stealth || obj.stealth {
-		if err = obj.AddScript(obj.ctx, stealth); err != nil {
+		if err = obj.AddScript(obj.ctx, createFp()); err != nil {
 			return err
 		}
 	}
@@ -128,7 +125,7 @@ type FpOption struct {
 	Locale          string
 }
 
-func CreateFp(options ...FpOption) (string, error) {
+func createFp(options ...FpOption) string {
 	screen := map[string]any{
 		"availHeight":      672,
 		"availWidth":       1280,
@@ -252,18 +249,8 @@ func CreateFp(options ...FpOption) (string, error) {
 		"userAgent":         requests.UserAgent,
 		"historyLength":     5,
 	}
-	cli, err := cmd.NewJsClient(nil, cmd.JsClientOption{
-		Script: getInjectableScript,
-		Names:  []string{"createFp"},
-	})
-	if err != nil {
-		return "", err
-	}
-	result, err := cli.Call("createFp", fp)
-	if err != nil {
-		return "", err
-	}
-	return result.Get("result").String(), nil
+	val, _ := tools.JsonMarshal(fp)
+	return strings.ReplaceAll(stealthRaw, `"@@__gospiderFpData__@@"`, tools.BytesToString(val))
 }
 func (obj *Page) AddScript(ctx context.Context, script string) error {
 	_, err := obj.webSock.PageAddScriptToEvaluateOnNewDocument(ctx, script)
