@@ -11,12 +11,12 @@ import (
 	"time"
 
 	"gitee.com/baixudong/bs4"
+	"gitee.com/baixudong/bson"
 	"gitee.com/baixudong/cdp"
 	"gitee.com/baixudong/db"
 	"gitee.com/baixudong/re"
 	"gitee.com/baixudong/requests"
 	"gitee.com/baixudong/tools"
-	"github.com/tidwall/gjson"
 )
 
 type Page struct {
@@ -69,7 +69,7 @@ func (obj *Page) domLoadMain(ctx context.Context, rd cdp.RecvData) {
 	obj.domLoad = true
 }
 func (obj *Page) frameLoadMain(ctx context.Context, rd cdp.RecvData) {
-	jsonData, err := tools.Any2json(rd.Params)
+	jsonData, err := bson.Decode(rd.Params)
 	if err != nil {
 		return
 	}
@@ -249,7 +249,7 @@ func createFp(options ...FpOption) string {
 		"userAgent":         requests.UserAgent,
 		"historyLength":     5,
 	}
-	val, _ := tools.JsonMarshal(fp)
+	val, _ := bson.Encode(fp)
 	return strings.ReplaceAll(stealthRaw, `"@@__gospiderFpData__@@"`, tools.BytesToString(val))
 }
 func (obj *Page) AddScript(ctx context.Context, script string) error {
@@ -279,7 +279,8 @@ func (obj *Page) Rect(ctx context.Context) (cdp.Rect, error) {
 	if err != nil {
 		return result, err
 	}
-	return result, tools.Any2struct(rs.Result["cssContentSize"], &result)
+	_, err = bson.Decode(rs.Result["cssContentSize"], &result)
+	return result, err
 }
 func (obj *Page) Reload(ctx context.Context) error {
 	_, err := obj.webSock.PageReload(ctx)
@@ -358,21 +359,21 @@ func (obj *Page) GoTo(preCtx context.Context, url string) error {
 }
 
 // ex:   ()=>{}  或者  (params)=>{}
-func (obj *Page) Eval(ctx context.Context, expression string, params map[string]any) (gjson.Result, error) {
+func (obj *Page) Eval(ctx context.Context, expression string, params map[string]any) (*bson.Client, error) {
 	var value string
 	if params != nil {
 		con, err := json.Marshal(params)
 		if err != nil {
-			return gjson.Result{}, err
+			return nil, err
 		}
 		value = tools.BytesToString(con)
 	}
 	// log.Print(fmt.Sprintf(`(async %s)(%s)`, expression, value))
 	rs, err := obj.webSock.RuntimeEvaluate(ctx, fmt.Sprintf(`(async %s)(%s)`, expression, value))
 	if err != nil {
-		return gjson.Result{}, err
+		return nil, err
 	}
-	return tools.Any2json(rs.Result)
+	return bson.Decode(rs.Result)
 }
 func (obj *Page) Close() error {
 	defer func() {
@@ -436,7 +437,7 @@ func (obj *Page) nodeId(ctx context.Context) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	jsonData, err := tools.Any2json(rs.Result["root"])
+	jsonData, err := bson.Decode(rs.Result["root"])
 	if err != nil {
 		return 0, err
 	}
@@ -624,7 +625,7 @@ func (obj *Page) querySelectorAll(ctx context.Context, nodeId int64, selector st
 	if rs.Result["nodeIds"] == nil {
 		return nil, nil
 	}
-	jsonData, err := tools.Any2json(rs.Result["nodeIds"])
+	jsonData, err := bson.Decode(rs.Result["nodeIds"])
 	if err != nil {
 		return nil, err
 	}
@@ -888,14 +889,14 @@ func (obj *Page) GetCookies(ctx context.Context, urls ...string) (cdp.Cookies, e
 	if err != nil {
 		return nil, err
 	}
-	jsonData, err := tools.Any2json(rs.Result)
+	jsonData, err := bson.Decode(rs.Result)
 	if err != nil {
 		return nil, err
 	}
 	result := []cdp.Cookie{}
 	for _, cookie := range jsonData.Get("cookies").Array() {
 		var cook cdp.Cookie
-		if err = json.Unmarshal(tools.StringToBytes(cookie.Raw), &cook); err != nil {
+		if _, err = bson.Decode(cookie.Raw, &cook); err != nil {
 			return result, err
 		}
 		result = append(result, cook)

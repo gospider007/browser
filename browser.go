@@ -399,7 +399,7 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 		return client, err
 	}
 	var proxyHost string
-	for _, addr := range tools.GetHosts(4) {
+	for _, addr := range requests.GetHosts(4) {
 		if addr.IsGlobalUnicast() {
 			proxyHost = addr.String()
 			break

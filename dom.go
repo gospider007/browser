@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"gitee.com/baixudong/bson"
 	"gitee.com/baixudong/cdp"
-	"gitee.com/baixudong/tools"
 )
 
 type Dom struct {
@@ -20,7 +20,7 @@ func (obj *Page) getFrameHtml(ctx context.Context, frameId string) (string, erro
 	if err != nil {
 		return "", err
 	}
-	jsonData, err := tools.Any2json(rs.Result)
+	jsonData, err := bson.Decode(rs.Result)
 	if err != nil {
 		return "", err
 	}
@@ -32,7 +32,7 @@ func (obj *Page) getFrameHtml(ctx context.Context, frameId string) (string, erro
 	if err != nil {
 		return "", err
 	}
-	if jsonData, err = tools.Any2json(rs.Result); err != nil {
+	if jsonData, err = bson.Decode(rs.Result); err != nil {
 		return "", err
 	}
 	if !jsonData.Get("node.contentDocument.backendNodeId").Exists() {
@@ -48,7 +48,7 @@ func (obj *Dom) frame2Dom(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	jsonData, err := tools.Any2json(rs.Result)
+	jsonData, err := bson.Decode(rs.Result)
 	if err != nil {
 		return err
 	}
@@ -63,7 +63,7 @@ func (obj *Dom) frame2Dom(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	if jsonData, err = tools.Any2json(rs.Result); err != nil {
+	if jsonData, err = bson.Decode(rs.Result); err != nil {
 		return err
 	}
 	objectId := jsonData.Get("object.objectId").String()
@@ -71,7 +71,7 @@ func (obj *Dom) frame2Dom(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	if jsonData, err = tools.Any2json(rs.Result); err != nil {
+	if jsonData, err = bson.Decode(rs.Result); err != nil {
 		return err
 	}
 	obj.nodeId = jsonData.Get("nodeId").Int()
@@ -82,7 +82,7 @@ func (obj *Dom) Rect(ctx context.Context) (cdp.Rect, error) {
 	if err != nil {
 		return cdp.Rect{}, err
 	}
-	jsonData, err := tools.Any2json(rs.Result["model"])
+	jsonData, err := bson.Decode(rs.Result["model"])
 	if err != nil {
 		return cdp.Rect{}, err
 	}
