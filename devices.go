@@ -7,8 +7,8 @@ import (
 	"os"
 	"strings"
 
-	"gitee.com/baixudong/bson"
 	"gitee.com/baixudong/cdp"
+	"gitee.com/baixudong/gson"
 	"gitee.com/baixudong/re"
 	"gitee.com/baixudong/tools"
 )
@@ -17,7 +17,7 @@ import (
 var devicesJson string
 
 func Json2Devices() {
-	lls, err := bson.Decode(devicesJson)
+	lls, err := gson.Decode(devicesJson)
 	if err != nil {
 		log.Panic(err)
 	}

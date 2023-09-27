@@ -7,13 +7,14 @@ import (
 	"errors"
 	"fmt"
 	uurl "net/url"
+	"strconv"
 	"strings"
 	"time"
 
 	"gitee.com/baixudong/bs4"
-	"gitee.com/baixudong/bson"
 	"gitee.com/baixudong/cdp"
 	"gitee.com/baixudong/db"
+	"gitee.com/baixudong/gson"
 	"gitee.com/baixudong/re"
 	"gitee.com/baixudong/requests"
 	"gitee.com/baixudong/tools"
@@ -69,7 +70,7 @@ func (obj *Page) domLoadMain(ctx context.Context, rd cdp.RecvData) {
 	obj.domLoad = true
 }
 func (obj *Page) frameLoadMain(ctx context.Context, rd cdp.RecvData) {
-	jsonData, err := bson.Decode(rd.Params)
+	jsonData, err := gson.Decode(rd.Params)
 	if err != nil {
 		return
 	}
@@ -249,7 +250,7 @@ func createFp(options ...FpOption) string {
 		"userAgent":         requests.UserAgent,
 		"historyLength":     5,
 	}
-	val, _ := bson.Encode(fp)
+	val, _ := gson.Encode(fp)
 	return strings.ReplaceAll(stealthRaw, `"@@__gospiderFpData__@@"`, tools.BytesToString(val))
 }
 func (obj *Page) AddScript(ctx context.Context, script string) error {
@@ -279,9 +280,10 @@ func (obj *Page) Rect(ctx context.Context) (cdp.Rect, error) {
 	if err != nil {
 		return result, err
 	}
-	_, err = bson.Decode(rs.Result["cssContentSize"], &result)
+	_, err = gson.Decode(rs.Result["cssContentSize"], &result)
 	return result, err
 }
+
 func (obj *Page) Reload(ctx context.Context) error {
 	_, err := obj.webSock.PageReload(ctx)
 	return err
@@ -359,7 +361,7 @@ func (obj *Page) GoTo(preCtx context.Context, url string) error {
 }
 
 // ex:   ()=>{}  或者  (params)=>{}
-func (obj *Page) Eval(ctx context.Context, expression string, params map[string]any) (*bson.Client, error) {
+func (obj *Page) Eval(ctx context.Context, expression string, params map[string]any) (*gson.Client, error) {
 	var value string
 	if params != nil {
 		con, err := json.Marshal(params)
@@ -373,7 +375,7 @@ func (obj *Page) Eval(ctx context.Context, expression string, params map[string]
 	if err != nil {
 		return nil, err
 	}
-	return bson.Decode(rs.Result)
+	return gson.Decode(rs.Result)
 }
 func (obj *Page) Close() error {
 	defer func() {
@@ -432,67 +434,24 @@ func (obj *Page) Response(ctx context.Context, ResponseFunc func(context.Context
 	}
 	return err
 }
-func (obj *Page) nodeId(ctx context.Context) (int64, error) {
-	rs, err := obj.webSock.DOMGetDocument(ctx)
-	if err != nil {
-		return 0, err
-	}
-	jsonData, err := bson.Decode(rs.Result["root"])
-	if err != nil {
-		return 0, err
-	}
-	href := jsonData.Get("baseURL").String()
-	if href != "" {
-		obj.baseUrl = href
-	}
-	return jsonData.Get("nodeId").Int(), nil
-}
 func (obj *Page) Html(ctx context.Context, contents ...string) (*bs4.Client, error) {
-	nodeId, err := obj.nodeId(ctx)
+	r, err := obj.webSock.DOMGetDocuments(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return obj.HtmlWithNodeId(ctx, nodeId, contents...)
-}
-func (obj *Page) HtmlWithNodeId(ctx context.Context, nodeId int64, contents ...string) (*bs4.Client, error) {
-	if len(contents) > 0 {
-		return nil, obj.setHtml(ctx, nodeId, contents[0])
+	data, err := gson.Decode(r.Result)
+	if err != nil {
+		return nil, err
 	}
-	return obj.html(ctx, nodeId)
+	return bs4.NewClientWithNode(cdp.ParseJsonDom(data.Get("root"))), nil
 }
 func (obj *Page) setHtml(ctx context.Context, nodeId int64, content string) error {
 	_, err := obj.webSock.DOMSetOuterHTML(ctx, nodeId, content)
 	return err
 }
-func (obj *Page) html(ctx context.Context, nodeId int64) (*bs4.Client, error) {
-	rs, err := obj.webSock.DOMGetOuterHTML(ctx, nodeId, 0)
-	if err != nil {
-		return nil, err
-	}
-	html := bs4.NewClient(rs.Result["outerHTML"].(string), obj.baseUrl)
-	for _, iframe := range html.Finds("iframe") {
-		href := iframe.Get("src")
-		iframeId, ok := obj.iframes[href]
-		if ok {
-			frameHtml, err := obj.getFrameHtml(ctx, iframeId)
-			if err != nil {
-				return nil, err
-			}
-			iframe.SetHtml(frameHtml)
-		}
-	}
-	return html, nil
-}
 func (obj *Page) WaitSelector(ctx context.Context, selector string, timeouts ...time.Duration) (*Dom, error) {
-	nodeId, err := obj.nodeId(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return obj.WaitSelectorWithNodeId(ctx, nodeId, selector, false, timeouts...)
-}
-func (obj *Page) WaitSelectorWithNodeId(preCtx context.Context, nodeId int64, selector string, isPage bool, timeouts ...time.Duration) (*Dom, error) {
-	if preCtx == nil {
-		preCtx = obj.ctx
+	if ctx == nil {
+		ctx = obj.ctx
 	}
 	var timeout time.Duration
 	if len(timeouts) > 0 {
@@ -508,7 +467,7 @@ func (obj *Page) WaitSelectorWithNodeId(preCtx context.Context, nodeId int64, se
 		}
 	}()
 	for time.Since(startTime) <= timeout {
-		dom, err := obj.QuerySelectorWithNodeId(preCtx, nodeId, selector, isPage)
+		dom, err := obj.QuerySelector(ctx, selector)
 		if err != nil {
 			return nil, err
 		}
@@ -522,168 +481,57 @@ func (obj *Page) WaitSelectorWithNodeId(preCtx context.Context, nodeId int64, se
 		}
 		select {
 		case <-t.C:
-		case <-preCtx.Done():
-			return nil, preCtx.Err()
+		case <-ctx.Done():
+			return nil, ctx.Err()
 		}
 	}
 	return nil, errors.New("超时")
 }
+
 func (obj *Page) QuerySelector(ctx context.Context, selector string) (*Dom, error) {
-	return obj.QuerySelectorWithNodeId(ctx, 0, selector, true)
-}
-func (obj *Page) QuerySelectorWithNodeId(ctx context.Context, nodeId int64, selector string, isPage bool) (dom *Dom, err error) {
-	dom, err = obj.querySelector(ctx, nodeId, selector, isPage)
-	if err != nil {
-		return dom, err
-	}
-	if dom == nil && selector != "iframe" {
-		iframes, err := obj.querySelectorAll(ctx, nodeId, "iframe", isPage)
-		if err != nil {
-			return nil, err
-		}
-		for _, iframe := range iframes {
-			dom, err = obj.querySelector(ctx, iframe.nodeId, selector, isPage)
-			if err != nil || dom != nil {
-				return dom, err
-			}
-		}
-	}
-	return dom, err
-}
-func (obj *Page) querySelector(ctx context.Context, nodeId int64, selector string, isPage bool) (dom *Dom, err error) {
-	if isPage {
-		if nodeId, err = obj.nodeId(ctx); err != nil {
-			return nil, err
-		}
-	}
-	rs, err := obj.webSock.DOMQuerySelector(ctx, nodeId, selector)
+	html, err := obj.Html(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if rs.Result == nil {
-		return nil, nil
+	ele := html.Find(selector)
+	if ele == nil {
+		return nil, err
 	}
-	nodeIdAny, ok := rs.Result["nodeId"]
-	if !ok {
-		return nil, errors.New("not found")
+	gospiderNodeId := ele.Get("gospiderNodeId")
+	nodeId, err := strconv.Atoi(gospiderNodeId)
+	if err != nil {
+		return nil, err
 	}
-	nodeId = int64(nodeIdAny.(float64))
-	if nodeId == 0 {
-		return nil, nil
-	}
-	dom = &Dom{
+
+	dom := &Dom{
 		baseUrl: obj.baseUrl,
 		webSock: obj.webSock,
-		nodeId:  nodeId,
-	}
-	if re.Search(`^iframe\W|\Wiframe\W|\Wiframe$|^iframe$`, selector) != nil {
-		if err = dom.frame2Dom(ctx); err != nil {
-			return nil, err
-		}
-	}
-	return dom, nil
-}
-func (obj *Page) QuerySelectorAll(ctx context.Context, selector string) ([]*Dom, error) {
-	nodeId, err := obj.nodeId(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return obj.QuerySelectorAllWithNodeId(ctx, nodeId, selector, true)
-}
-func (obj *Page) QuerySelectorAllWithNodeId(ctx context.Context, nodeId int64, selector string, isPage bool) ([]*Dom, error) {
-	dom, err := obj.querySelectorAll(ctx, nodeId, selector, isPage)
-	if err != nil {
-		return dom, err
-	}
-	if dom == nil && selector != "iframe" {
-		iframes, err := obj.querySelectorAll(ctx, nodeId, "iframe", isPage)
-		if err != nil {
-			return nil, err
-		}
-		doms := []*Dom{}
-		for _, iframe := range iframes {
-			dom, err = obj.querySelectorAll(ctx, iframe.nodeId, selector, isPage)
-			if err != nil {
-				return dom, err
-			}
-			doms = append(doms, dom...)
-		}
-		return doms, err
+		nodeId:  int64(nodeId),
+		ele:     ele,
 	}
 	return dom, err
 }
-func (obj *Page) querySelectorAll(ctx context.Context, nodeId int64, selector string, isPage bool) (doms []*Dom, err error) {
-	if isPage {
-		if nodeId, err = obj.nodeId(ctx); err != nil {
+func (obj *Page) QuerySelectorAll(ctx context.Context, selector string) ([]*Dom, error) {
+	html, err := obj.Html(ctx)
+	if err != nil {
+		return nil, err
+	}
+	doms := []*Dom{}
+	for _, ele := range html.Finds(selector) {
+		gospiderNodeId := ele.Get("gospiderNodeId")
+		nodeId, err := strconv.Atoi(gospiderNodeId)
+		if err != nil {
 			return nil, err
 		}
-	}
-	rs, err := obj.webSock.DOMQuerySelectorAll(ctx, nodeId, selector)
-	if err != nil {
-		return nil, err
-	}
-	if rs.Result["nodeIds"] == nil {
-		return nil, nil
-	}
-	jsonData, err := bson.Decode(rs.Result["nodeIds"])
-	if err != nil {
-		return nil, err
-	}
-	doms = []*Dom{}
-	for _, nodeId := range jsonData.Array() {
 		dom := &Dom{
 			baseUrl: obj.baseUrl,
 			webSock: obj.webSock,
-			nodeId:  nodeId.Int(),
-		}
-		if re.Search(`^iframe\W|\Wiframe\W|\Wiframe$|^iframe$`, selector) != nil {
-			if err = dom.frame2Dom(ctx); err != nil {
-				return nil, err
-			}
+			nodeId:  int64(nodeId),
+			ele:     ele,
 		}
 		doms = append(doms, dom)
 	}
-	return doms, nil
-}
-func (obj *Page) Focus(ctx context.Context, nodeId int64) error {
-	_, err := obj.webSock.DOMFocus(ctx, nodeId)
-	return err
-}
-func (obj *Page) sendChar(ctx context.Context, chr rune) error {
-	_, err := obj.webSock.InputDispatchKeyEvent(ctx, cdp.DispatchKeyEventOption{
-		Type: "keyDown",
-		Key:  "Unidentified",
-	})
-	if err != nil {
-		return err
-	}
-	_, err = obj.webSock.InputDispatchKeyEvent(ctx, cdp.DispatchKeyEventOption{
-		Type:           "keyDown",
-		Key:            "Unidentified",
-		Text:           string(chr),
-		UnmodifiedText: string(chr),
-	})
-	if err != nil {
-		return err
-	}
-	_, err = obj.webSock.InputDispatchKeyEvent(ctx, cdp.DispatchKeyEventOption{
-		Type: "keyUp",
-		Key:  "Unidentified",
-	})
-	return err
-}
-func (obj *Page) SendText(ctx context.Context, nodeId int64, text string) error {
-	err := obj.Focus(ctx, nodeId)
-	if err != nil {
-		return err
-	}
-	for _, chr := range text {
-		err = obj.sendChar(ctx, chr)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+	return doms, err
 }
 
 // 移动操作
@@ -889,14 +737,14 @@ func (obj *Page) GetCookies(ctx context.Context, urls ...string) (cdp.Cookies, e
 	if err != nil {
 		return nil, err
 	}
-	jsonData, err := bson.Decode(rs.Result)
+	jsonData, err := gson.Decode(rs.Result)
 	if err != nil {
 		return nil, err
 	}
 	result := []cdp.Cookie{}
 	for _, cookie := range jsonData.Get("cookies").Array() {
 		var cook cdp.Cookie
-		if _, err = bson.Decode(cookie.Raw, &cook); err != nil {
+		if _, err = gson.Decode(cookie.Raw, &cook); err != nil {
 			return result, err
 		}
 		result = append(result, cook)

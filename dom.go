@@ -4,85 +4,28 @@ import (
 	"context"
 	"errors"
 
-	"gitee.com/baixudong/bson"
+	"gitee.com/baixudong/bs4"
 	"gitee.com/baixudong/cdp"
+	"gitee.com/baixudong/gson"
 )
 
 type Dom struct {
-	baseUrl  string
-	webSock  *cdp.WebSock
-	nodeId   int64
-	isIframe bool
+	baseUrl string
+	webSock *cdp.WebSock
+	nodeId  int64
+	ele     *bs4.Client
 }
 
-func (obj *Page) getFrameHtml(ctx context.Context, frameId string) (string, error) {
-	rs, err := obj.webSock.DOMGetFrameOwner(ctx, frameId)
-	if err != nil {
-		return "", err
-	}
-	jsonData, err := bson.Decode(rs.Result)
-	if err != nil {
-		return "", err
-	}
-	if !jsonData.Get("backendNodeId").Exists() {
-		return "", errors.New("not fuond backendNodeId")
-	}
-	backendNodeId := jsonData.Get("backendNodeId").Int()
-	rs, err = obj.webSock.DOMDescribeNode(ctx, 0, backendNodeId)
-	if err != nil {
-		return "", err
-	}
-	if jsonData, err = bson.Decode(rs.Result); err != nil {
-		return "", err
-	}
-	if !jsonData.Get("node.contentDocument.backendNodeId").Exists() {
-		return "", errors.New("not fuond backendNodeId")
-	}
-	backendNodeId = jsonData.Get("node.contentDocument.backendNodeId").Int()
-	rs, err = obj.webSock.DOMGetOuterHTML(ctx, 0, backendNodeId)
-	return rs.Result["outerHTML"].(string), err
-}
-
-func (obj *Dom) frame2Dom(ctx context.Context) error {
-	rs, err := obj.webSock.DOMDescribeNode(ctx, obj.nodeId, 0)
-	if err != nil {
-		return err
-	}
-	jsonData, err := bson.Decode(rs.Result)
-	if err != nil {
-		return err
-	}
-	var backendNodeId int64
-	if jsonData.Get("node.contentDocument.backendNodeId").Exists() {
-		backendNodeId = jsonData.Get("node.contentDocument.backendNodeId").Int()
-	} else {
-		obj.isIframe = true
-		return nil
-	}
-	rs, err = obj.webSock.DOMResolveNode(ctx, backendNodeId)
-	if err != nil {
-		return err
-	}
-	if jsonData, err = bson.Decode(rs.Result); err != nil {
-		return err
-	}
-	objectId := jsonData.Get("object.objectId").String()
-	rs, err = obj.webSock.DOMRequestNode(ctx, objectId)
-	if err != nil {
-		return err
-	}
-	if jsonData, err = bson.Decode(rs.Result); err != nil {
-		return err
-	}
-	obj.nodeId = jsonData.Get("nodeId").Int()
-	return err
-}
 func (obj *Dom) Rect(ctx context.Context) (cdp.Rect, error) {
 	rs, err := obj.webSock.DOMGetBoxModel(ctx, obj.nodeId)
 	if err != nil {
 		return cdp.Rect{}, err
 	}
-	jsonData, err := bson.Decode(rs.Result["model"])
+	model, ok := rs.Result["model"]
+	if !ok {
+		return cdp.Rect{}, errors.New("not rect")
+	}
+	jsonData, err := gson.Decode(model)
 	if err != nil {
 		return cdp.Rect{}, err
 	}
@@ -101,4 +44,49 @@ func (obj *Dom) Rect(ctx context.Context) (cdp.Rect, error) {
 func (obj *Dom) Show(ctx context.Context) error {
 	_, err := obj.webSock.DOMScrollIntoViewIfNeeded(ctx, obj.nodeId)
 	return err
+}
+
+func (obj *Dom) String() string {
+	return obj.ele.String()
+}
+
+func (obj *Dom) Focus(ctx context.Context) error {
+	_, err := obj.webSock.DOMFocus(ctx, obj.nodeId)
+	return err
+}
+func (obj *Dom) sendChar(ctx context.Context, chr rune) error {
+	_, err := obj.webSock.InputDispatchKeyEvent(ctx, cdp.DispatchKeyEventOption{
+		Type: "keyDown",
+		Key:  "Unidentified",
+	})
+	if err != nil {
+		return err
+	}
+	_, err = obj.webSock.InputDispatchKeyEvent(ctx, cdp.DispatchKeyEventOption{
+		Type:           "keyDown",
+		Key:            "Unidentified",
+		Text:           string(chr),
+		UnmodifiedText: string(chr),
+	})
+	if err != nil {
+		return err
+	}
+	_, err = obj.webSock.InputDispatchKeyEvent(ctx, cdp.DispatchKeyEventOption{
+		Type: "keyUp",
+		Key:  "Unidentified",
+	})
+	return err
+}
+func (obj *Dom) SendText(ctx context.Context, text string) error {
+	err := obj.Focus(ctx)
+	if err != nil {
+		return err
+	}
+	for _, chr := range text {
+		err = obj.sendChar(ctx, chr)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
