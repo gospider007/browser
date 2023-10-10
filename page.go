@@ -36,23 +36,61 @@ type Page struct {
 	webSock          *cdp.WebSock
 	stealth          bool
 	isReplaceRequest bool
-	pageAfterTime    *time.Timer
-	domAfterTime     *time.Timer
 
-	pageLoadId int64
-	pageStop   bool
-	domLoad    bool
-	iframes    map[string]string
+	pageLoadId     int64
+	pageStop       bool
+	domLoad        bool
+	loadNotices    chan struct{}
+	stopNotices    chan struct{}
+	networkNotices chan struct{}
+
+	requestFunc  func(context.Context, *cdp.Route)
+	responseFunc func(context.Context, *cdp.Route)
+
+	iframes map[string]string
 }
 
 func defaultRequestFunc(ctx context.Context, r *cdp.Route) { r.RequestContinue(ctx) }
+func (obj *Page) delStopNotice() {
+	select {
+	case <-obj.stopNotices:
+	default:
+	}
+	select {
+	case <-obj.loadNotices:
+	default:
+	}
+}
+func (obj *Page) delLoadNotice() {
+	select {
+	case <-obj.loadNotices:
+	default:
+	}
+}
+func (obj *Page) addStopNotice() {
+	select {
+	case obj.stopNotices <- struct{}{}:
+	default:
+	}
+	select {
+	case obj.loadNotices <- struct{}{}:
+	default:
+	}
+}
+func (obj *Page) addLoadNotice() {
+	select {
+	case obj.loadNotices <- struct{}{}:
+	default:
+	}
+}
 func (obj *Page) pageStartLoadMain(ctx context.Context, rd cdp.RecvData) {
 	if obj.id == rd.Params["frameId"].(string) {
 		if rd.Id > obj.pageLoadId {
 			obj.pageLoadId = rd.Id
 			obj.domLoad = false
 			obj.pageStop = false
-			obj.iframes = make(map[string]string)
+			clear(obj.iframes)
+			obj.delStopNotice()
 		}
 	}
 }
@@ -62,12 +100,13 @@ func (obj *Page) pageEndLoadMain(ctx context.Context, rd cdp.RecvData) {
 			obj.pageLoadId = rd.Id
 			obj.domLoad = true
 			obj.pageStop = true
+			obj.addStopNotice()
 		}
 	}
 }
-
 func (obj *Page) domLoadMain(ctx context.Context, rd cdp.RecvData) {
 	obj.domLoad = true
+	obj.addLoadNotice()
 }
 func (obj *Page) frameLoadMain(ctx context.Context, rd cdp.RecvData) {
 	jsonData, err := gson.Decode(rd.Params)
@@ -78,6 +117,36 @@ func (obj *Page) frameLoadMain(ctx context.Context, rd cdp.RecvData) {
 	frameId := jsonData.Get("frame.id").String()
 	if href != "" && frameId != "" {
 		obj.iframes[href] = frameId
+	}
+}
+func (obj *Page) routeMain(ctx context.Context, rd cdp.RecvData) {
+	routeData := cdp.RouteData{}
+	temData, err := json.Marshal(rd.Params)
+	if err == nil && json.Unmarshal(temData, &routeData) == nil {
+		route := cdp.NewRoute(obj.webSock, routeData)
+		if route.IsResponse() {
+			if obj.responseFunc != nil {
+				obj.responseFunc(ctx, route)
+				if !route.Used() {
+					route.Continue(ctx)
+				}
+			} else {
+				route.Continue(ctx)
+			}
+		} else {
+			if obj.requestFunc != nil {
+				obj.requestFunc(ctx, route)
+				if !route.Used() {
+					if obj.isReplaceRequest {
+						route.RequestContinue(ctx)
+					} else {
+						route.Continue(ctx)
+					}
+				}
+			} else {
+				route.Continue(ctx)
+			}
+		}
 	}
 }
 
@@ -95,8 +164,7 @@ func (obj *Page) init(globalReqCli *requests.Client, option PageOption, db *db.C
 		globalReqCli,
 		fmt.Sprintf("ws://%s:%d/devtools/page/%s", obj.host, obj.port, obj.id),
 		cdp.WebSockOption{
-			IsReplaceRequest: obj.isReplaceRequest,
-			Proxy:            option.Proxy,
+			Proxy: option.Proxy,
 		},
 		db,
 	); err != nil {
@@ -106,6 +174,7 @@ func (obj *Page) init(globalReqCli *requests.Client, option PageOption, db *db.C
 	obj.addEvent("Page.frameStoppedLoading", obj.pageEndLoadMain)
 	obj.addEvent("Page.domContentEventFired", obj.domLoadMain)
 	obj.addEvent("Page.frameNavigated", obj.frameLoadMain)
+	obj.addEvent("Fetch.requestPaused", obj.routeMain)
 	if _, err = obj.webSock.PageEnable(obj.ctx); err != nil {
 		return err
 	}
@@ -288,67 +357,53 @@ func (obj *Page) Reload(ctx context.Context) error {
 	_, err := obj.webSock.PageReload(ctx)
 	return err
 }
-func (obj *Page) WaitPageStop(preCtx context.Context, waits ...time.Duration) error {
-	var wait time.Duration
-	if len(waits) > 0 {
-		wait = waits[0]
-	} else {
-		wait = time.Second * 2
-	}
+func (obj *Page) WaitPageStop(preCtx context.Context, timeout ...time.Duration) error {
 	var ctx context.Context
 	var cnl context.CancelFunc
 	if preCtx == nil {
-		ctx, cnl = context.WithTimeout(obj.ctx, time.Second*60)
+		preCtx = obj.ctx
+	}
+	if len(timeout) > 0 {
+		ctx, cnl = context.WithTimeout(preCtx, timeout[0])
 	} else {
-		ctx, cnl = context.WithTimeout(preCtx, time.Second*60)
+		ctx, cnl = context.WithCancel(preCtx)
 	}
 	defer cnl()
 	for {
-		if obj.pageAfterTime == nil {
-			obj.pageAfterTime = time.NewTimer(wait)
-		} else {
-			obj.pageAfterTime.Reset(wait)
-		}
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-obj.ctx.Done():
 			return obj.ctx.Err()
-		case <-obj.pageAfterTime.C:
+		case <-obj.stopNotices:
 			if obj.pageStop {
+				obj.addStopNotice()
 				return nil
 			}
 		}
 	}
 }
-func (obj *Page) WaitDomLoad(preCtx context.Context, waits ...time.Duration) error {
-	var wait time.Duration
-	if len(waits) > 0 {
-		wait = waits[0]
-	} else {
-		wait = time.Second * 2
-	}
+func (obj *Page) WaitDomLoad(preCtx context.Context, timeout ...time.Duration) error {
 	var ctx context.Context
 	var cnl context.CancelFunc
 	if preCtx == nil {
-		ctx, cnl = context.WithTimeout(obj.ctx, time.Second*60)
+		preCtx = obj.ctx
+	}
+	if len(timeout) > 0 {
+		ctx, cnl = context.WithTimeout(preCtx, timeout[0])
 	} else {
-		ctx, cnl = context.WithTimeout(preCtx, time.Second*60)
+		ctx, cnl = context.WithCancel(preCtx)
 	}
 	defer cnl()
 	for {
-		if obj.domAfterTime == nil {
-			obj.domAfterTime = time.NewTimer(wait)
-		} else {
-			obj.domAfterTime.Reset(wait)
-		}
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-obj.ctx.Done():
 			return obj.ctx.Err()
-		case <-obj.domAfterTime.C:
+		case <-obj.loadNotices:
 			if obj.domLoad {
+				obj.addLoadNotice()
 				return nil
 			}
 		}
@@ -378,20 +433,12 @@ func (obj *Page) Eval(ctx context.Context, expression string, params map[string]
 	return gson.Decode(rs.Result)
 }
 func (obj *Page) Close() error {
-	defer func() {
-		if obj.pageAfterTime != nil {
-			obj.pageAfterTime.Stop()
-		}
-		if obj.domAfterTime != nil {
-			obj.domAfterTime.Stop()
-		}
-	}()
-	defer obj.cnl()
 	_, err := obj.preWebSock.TargetCloseTarget(obj.id)
 	if err != nil {
 		err = obj.close()
 	}
 	obj.webSock.Close(nil)
+	obj.cnl()
 	return err
 }
 func (obj *Page) close() error {
@@ -410,26 +457,26 @@ func (obj *Page) Done() <-chan struct{} {
 }
 func (obj *Page) Request(ctx context.Context, RequestFunc func(context.Context, *cdp.Route)) error {
 	if RequestFunc != nil {
-		obj.webSock.RequestFunc = RequestFunc
+		obj.requestFunc = RequestFunc
 	} else if obj.isReplaceRequest {
-		obj.webSock.RequestFunc = defaultRequestFunc
+		obj.requestFunc = defaultRequestFunc
 	} else {
-		obj.webSock.RequestFunc = nil
+		obj.requestFunc = nil
 	}
 	var err error
-	if obj.webSock.RequestFunc != nil {
+	if obj.requestFunc != nil {
 		_, err = obj.webSock.FetchRequestEnable(ctx)
-	} else if obj.webSock.ResponseFunc == nil {
+	} else if obj.responseFunc == nil {
 		_, err = obj.webSock.FetchDisable(ctx)
 	}
 	return err
 }
 func (obj *Page) Response(ctx context.Context, ResponseFunc func(context.Context, *cdp.Route)) error {
-	obj.webSock.ResponseFunc = ResponseFunc
+	obj.responseFunc = ResponseFunc
 	var err error
-	if obj.webSock.ResponseFunc != nil {
+	if obj.responseFunc != nil {
 		_, err = obj.webSock.FetchResponseEnable(ctx)
-	} else if obj.webSock.RequestFunc == nil {
+	} else if obj.requestFunc == nil {
 		_, err = obj.webSock.FetchDisable(ctx)
 	}
 	return err
@@ -744,7 +791,7 @@ func (obj *Page) GetCookies(ctx context.Context, urls ...string) (cdp.Cookies, e
 	result := []cdp.Cookie{}
 	for _, cookie := range jsonData.Get("cookies").Array() {
 		var cook cdp.Cookie
-		if _, err = gson.Decode(cookie.Raw, &cook); err != nil {
+		if _, err = gson.Decode(cookie.Raw(), &cook); err != nil {
 			return result, err
 		}
 		result = append(result, cook)

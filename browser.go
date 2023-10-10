@@ -216,7 +216,6 @@ var chromeArgs = []string{
 
 	"--disable-extensions",            //禁用所有扩展程序，这可以降低Chrome对内存的占用。
 	"--disable-plugins",               //禁用所有已安装的Chrome浏览器插件。
-	"--process-per-site",              //为每个站点启动一个新的进程，这可以防止内存泄漏，并降低同一进程中多个标签页的内存占用。
 	"--disable-dev-shm-usage",         //禁用Chrome在/dev/shm文件系统中分配的共享内存，这可以减少Chrome进程的内存占用。
 	"--fast-start",                    //启用快速启动功能，这可以加快Chrome的启动速度。
 	"--disable-hardware-acceleration", //禁用硬件加速功能，这可以在某些旧的计算机和旧的显卡上降低Chrome的资源消耗，但可能会影响一些图形性能和视频播放。
@@ -224,7 +223,9 @@ var chromeArgs = []string{
 	"--disable-background-networking", // 禁用Chrome的后台网络请求，可以降低Chrome对内存的占用。
 	"--browser-test",                  //启用浏览器测试模式，这可以对Chrome进行优化以实现更低的内存占用率。
 	"--disable-gpu",                   //禁用硬件加速功能，这可以降低一些GPU相关任务的CPU占用，但可能降低图形性能和视频播放能力。
+	"--process-per-site",              //为每个站点启动一个新的进程，这可以防止内存泄漏，并降低同一进程中多个标签页的内存占用。
 	"--process-per-tab",               //为每个标签页启动一个新的进程，这可以有效防止内存泄漏，并大幅度降低Chrome进程的内存占用。
+	"--multi-profiles",                //启用多个用户配置文件。这将允许您在同一实例中打开多个独立的标签页，每个标签页都有自己的用户配置文件。
 	"--no-pings",                      //禁用 ping。
 	"--no-zygote",                     //禁用 zygote 进程。
 
@@ -246,7 +247,7 @@ var chromeArgs = []string{
 	"--prerender-from-omnibox=disabled",           //用于禁用从地址栏预渲染页面
 
 	"--enable-features=NetworkService,NetworkServiceInProcess",
-	"--disable-features=WebRtcHideLocalIpsWithMdns,EnablePasswordsAccountStorage,FlashDeprecationWarning,UserAgentClientHint,AutoUpdate,site-per-process,Profiles,EasyBakeWebBundler,MultipleCompositingThreads,AudioServiceOutOfProcess,TranslateUI,BackgroundSync,ClientHints,NetworkQualityEstimator,PasswordGeneration,PrefetchPrivacyChanges,TabHoverCards,ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate", // 禁用一些 Chrome 功能。
+	"--disable-features=WebRtcHideLocalIpsWithMdns,EnablePasswordsAccountStorage,FlashDeprecationWarning,UserAgentClientHint,AutoUpdate,site-per-process,Profiles,EasyBakeWebBundler,MultipleCompositingThreads,AudioServiceOutOfProcess,TranslateUI,BackgroundSync,ClientHints,NetworkQualityEstimator,PasswordGeneration,PrefetchPrivacyChanges,TabHoverCards,ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,TabFreezing,TabDiscarding", // 禁用一些 Chrome 功能。
 
 	"--disable-field-trial-config", //禁用实验室配置，在禁用情况下，不会向远程服务器报告任何配置或默认设置。
 	"--disable-back-forward-cache", //禁用后退/前进缓存。
@@ -281,11 +282,9 @@ var chromeArgs = []string{
 	"--enable-webrtc-stun-origin=false",                               //用于禁用WebRTC的STUN源，而
 	"--enforce-webrtc-ip-permission-check=false",                      //用于禁用WebRTC的IP权限检查。
 
-	"--disable-session-crashed-bubble", //禁用会话崩溃气泡。
-	"--disable-renderer-backgrounding", //禁用渲染器后台化。
-	"--font-render-hinting=none",       //禁用字体渲染提示
-	"--disable-logging",                //禁用日志记录。
-
+	"--disable-session-crashed-bubble",                     //禁用会话崩溃气泡。
+	"--font-render-hinting=none",                           //禁用字体渲染提示
+	"--disable-logging",                                    //禁用日志记录。
 	"--disable-partial-raster",                             //禁用部分光栅化
 	"--disable-component-extensions-with-background-pages", //禁用具有后台页面的组件扩展。
 	"--disable-translate",                                  //禁用翻译。
@@ -293,10 +292,14 @@ var chromeArgs = []string{
 	"--disable-image-animation-resync",                     //禁用图像动画重新
 	"--use-gl=swiftshader",                                 //可以在不支持硬件加速的系统或设备上提供基本的图形渲染功能。
 	"--window-position=0,0",                                //窗口起始位置
-
+	"--disable-remote-fonts",                               //禁用远程字体加载。这个参数可以防止Chrome从远程服务器加载字体，从而减少与服务器的连接，增强隐私。
+	"--disable-geolocation",                                //禁用地理位置定位功能。这个参数可以防止Chrome获取您的地理位置信息，增强隐私。
+	"--disable-media-stream",                               //禁用媒体流功能。这个参数可以防止Chrome访问您的摄像头和麦克风，增强隐私。
+	"--disable-preconnect",                                 //禁用预连接。预连接是一种优化技术，可以在您点击链接之前预先建立与目标服务器的连接，以加快页面加载速度。禁用预连接可以减少被追踪的可能性。
 	"--force-color-profile=srgb",
-	"--disable-background-mode", // 禁用后台模式。
-	"--disable-web-security",    //关闭同源策略，抖音需要
+	"--disable-background-mode",        // 禁用后台模式。
+	"--disable-renderer-backgrounding", //禁用渲染器后台化。,反爬用到
+	"--disable-web-security",           //关闭同源策略，抖音需要
 }
 
 func downChrome(preCtx context.Context, chromeDir, chromeDownUrl string) error {
@@ -554,6 +557,10 @@ func (obj *Client) NewPage(preCtx context.Context, options ...PageOption) (*Page
 		globalReqCli:     obj.globalReqCli,
 		stealth:          obj.stealth,
 		isReplaceRequest: isReplaceRequest,
+		loadNotices:      make(chan struct{}, 1),
+		stopNotices:      make(chan struct{}, 1),
+		networkNotices:   make(chan struct{}, 1),
+		iframes:          make(map[string]string),
 	}
 	if err = page.init(obj.globalReqCli, option, obj.db); err != nil {
 		return nil, err
