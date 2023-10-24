@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"gitee.com/baixudong/bs4"
-	"gitee.com/baixudong/cdp"
-	"gitee.com/baixudong/gson"
+	"github.com/gospider007/bs4"
+	"github.com/gospider007/cdp"
+	"github.com/gospider007/gson"
 )
 
 type Dom struct {

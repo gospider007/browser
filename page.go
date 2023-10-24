@@ -11,13 +11,13 @@ import (
 	"strings"
 	"time"
 
-	"gitee.com/baixudong/bs4"
-	"gitee.com/baixudong/cdp"
-	"gitee.com/baixudong/db"
-	"gitee.com/baixudong/gson"
-	"gitee.com/baixudong/re"
-	"gitee.com/baixudong/requests"
-	"gitee.com/baixudong/tools"
+	"github.com/gospider007/bs4"
+	"github.com/gospider007/cdp"
+	"github.com/gospider007/db"
+	"github.com/gospider007/gson"
+	"github.com/gospider007/re"
+	"github.com/gospider007/requests"
+	"github.com/gospider007/tools"
 )
 
 type Page struct {

@@ -7,10 +7,10 @@ import (
 	"os"
 	"strings"
 
-	"gitee.com/baixudong/cdp"
-	"gitee.com/baixudong/gson"
-	"gitee.com/baixudong/re"
-	"gitee.com/baixudong/tools"
+	"github.com/gospider007/cdp"
+	"github.com/gospider007/gson"
+	"github.com/gospider007/re"
+	"github.com/gospider007/tools"
 )
 
 //go:embed devices.json

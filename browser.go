@@ -18,14 +18,15 @@ import (
 	"sync"
 	"time"
 
-	"gitee.com/baixudong/cdp"
-	"gitee.com/baixudong/cmd"
-	"gitee.com/baixudong/conf"
-	"gitee.com/baixudong/db"
-	"gitee.com/baixudong/proxy"
-	"gitee.com/baixudong/re"
-	"gitee.com/baixudong/requests"
-	"gitee.com/baixudong/tools"
+	"github.com/gospider007/cdp"
+	"github.com/gospider007/cmd"
+	"github.com/gospider007/conf"
+	"github.com/gospider007/db"
+	"github.com/gospider007/gtls"
+	"github.com/gospider007/proxy"
+	"github.com/gospider007/re"
+	"github.com/gospider007/requests"
+	"github.com/gospider007/tools"
 )
 
 type Client struct {
@@ -402,7 +403,7 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 		return client, err
 	}
 	var proxyHost string
-	for _, addr := range requests.GetHosts(4) {
+	for _, addr := range gtls.GetHosts(4) {
 		if addr.IsGlobalUnicast() {
 			proxyHost = addr.String()
 			break
