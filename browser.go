@@ -21,12 +21,12 @@ import (
 	"github.com/gospider007/cdp"
 	"github.com/gospider007/cmd"
 	"github.com/gospider007/conf"
-	"github.com/gospider007/db"
 	"github.com/gospider007/gtls"
 	"github.com/gospider007/proxy"
 	"github.com/gospider007/re"
 	"github.com/gospider007/requests"
 	"github.com/gospider007/tools"
+	"golang.org/x/exp/slices"
 )
 
 type Client struct {
@@ -34,7 +34,6 @@ type Client struct {
 	proxyClient      *proxy.Client
 	proxy            string
 	getProxy         func(ctx context.Context, url *url.URL) (string, error)
-	db               *db.Client
 	cmdCli           *cmd.Client
 	globalReqCli     *requests.Client
 	port             int
@@ -46,7 +45,6 @@ type Client struct {
 	stealth          bool //是否开启随机指纹
 }
 type ClientOption struct {
-	DbOption   db.ClientOption
 	ChromePath string   //chrome浏览器执行路径
 	Host       string   //连接host
 	Port       int      //连接port
@@ -174,7 +172,11 @@ func runChrome(ctx context.Context, option *ClientOption) (*cmd.Client, bool, er
 	args = append(args, fmt.Sprintf(`--user-data-dir=%s`, option.UserDir))
 	args = append(args, fmt.Sprintf("--remote-debugging-port=%d", option.Port))
 	args = append(args, fmt.Sprintf("--window-size=%d,%d", option.Width, option.Height))
-	args = append(args, option.Args...)
+	for _, arg := range option.Args {
+		if !slices.Contains(args, arg) {
+			args = append(args, arg)
+		}
+	}
 	var closeCallBack func()
 	if isDelDir {
 		closeCallBack = func() {
@@ -392,12 +394,6 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 		globalReqCli:     globalReqCli,
 		stealth:          option.Stealth,
 	}
-	if option.DbOption.Dir != "" || option.DbOption.Ttl != 0 {
-		if client.db, err = db.NewClient(option.DbOption); err != nil {
-			return nil, err
-		}
-		client.isReplaceRequest = true
-	}
 	go tools.Signal(ctx, client.Close)
 	if err = client.init(); err != nil {
 		return client, err
@@ -486,7 +482,6 @@ func (obj *Client) init() (err error) {
 		obj.globalReqCli,
 		fmt.Sprintf("ws://%s:%d/devtools/browser/%s", obj.host, obj.port, browWsRs.Group(1)),
 		cdp.WebSockOption{},
-		obj.db,
 	)
 	return err
 }
@@ -514,9 +509,6 @@ func (obj *Client) Close() {
 	}
 	if obj.cmdCli != nil {
 		obj.cmdCli.Close()
-	}
-	if obj.db != nil {
-		obj.db.Close()
 	}
 	obj.cnl()
 }
@@ -563,7 +555,7 @@ func (obj *Client) NewPage(preCtx context.Context, options ...PageOption) (*Page
 		networkNotices:   make(chan struct{}, 1),
 		iframes:          make(map[string]string),
 	}
-	if err = page.init(obj.globalReqCli, option, obj.db); err != nil {
+	if err = page.init(obj.globalReqCli, option); err != nil {
 		return nil, err
 	}
 	if isReplaceRequest {

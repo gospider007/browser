@@ -9,11 +9,11 @@ import (
 	uurl "net/url"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/gospider007/bs4"
 	"github.com/gospider007/cdp"
-	"github.com/gospider007/db"
 	"github.com/gospider007/gson"
 	"github.com/gospider007/re"
 	"github.com/gospider007/requests"
@@ -37,12 +37,13 @@ type Page struct {
 	stealth          bool
 	isReplaceRequest bool
 
-	pageLoadId     int64
-	pageStop       bool
-	domLoad        bool
-	loadNotices    chan struct{}
-	stopNotices    chan struct{}
-	networkNotices chan struct{}
+	pageLoadId         int64
+	pageStop           bool
+	domLoad            bool
+	loadNotices        chan struct{}
+	stopNotices        chan struct{}
+	networkNotices     chan struct{}
+	networkNoticesSize atomic.Int64
 
 	requestFunc  func(context.Context, *cdp.Route)
 	responseFunc func(context.Context, *cdp.Route)
@@ -72,14 +73,18 @@ func (obj *Page) addStopNotice() {
 	case obj.stopNotices <- struct{}{}:
 	default:
 	}
-	select {
-	case obj.loadNotices <- struct{}{}:
-	default:
-	}
+	obj.addLoadNotice()
 }
 func (obj *Page) addLoadNotice() {
 	select {
 	case obj.loadNotices <- struct{}{}:
+	default:
+	}
+	obj.addNetworkNotice()
+}
+func (obj *Page) addNetworkNotice() {
+	select {
+	case obj.networkNotices <- struct{}{}:
 	default:
 	}
 }
@@ -120,9 +125,13 @@ func (obj *Page) frameLoadMain(ctx context.Context, rd cdp.RecvData) {
 	}
 }
 func (obj *Page) routeMain(ctx context.Context, rd cdp.RecvData) {
+	obj.networkNoticesSize.Add(1)
+	defer func() {
+		obj.networkNoticesSize.Add(-1)
+		obj.addNetworkNotice()
+	}()
 	routeData := cdp.RouteData{}
-	temData, err := json.Marshal(rd.Params)
-	if err == nil && json.Unmarshal(temData, &routeData) == nil {
+	if _, err := gson.Decode(rd.Params, &routeData); err == nil {
 		route := cdp.NewRoute(obj.webSock, routeData)
 		if route.IsResponse() {
 			if obj.responseFunc != nil {
@@ -134,7 +143,11 @@ func (obj *Page) routeMain(ctx context.Context, rd cdp.RecvData) {
 				route.Continue(ctx)
 			}
 		} else {
-			if obj.requestFunc != nil {
+			if strings.HasSuffix(route.Url(), "/favicon.ico") {
+				route.FulFill(ctx, cdp.FulData{
+					StatusCode: 404,
+				})
+			} else if obj.requestFunc != nil {
 				obj.requestFunc(ctx, route)
 				if !route.Used() {
 					if obj.isReplaceRequest {
@@ -157,7 +170,7 @@ func (obj *Page) addEvent(method string, fun func(ctx context.Context, rd cdp.Re
 //go:embed stealthRaw.js
 var stealthRaw string
 
-func (obj *Page) init(globalReqCli *requests.Client, option PageOption, db *db.Client) error {
+func (obj *Page) init(globalReqCli *requests.Client, option PageOption) error {
 	var err error
 	if obj.webSock, err = cdp.NewWebSock(
 		obj.ctx,
@@ -166,7 +179,6 @@ func (obj *Page) init(globalReqCli *requests.Client, option PageOption, db *db.C
 		cdp.WebSockOption{
 			Proxy: option.Proxy,
 		},
-		db,
 	); err != nil {
 		return err
 	}
@@ -407,6 +419,52 @@ func (obj *Page) WaitDomLoad(preCtx context.Context, timeout ...time.Duration) e
 				return nil
 			}
 		}
+	}
+}
+func (obj *Page) WaitNetwork(preCtx context.Context, timeout ...time.Duration) error {
+	var ctx context.Context
+	var cnl context.CancelFunc
+	if preCtx == nil {
+		preCtx = obj.ctx
+	}
+	if len(timeout) > 0 {
+		ctx, cnl = context.WithTimeout(preCtx, timeout[0])
+	} else {
+		ctx, cnl = context.WithCancel(preCtx)
+	}
+	defer cnl()
+	if !obj.isReplaceRequest {
+		obj.isReplaceRequest = true
+		if err := obj.Request(ctx, nil); err != nil {
+			return err
+		}
+	}
+	msT := time.NewTimer(time.Second)
+	defer msT.Stop()
+	var zeroNum int
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-obj.ctx.Done():
+			return obj.ctx.Err()
+		case <-obj.networkNotices:
+			if obj.pageStop && obj.networkNoticesSize.Load() <= 0 {
+				zeroNum++
+			} else {
+				zeroNum = 0
+			}
+		case <-msT.C:
+			if obj.pageStop && obj.networkNoticesSize.Load() <= 0 {
+				zeroNum++
+			} else {
+				zeroNum = 0
+			}
+		}
+		if zeroNum > 1 {
+			return nil
+		}
+		msT.Reset(time.Second)
 	}
 }
 func (obj *Page) GoTo(preCtx context.Context, url string) error {
