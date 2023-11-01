@@ -439,7 +439,10 @@ func (obj *Page) WaitNetwork(preCtx context.Context, timeout ...time.Duration) e
 			return err
 		}
 	}
-	msT := time.NewTimer(time.Second)
+	msTime := time.Millisecond * 1500
+	basTime := time.Millisecond * 300
+	msN := int(msTime/basTime) + 1
+	msT := time.NewTimer(basTime)
 	defer msT.Stop()
 	var zeroNum int
 	for {
@@ -461,10 +464,10 @@ func (obj *Page) WaitNetwork(preCtx context.Context, timeout ...time.Duration) e
 				zeroNum = 0
 			}
 		}
-		if zeroNum > 1 {
+		if zeroNum > msN {
 			return nil
 		}
-		msT.Reset(time.Second)
+		msT.Reset(basTime)
 	}
 }
 func (obj *Page) GoTo(preCtx context.Context, url string) error {

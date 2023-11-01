@@ -53,6 +53,8 @@ github.com/gospider007/re v0.0.0-20231024115818-adfd03636256 h1:Z6kHRANoWB+/4rDz
 github.com/gospider007/re v0.0.0-20231024115818-adfd03636256/go.mod h1:X58uk0/F3mVskuQOZng0ZKJiAt3ETn0wxuLN//rVZrE=
 github.com/gospider007/requests v0.0.0-20231029025248-ed78b8c6cd82 h1:Ms+1IWFF2qtJddgdDHxFAtFpARYU4mAf//vLXgvbVbc=
 github.com/gospider007/requests v0.0.0-20231029025248-ed78b8c6cd82/go.mod h1:y8d5yKQShHBYfx54IwD58qMdxz7s8uNrJPnde+w8nlQ=
+github.com/gospider007/requests v0.0.0-20231101061514-e4b76326ca51 h1:+d0OAY9jG+mEhpL8OG6NhY4L9GgLwRUtiLQfVfymnZ8=
+github.com/gospider007/requests v0.0.0-20231101061514-e4b76326ca51/go.mod h1:8FGWC7bEZx2gTm6Ip9O0Q4oOhpuYY3CYqcuVAB1Ml0o=
 github.com/gospider007/tools v0.0.0-20231024115950-be51fa815fcd h1:UH2D7tgAmzr9gbtuC46L5bggrDw1/MXq/1YYdN2l+kA=
 github.com/gospider007/tools v0.0.0-20231024115950-be51fa815fcd/go.mod h1:U7MVsYWYQPXIOfXja0g/OK7rG67QIRypXfD+VPsQeiw=
 github.com/gospider007/websocket v0.0.0-20231024120029-ac3d4bf72f42 h1:WeR+cv6ru53SkOt/+O7urqK5L/dLIEtTERoM9BqWjqs=
@@ -85,6 +87,8 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/quic-go/quic-go v0.39.3 h1:o3YB6t2SR+HU/pgwF29kJ6g4jJIJEwEZ8CKia1h1TKg=
 github.com/quic-go/quic-go v0.39.3/go.mod h1:T09QsDQWjLiQ74ZmacDfqZmhY/NLnw5BC40MANNNZ1Q=
+github.com/quic-go/quic-go v0.40.0 h1:GYd1iznlKm7dpHD7pOVpUvItgMPo/jrMgDWZhMCecqw=
+github.com/quic-go/quic-go v0.40.0/go.mod h1:PeN7kuVJ4xZbxSv/4OX6S1USOX8MJvydwpTx31vx60c=
 github.com/refraction-networking/utls v1.5.4 h1:9k6EO2b8TaOGsQ7Pl7p9w6PUhx18/ZCeT0WNTZ7Uw4o=
 github.com/refraction-networking/utls v1.5.4/go.mod h1:SPuDbBmgLGp8s+HLNc83FuavwZCFoMmExj+ltUHiHUw=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
