@@ -41,8 +41,8 @@ type Client struct {
 	ctx              context.Context
 	cnl              context.CancelFunc
 	webSock          *cdp.WebSock
-	headless         bool
-	stealth          bool //是否开启随机指纹
+	// headless         bool
+	stealth bool //是否开启随机指纹
 }
 type ClientOption struct {
 	ChromePath string   //chrome浏览器执行路径
@@ -217,18 +217,13 @@ var chromeArgs = []string{
 	"--ignore-ssl-errors=true", //忽略 SSL 错误。
 	"--disable-setuid-sandbox", //重要headless
 
-	"--disable-extensions",            //禁用所有扩展程序，这可以降低Chrome对内存的占用。
-	"--disable-plugins",               //禁用所有已安装的Chrome浏览器插件。
-	"--disable-dev-shm-usage",         //禁用Chrome在/dev/shm文件系统中分配的共享内存，这可以减少Chrome进程的内存占用。
-	"--fast-start",                    //启用快速启动功能，这可以加快Chrome的启动速度。
-	"--disable-hardware-acceleration", //禁用硬件加速功能，这可以在某些旧的计算机和旧的显卡上降低Chrome的资源消耗，但可能会影响一些图形性能和视频播放。
+	"--disable-extensions", //禁用所有扩展程序，这可以降低Chrome对内存的占用。
+	"--disable-plugins",    //禁用所有已安装的Chrome浏览器插件。
+	"--fast-start",         //启用快速启动功能，这可以加快Chrome的启动速度。
 
 	"--disable-background-networking", // 禁用Chrome的后台网络请求，可以降低Chrome对内存的占用。
 	"--browser-test",                  //启用浏览器测试模式，这可以对Chrome进行优化以实现更低的内存占用率。
 	"--disable-gpu",                   //禁用硬件加速功能，这可以降低一些GPU相关任务的CPU占用，但可能降低图形性能和视频播放能力。
-	"--process-per-site",              //为每个站点启动一个新的进程，这可以防止内存泄漏，并降低同一进程中多个标签页的内存占用。
-	"--process-per-tab",               //为每个标签页启动一个新的进程，这可以有效防止内存泄漏，并大幅度降低Chrome进程的内存占用。
-	"--multi-profiles",                //启用多个用户配置文件。这将允许您在同一实例中打开多个独立的标签页，每个标签页都有自己的用户配置文件。
 	"--no-pings",                      //禁用 ping。
 	"--no-zygote",                     //禁用 zygote 进程。
 
@@ -247,7 +242,6 @@ var chromeArgs = []string{
 	"--enable-async-dns",                          //启用异步 DNS。
 	"--enable-simple-cache-backend",               //启用简单缓存后端
 	"--enable-tcp-fast-open",                      //启用 TCP 快速打开。
-	"--prerender-from-omnibox=disabled",           //用于禁用从地址栏预渲染页面
 
 	"--enable-features=NetworkService,NetworkServiceInProcess",
 	"--disable-features=WebRtcHideLocalIpsWithMdns,EnablePasswordsAccountStorage,FlashDeprecationWarning,UserAgentClientHint,AutoUpdate,site-per-process,Profiles,EasyBakeWebBundler,MultipleCompositingThreads,AudioServiceOutOfProcess,TranslateUI,BackgroundSync,ClientHints,NetworkQualityEstimator,PasswordGeneration,PrefetchPrivacyChanges,TabHoverCards,ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,TabFreezing,TabDiscarding", // 禁用一些 Chrome 功能。
@@ -300,7 +294,9 @@ var chromeArgs = []string{
 	"--disable-media-stream",                               //禁用媒体流功能。这个参数可以防止Chrome访问您的摄像头和麦克风，增强隐私。
 	"--disable-preconnect",                                 //禁用预连接。预连接是一种优化技术，可以在您点击链接之前预先建立与目标服务器的连接，以加快页面加载速度。禁用预连接可以减少被追踪的可能性。
 	"--force-color-profile=srgb",
-	"--disable-background-mode",        // 禁用后台模式。
+	"--disable-dev-shm-usage",          //禁用Chrome在/dev/shm文件系统中分配的共享内存
+	"--disable-background-mode",        // 禁用浏览器后台模式。
+	"--disable-hardware-acceleration",  //禁用硬件加速功能，这可以在某些旧的计算机和旧的显卡上降低Chrome的资源消耗，但可能会影响一些图形性能和视频播放。
 	"--disable-renderer-backgrounding", //禁用渲染器后台化。,反爬用到
 	"--disable-web-security",           //关闭同源策略，抖音需要
 }
@@ -357,6 +353,9 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 			cnl()
 		}
 	}()
+	if runtime.GOOS == "linux" {
+		option.Headless = true
+	}
 	if option.Width == 0 {
 		option.Width = 1200
 	}
@@ -385,7 +384,6 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 		isReplaceRequest: isReplaceRequest,
 		proxy:            option.Proxy,
 		getProxy:         option.GetProxy,
-		headless:         option.Headless,
 		ctx:              ctx,
 		cnl:              cnl,
 		cmdCli:           cli,
@@ -546,7 +544,6 @@ func (obj *Client) NewPage(preCtx context.Context, options ...PageOption) (*Page
 		host:             obj.host,
 		ctx:              ctx,
 		cnl:              cnl,
-		headless:         obj.headless,
 		globalReqCli:     obj.globalReqCli,
 		stealth:          obj.stealth,
 		isReplaceRequest: isReplaceRequest,

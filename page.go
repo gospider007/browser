@@ -30,7 +30,6 @@ type Page struct {
 	cnl          context.CancelFunc
 	preWebSock   *cdp.WebSock
 	globalReqCli *requests.Client
-	headless     bool
 
 	baseUrl          string
 	webSock          *cdp.WebSock
@@ -433,7 +432,7 @@ func (obj *Page) WaitNetwork(preCtx context.Context, timeout ...time.Duration) e
 		ctx, cnl = context.WithCancel(preCtx)
 	}
 	defer cnl()
-	if !obj.isReplaceRequest {
+	if obj.requestFunc == nil && obj.responseFunc == nil {
 		obj.isReplaceRequest = true
 		if err := obj.Request(ctx, nil); err != nil {
 			return err
@@ -498,7 +497,7 @@ func (obj *Page) Close() error {
 	if err != nil {
 		err = obj.close()
 	}
-	obj.webSock.Close(nil)
+	obj.webSock.Close()
 	obj.cnl()
 	return err
 }
