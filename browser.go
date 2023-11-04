@@ -36,27 +36,25 @@ type Client struct {
 	getProxy         func(ctx context.Context, url *url.URL) (string, error)
 	cmdCli           *cmd.Client
 	globalReqCli     *requests.Client
-	port             int
-	host             string
+	addr             string
 	ctx              context.Context
 	cnl              context.CancelFunc
 	webSock          *cdp.WebSock
-	// headless         bool
-	stealth bool //是否开启随机指纹
+	stealth          bool //是否开启随机指纹
 }
 type ClientOption struct {
-	ChromePath string   //chrome浏览器执行路径
-	Host       string   //连接host
-	Port       int      //连接port
-	UserDir    string   //设置用户目录
-	Args       []string //启动参数
-	Headless   bool     //是否使用无头
+	Host       string
+	Port       int
+	ChromePath string   //chrome path
+	UserDir    string   //user dir
+	Args       []string //start args
+	Headless   bool     //is headless
 	UserAgent  string
-	Proxy      string                                                  //代理http,https,socks5,ex: http://127.0.0.1:7005
-	GetProxy   func(ctx context.Context, url *url.URL) (string, error) //代理
-	Width      int64                                                   //浏览器的宽,1200
-	Height     int64                                                   //浏览器的高,605
-	Stealth    bool                                                    //是否开启随机指纹
+	Proxy      string                                                  //support http,https,socks5,ex: http://127.0.0.1:7005
+	GetProxy   func(ctx context.Context, url *url.URL) (string, error) //pr
+	Width      int64                                                   //browser width,1200
+	Height     int64                                                   //browser height,605
+	Stealth    bool                                                    //is stealth
 }
 
 type downClient struct {
@@ -118,35 +116,34 @@ func (obj *downClient) getChromePath(preCtx context.Context) (string, error) {
 	}
 	return chromePath, nil
 }
-func runChrome(ctx context.Context, option *ClientOption) (*cmd.Client, bool, error) {
+func (obj *Client) runChrome(option *ClientOption) error {
 	var err error
-	var isReplaceRequest bool
 	if option.Host == "" {
 		option.Host = "127.0.0.1"
 	}
 	if option.Port == 0 {
 		option.Port, err = tools.FreePort()
 		if err != nil {
-			return nil, isReplaceRequest, err
+			return err
 		}
 	}
 	if option.UserAgent == "" {
 		option.UserAgent = requests.UserAgent
 	}
 	if option.ChromePath == "" {
-		option.ChromePath, err = oneDown.getChromePath(ctx)
+		option.ChromePath, err = oneDown.getChromePath(obj.ctx)
 		if err != nil {
-			return nil, isReplaceRequest, err
+			return err
 		}
 	}
 	if err = verifyEvalPath(option.ChromePath); err != nil {
-		return nil, isReplaceRequest, err
+		return err
 	}
 	var isDelDir bool
 	if option.UserDir == "" {
 		option.UserDir, err = conf.GetTempChromeDirPath()
 		if err != nil {
-			return nil, isReplaceRequest, err
+			return err
 		}
 		isDelDir = true
 	}
@@ -161,12 +158,12 @@ func runChrome(ctx context.Context, option *ClientOption) (*cmd.Client, bool, er
 	if option.Proxy != "" {
 		proxyUrl, err := url.Parse(option.Proxy)
 		if err != nil {
-			return nil, isReplaceRequest, err
+			return err
 		}
 		if proxyUrl.User == nil {
 			args = append(args, fmt.Sprintf(`--proxy-server=%s`, proxyUrl.String()))
 		} else {
-			isReplaceRequest = true
+			obj.isReplaceRequest = true
 		}
 	}
 	args = append(args, fmt.Sprintf(`--user-data-dir=%s`, option.UserDir))
@@ -188,16 +185,16 @@ func runChrome(ctx context.Context, option *ClientOption) (*cmd.Client, bool, er
 			}
 		}
 	}
-	cli, err := cmd.NewClient(ctx, cmd.ClientOption{
+	cli, err := cmd.NewClient(obj.ctx, cmd.ClientOption{
 		Name:          option.ChromePath,
 		Args:          args,
 		CloseCallBack: closeCallBack,
 	})
 	if err != nil {
-		return cli, isReplaceRequest, err
+		return err
 	}
 	go cli.Run()
-	return cli, isReplaceRequest, cli.Err()
+	return cli.Err()
 }
 
 var chromeArgs = []string{
@@ -347,21 +344,6 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 	if preCtx == nil {
 		preCtx = context.TODO()
 	}
-	ctx, cnl := context.WithCancel(preCtx)
-	defer func() {
-		if err != nil {
-			cnl()
-		}
-	}()
-	if runtime.GOOS == "linux" {
-		option.Headless = true
-	}
-	if option.Width == 0 {
-		option.Width = 1200
-	}
-	if option.Height == 0 {
-		option.Height = 605
-	}
 	globalReqCli, err := requests.NewClient(preCtx, requests.ClientOption{
 		TryNum:      2,
 		Proxy:       option.Proxy,
@@ -373,51 +355,51 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 	if err != nil {
 		return nil, err
 	}
-	var cli *cmd.Client
-	var isReplaceRequest bool
-	if option.Host == "" || option.Port == 0 {
-		if cli, isReplaceRequest, err = runChrome(ctx, &option); err != nil {
-			return
-		}
+	if runtime.GOOS == "linux" {
+		option.Headless = true
+	}
+	if option.Width == 0 {
+		option.Width = 1200
+	}
+	if option.Height == 0 {
+		option.Height = 605
 	}
 	client = &Client{
-		isReplaceRequest: isReplaceRequest,
-		proxy:            option.Proxy,
-		getProxy:         option.GetProxy,
-		ctx:              ctx,
-		cnl:              cnl,
-		cmdCli:           cli,
-		host:             option.Host,
-		port:             option.Port,
-		globalReqCli:     globalReqCli,
-		stealth:          option.Stealth,
+		proxy:        option.Proxy,
+		getProxy:     option.GetProxy,
+		globalReqCli: globalReqCli,
+		stealth:      option.Stealth,
 	}
-	go tools.Signal(ctx, client.Close)
-	if err = client.init(); err != nil {
-		return client, err
-	}
-	var proxyHost string
-	for _, addr := range gtls.GetHosts(4) {
-		if addr.IsGlobalUnicast() {
-			proxyHost = addr.String()
-			break
+	client.ctx, client.cnl = context.WithCancel(preCtx)
+	if option.Host == "" || option.Port == 0 {
+		if err = client.runChrome(&option); err != nil {
+			return
 		}
+	} else {
+		var proxyHost string
+		for _, addr := range gtls.GetHosts(4) {
+			if addr.IsGlobalUnicast() {
+				proxyHost = addr.String()
+				break
+			}
+		}
+		if proxyHost == "" {
+			return client, errors.New("获取内网地址失败")
+		}
+		client.proxyClient, err = proxy.NewClient(nil, proxy.ClientOption{
+			Addr:      net.JoinHostPort(proxyHost, strconv.Itoa(option.Port)),
+			DisVerify: true,
+			HttpConnectCallBack: func(r *http.Request) error {
+				r.Host = fmt.Sprintf("127.0.0.1:%d", option.Port)
+				r.Header.Del("Origin")
+				return nil
+			},
+		})
+		go client.proxyClient.Run()
 	}
-	if proxyHost == "" {
-		return client, errors.New("获取内网地址失败")
-	}
-	client.proxyClient, err = proxy.NewClient(nil, proxy.ClientOption{
-		Port:      client.port,
-		Host:      proxyHost,
-		DisVerify: true,
-		HttpConnectCallBack: func(r *http.Request) error {
-			r.Host = fmt.Sprintf("127.0.0.1:%d", client.port)
-			r.Header.Del("Origin")
-			return nil
-		},
-	})
-	go client.proxyClient.Run()
-	return client, err
+	client.addr = net.JoinHostPort(option.Host, strconv.Itoa(option.Port))
+	go tools.Signal(preCtx, client.Close)
+	return client, client.init()
 }
 func (obj *Client) RequestClient() *requests.Client {
 	return obj.globalReqCli
@@ -432,7 +414,7 @@ func (obj *Client) init() (err error) {
 	}()
 	var resp *requests.Response
 	resp, err = obj.globalReqCli.Request(obj.ctx, "get",
-		fmt.Sprintf("http://%s:%d/json/version", obj.host, obj.port),
+		fmt.Sprintf("http://%s/json/version", obj.addr),
 		requests.RequestOption{
 			Timeout:  time.Second * 3,
 			DisProxy: true,
@@ -478,7 +460,7 @@ func (obj *Client) init() (err error) {
 	obj.webSock, err = cdp.NewWebSock(
 		obj.ctx,
 		obj.globalReqCli,
-		fmt.Sprintf("ws://%s:%d/devtools/browser/%s", obj.host, obj.port, browWsRs.Group(1)),
+		fmt.Sprintf("ws://%s/devtools/browser/%s", obj.addr, browWsRs.Group(1)),
 		cdp.WebSockOption{},
 	)
 	return err
@@ -491,7 +473,7 @@ func (obj *Client) Done() <-chan struct{} {
 
 // 返回浏览器远程控制的地址
 func (obj *Client) Addr() string {
-	return net.JoinHostPort(obj.host, strconv.Itoa(obj.port))
+	return obj.addr
 }
 
 // 关闭浏览器
@@ -540,8 +522,7 @@ func (obj *Client) NewPage(preCtx context.Context, options ...PageOption) (*Page
 	page := &Page{
 		id:               targetId,
 		preWebSock:       obj.webSock,
-		port:             obj.port,
-		host:             obj.host,
+		addr:             obj.addr,
 		ctx:              ctx,
 		cnl:              cnl,
 		globalReqCli:     obj.globalReqCli,

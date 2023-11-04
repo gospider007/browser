@@ -21,8 +21,7 @@ import (
 )
 
 type Page struct {
-	host         string
-	port         int
+	addr         string
 	id           string
 	mouseX       float64
 	mouseY       float64
@@ -174,7 +173,7 @@ func (obj *Page) init(globalReqCli *requests.Client, option PageOption) error {
 	if obj.webSock, err = cdp.NewWebSock(
 		obj.ctx,
 		globalReqCli,
-		fmt.Sprintf("ws://%s:%d/devtools/page/%s", obj.host, obj.port, obj.id),
+		fmt.Sprintf("ws://%s/devtools/page/%s", obj.addr, obj.id),
 		cdp.WebSockOption{
 			Proxy: option.Proxy,
 		},
@@ -502,7 +501,7 @@ func (obj *Page) Close() error {
 	return err
 }
 func (obj *Page) close() error {
-	resp, err := obj.globalReqCli.Request(context.TODO(), "get", fmt.Sprintf("http://%s:%d/json/close/%s", obj.host, obj.port, obj.id), requests.RequestOption{DisProxy: true})
+	resp, err := obj.globalReqCli.Request(context.TODO(), "get", fmt.Sprintf("http://%s/json/close/%s", obj.addr, obj.id), requests.RequestOption{DisProxy: true})
 	if err != nil {
 		return err
 	}
