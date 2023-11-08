@@ -345,12 +345,12 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 		preCtx = context.TODO()
 	}
 	globalReqCli, err := requests.NewClient(preCtx, requests.ClientOption{
-		TryNum:      2,
-		Proxy:       option.Proxy,
-		GetProxy:    option.GetProxy,
-		Ja3:         true,
-		RedirectNum: -1,
-		DisDecode:   true,
+		TryNum:         2,
+		Proxy:          option.Proxy,
+		GetProxy:       option.GetProxy,
+		Ja3:            true,
+		MaxRedirectNum: -1,
+		DisDecode:      true,
 	})
 	if err != nil {
 		return nil, err
