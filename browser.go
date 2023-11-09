@@ -21,6 +21,7 @@ import (
 	"github.com/gospider007/cdp"
 	"github.com/gospider007/cmd"
 	"github.com/gospider007/conf"
+	"github.com/gospider007/gtls"
 	"github.com/gospider007/proxy"
 	"github.com/gospider007/re"
 	"github.com/gospider007/requests"
@@ -184,7 +185,7 @@ func (obj *Client) runChrome(option *ClientOption) error {
 			}
 		}
 	}
-	cli, err := cmd.NewClient(obj.ctx, cmd.ClientOption{
+	obj.cmdCli, err = cmd.NewClient(obj.ctx, cmd.ClientOption{
 		Name:          option.ChromePath,
 		Args:          args,
 		CloseCallBack: closeCallBack,
@@ -192,8 +193,8 @@ func (obj *Client) runChrome(option *ClientOption) error {
 	if err != nil {
 		return err
 	}
-	go cli.Run()
-	return cli.Err()
+	go obj.cmdCli.Run()
+	return obj.cmdCli.Err()
 }
 
 var chromeArgs = []string{
@@ -376,7 +377,7 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 		}
 	} else {
 		var proxyHost string
-		for _, addr := range requests.GetHosts(4) {
+		for _, addr := range gtls.GetHosts(4) {
 			if addr.IsGlobalUnicast() {
 				proxyHost = addr.String()
 				break
