@@ -11,8 +11,8 @@ require (
 	github.com/gospider007/gtls v0.0.0-20231109073720-32fe741c06d3
 	github.com/gospider007/proxy v0.0.0-20231109073900-6e3d21f3f89d
 	github.com/gospider007/re v0.0.0-20231024115818-adfd03636256
-	github.com/gospider007/requests v0.0.0-20231109073812-a8a1e0dc56a9
-	github.com/gospider007/tools v0.0.0-20231104124710-69ac32876ccc
+	github.com/gospider007/requests v0.0.0-20231110021017-79b7f5b8f31b
+	github.com/gospider007/tools v0.0.0-20231110011734-c2a4739ea0a0
 	golang.org/x/exp v0.0.0-20231108232855-2478ac86f678
 )
 

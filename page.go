@@ -491,24 +491,28 @@ func (obj *Page) Eval(ctx context.Context, expression string, params map[string]
 	}
 	return gson.Decode(rs.Result)
 }
-func (obj *Page) Close() error {
-	_, err := obj.preWebSock.TargetCloseTarget(obj.id)
-	if err != nil {
-		err = obj.close()
-	}
+func (obj *Page) Close() (err error) {
+	err = obj.close()
+	obj.preWebSock.TargetCloseTarget(obj.id)
 	obj.webSock.Close()
 	obj.cnl()
-	return err
+	return
 }
 func (obj *Page) close() error {
-	resp, err := obj.globalReqCli.Request(context.TODO(), "get", fmt.Sprintf("http://%s/json/close/%s", obj.addr, obj.id), requests.RequestOption{DisProxy: true})
-	if err != nil {
-		return err
-	}
-	if resp.Text() == "Target is closing" {
-		return nil
-	}
-	return errors.New(resp.Text())
+	_, err := obj.globalReqCli.Request(context.TODO(), "get", fmt.Sprintf("http://%s/json/close/%s", obj.addr, obj.id), requests.RequestOption{
+		TryNum:   10,
+		DisProxy: true,
+		ResultCallBack: func(ctx context.Context, c *requests.Client, r *requests.Response) error {
+			switch r.Text() {
+			case "Target is closing", fmt.Sprintf("No such target id: %s", obj.id):
+			}
+			if text := r.Text(); text == "Target is closing" || text == fmt.Sprintf("No such target id: %s", obj.id) {
+				return nil
+			}
+			return errors.New("req close target error")
+		},
+	})
+	return err
 }
 
 func (obj *Page) Done() <-chan struct{} {
