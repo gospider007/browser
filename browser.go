@@ -418,7 +418,7 @@ func (obj *Client) init() (err error) {
 		requests.RequestOption{
 			Timeout:  time.Second * 3,
 			DisProxy: true,
-			ErrCallBack: func(ctx context.Context, cl *requests.Client, err error) error {
+			ErrCallBack: func(ctx context.Context, cl *requests.Client, _ *requests.Response, err error) error {
 				select {
 				case <-obj.cmdCli.Ctx().Done():
 					return obj.cmdCli.Ctx().Err()
