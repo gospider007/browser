@@ -13,6 +13,7 @@ type Dom struct {
 	baseUrl string
 	webSock *cdp.WebSock
 	nodeId  int64
+	frameId string
 	ele     *bs4.Client
 }
 
@@ -45,7 +46,12 @@ func (obj *Dom) Show(ctx context.Context) error {
 	_, err := obj.webSock.DOMScrollIntoViewIfNeeded(ctx, obj.nodeId)
 	return err
 }
-
+func (obj *Dom) NodeId() int64 {
+	return obj.nodeId
+}
+func (obj *Dom) FrameId() string {
+	return obj.frameId
+}
 func (obj *Dom) String() string {
 	return obj.ele.String()
 }

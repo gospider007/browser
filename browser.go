@@ -29,14 +29,27 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+// https://github.com/microsoft/playwright/blob/main/packages/playwright-core/browsers.json
+var debian12_x64 = "builds/chromium/%s/chromium-linux.zip"
+var debian12_arm64 = "builds/chromium/%s/chromium-linux-arm64.zip"
+var mac13 = "builds/chromium/%s/chromium-mac.zip"
+var mac13_arm64 = "builds/chromium/%s/chromium-mac-arm64.zip"
+var win64 = "builds/chromium/%s/chromium-win64.zip"
+
+var PLAYWRIGHT_CDN_MIRRORS = []string{
+	"playwright-verizon.azureedge.net",
+	"playwright-akamai.azureedge.net",
+	"playwright.azureedge.net",
+}
+
 type Client struct {
-	isReplaceRequest bool //是否自定义请求
-	proxyClient      *proxy.Client
 	proxy            string
-	getProxy         func(ctx context.Context, url *url.URL) (string, error)
+	isReplaceRequest bool
+	proxyClient      *proxy.Client
 	cmdCli           *cmd.Client
 	globalReqCli     *requests.Client
 	addr             string
+	proxyAddr        string
 	ctx              context.Context
 	cnl              context.CancelFunc
 	webSock          *cdp.WebSock
@@ -205,11 +218,12 @@ var chromeArgs = []string{
 	"--useAutomationExtension=false",                //禁用自动化扩展。
 	"--excludeSwitches=enable-automation",           //禁用自动化
 	"--disable-blink-features=AutomationControlled", //禁用 Blink 引擎的自动化控制。
-
 	//稳定性选项
 	"--no-sandbox",      //禁用 Chrome 的沙盒模式。
 	"--set-uid-sandbox", //命令行参数用于设置 Chrome 进程运行时使用的 UID，从而提高 Chrome 浏览器的安全性
 	"--set-gid-sandbox", //命令行参数用于设置 Chrome 进程运行时使用的 GID，从而提高 Chrome 浏览器的安全性
+	"--enable-features=NetworkService,NetworkServiceInProcess",
+	"--disable-features=WebRtcHideLocalIpsWithMdns,EnablePasswordsAccountStorage,FlashDeprecationWarning,UserAgentClientHint,AutoUpdate,site-per-process,Profiles,EasyBakeWebBundler,MultipleCompositingThreads,AudioServiceOutOfProcess,TranslateUI,BackgroundSync,ClientHints,NetworkQualityEstimator,PasswordGeneration,PrefetchPrivacyChanges,TabHoverCards,ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,TabFreezing,TabDiscarding", // 禁用一些 Chrome 功能。
 	"--blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4,imagesEnabled=true", //Blink 设置。
 	"--ignore-ssl-errors=true", //忽略 SSL 错误。
 	"--disable-setuid-sandbox", //重要headless
@@ -239,9 +253,6 @@ var chromeArgs = []string{
 	"--enable-async-dns",                          //启用异步 DNS。
 	"--enable-simple-cache-backend",               //启用简单缓存后端
 	"--enable-tcp-fast-open",                      //启用 TCP 快速打开。
-
-	"--enable-features=NetworkService,NetworkServiceInProcess",
-	"--disable-features=WebRtcHideLocalIpsWithMdns,EnablePasswordsAccountStorage,FlashDeprecationWarning,UserAgentClientHint,AutoUpdate,site-per-process,Profiles,EasyBakeWebBundler,MultipleCompositingThreads,AudioServiceOutOfProcess,TranslateUI,BackgroundSync,ClientHints,NetworkQualityEstimator,PasswordGeneration,PrefetchPrivacyChanges,TabHoverCards,ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,TabFreezing,TabDiscarding", // 禁用一些 Chrome 功能。
 
 	"--disable-field-trial-config", //禁用实验室配置，在禁用情况下，不会向远程服务器报告任何配置或默认设置。
 	"--disable-back-forward-cache", //禁用后退/前进缓存。
@@ -366,7 +377,6 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 	}
 	client = &Client{
 		proxy:        option.Proxy,
-		getProxy:     option.GetProxy,
 		globalReqCli: globalReqCli,
 		stealth:      option.Stealth,
 	}
@@ -375,7 +385,6 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 		if err = client.runChrome(&option); err != nil {
 			return
 		}
-	} else {
 		var proxyHost string
 		for _, addr := range gtls.GetHosts(4) {
 			if addr.IsGlobalUnicast() {
@@ -396,6 +405,9 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 			},
 		})
 		go client.proxyClient.Run()
+		client.proxyAddr = net.JoinHostPort(proxyHost, strconv.Itoa(option.Port))
+	} else {
+		client.proxyAddr = net.JoinHostPort(option.Host, strconv.Itoa(option.Port))
 	}
 	client.addr = net.JoinHostPort(option.Host, strconv.Itoa(option.Port))
 	go tools.Signal(preCtx, client.Close)
@@ -500,6 +512,17 @@ type PageOption struct {
 
 // 新建标签页
 func (obj *Client) NewPage(preCtx context.Context, options ...PageOption) (*Page, error) {
+	rs, err := obj.webSock.TargetCreateTarget(preCtx, "")
+	if err != nil {
+		return nil, err
+	}
+	targetId, ok := rs.Result["targetId"].(string)
+	if !ok {
+		return nil, errors.New("not found targetId")
+	}
+	return obj.NewPageWithTargetId(preCtx, targetId, options...)
+}
+func (obj *Client) NewPageWithTargetId(preCtx context.Context, targetId string, options ...PageOption) (*Page, error) {
 	var option PageOption
 	if len(options) > 0 {
 		option = options[0]
@@ -510,34 +533,29 @@ func (obj *Client) NewPage(preCtx context.Context, options ...PageOption) (*Page
 			isReplaceRequest = true
 		}
 	}
-	rs, err := obj.webSock.TargetCreateTarget(preCtx, "")
-	if err != nil {
-		return nil, err
-	}
-	targetId, ok := rs.Result["targetId"].(string)
-	if !ok {
-		return nil, errors.New("not found targetId")
+	if !option.Stealth {
+		option.Stealth = obj.stealth
 	}
 	ctx, cnl := context.WithCancel(obj.ctx)
 	page := &Page{
-		id:               targetId,
-		preWebSock:       obj.webSock,
+		option:           option,
+		targetId:         targetId,
 		addr:             obj.addr,
+		proxyAddr:        obj.proxyAddr,
 		ctx:              ctx,
 		cnl:              cnl,
 		globalReqCli:     obj.globalReqCli,
-		stealth:          obj.stealth,
 		isReplaceRequest: isReplaceRequest,
 		loadNotices:      make(chan struct{}, 1),
 		stopNotices:      make(chan struct{}, 1),
 		networkNotices:   make(chan struct{}, 1),
-		iframes:          make(map[string]string),
+		frames:           make(map[string]*Page),
 	}
-	if err = page.init(obj.globalReqCli, option); err != nil {
+	if err := page.init(); err != nil {
 		return nil, err
 	}
 	if isReplaceRequest {
-		if err = page.Request(preCtx, defaultRequestFunc); err != nil {
+		if err := page.Request(preCtx, defaultRequestFunc); err != nil {
 			return nil, err
 		}
 	}

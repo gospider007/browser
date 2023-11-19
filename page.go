@@ -3,12 +3,12 @@ package browser
 import (
 	"context"
 	_ "embed"
-	"encoding/json"
 	"errors"
 	"fmt"
 	uurl "net/url"
 	"strconv"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -21,32 +21,29 @@ import (
 )
 
 type Page struct {
-	addr         string
-	id           string
-	mouseX       float64
-	mouseY       float64
-	ctx          context.Context
-	cnl          context.CancelFunc
-	preWebSock   *cdp.WebSock
-	globalReqCli *requests.Client
-
-	baseUrl          string
-	webSock          *cdp.WebSock
-	stealth          bool
+	option           PageOption
+	addr             string
+	proxyAddr        string
+	targetId         string
+	mouseX           float64
+	mouseY           float64
+	ctx              context.Context
+	cnl              context.CancelFunc
+	globalReqCli     *requests.Client
 	isReplaceRequest bool
 
-	pageLoadId         int64
+	baseUrl string
+	webSock *cdp.WebSock
+
 	pageStop           bool
 	domLoad            bool
 	loadNotices        chan struct{}
 	stopNotices        chan struct{}
 	networkNotices     chan struct{}
 	networkNoticesSize atomic.Int64
-
-	requestFunc  func(context.Context, *cdp.Route)
-	responseFunc func(context.Context, *cdp.Route)
-
-	iframes map[string]string
+	requestFunc        func(context.Context, *cdp.Route)
+	frameLock          sync.Mutex
+	frames             map[string]*Page
 }
 
 func defaultRequestFunc(ctx context.Context, r *cdp.Route) { r.RequestContinue(ctx) }
@@ -87,40 +84,23 @@ func (obj *Page) addNetworkNotice() {
 	}
 }
 func (obj *Page) pageStartLoadMain(ctx context.Context, rd cdp.RecvData) {
-	if obj.id == rd.Params["frameId"].(string) {
-		if rd.Id > obj.pageLoadId {
-			obj.pageLoadId = rd.Id
-			obj.domLoad = false
-			obj.pageStop = false
-			clear(obj.iframes)
-			obj.delStopNotice()
-		}
+	if obj.targetId == rd.Params["frameId"].(string) {
+		obj.domLoad = false
+		obj.pageStop = false
+		obj.clearFrames()
+		obj.delStopNotice()
 	}
 }
 func (obj *Page) pageEndLoadMain(ctx context.Context, rd cdp.RecvData) {
-	if obj.id == rd.Params["frameId"].(string) {
-		if rd.Id > obj.pageLoadId {
-			obj.pageLoadId = rd.Id
-			obj.domLoad = true
-			obj.pageStop = true
-			obj.addStopNotice()
-		}
+	if obj.targetId == rd.Params["frameId"].(string) {
+		obj.domLoad = true
+		obj.pageStop = true
+		obj.addStopNotice()
 	}
 }
 func (obj *Page) domLoadMain(ctx context.Context, rd cdp.RecvData) {
 	obj.domLoad = true
 	obj.addLoadNotice()
-}
-func (obj *Page) frameLoadMain(ctx context.Context, rd cdp.RecvData) {
-	jsonData, err := gson.Decode(rd.Params)
-	if err != nil {
-		return
-	}
-	href := jsonData.Get("frame.url").String()
-	frameId := jsonData.Get("frame.id").String()
-	if href != "" && frameId != "" {
-		obj.iframes[href] = frameId
-	}
 }
 func (obj *Page) routeMain(ctx context.Context, rd cdp.RecvData) {
 	obj.networkNoticesSize.Add(1)
@@ -131,34 +111,70 @@ func (obj *Page) routeMain(ctx context.Context, rd cdp.RecvData) {
 	routeData := cdp.RouteData{}
 	if _, err := gson.Decode(rd.Params, &routeData); err == nil {
 		route := cdp.NewRoute(obj.webSock, routeData)
-		if route.IsResponse() {
-			if obj.responseFunc != nil {
-				obj.responseFunc(ctx, route)
-				if !route.Used() {
-					route.Continue(ctx)
-				}
-			} else {
-				route.Continue(ctx)
-			}
-		} else {
+		if !route.IsResponse() {
 			if strings.HasSuffix(route.Url(), "/favicon.ico") {
 				route.FulFill(ctx, cdp.FulData{
 					StatusCode: 404,
 				})
 			} else if obj.requestFunc != nil {
 				obj.requestFunc(ctx, route)
-				if !route.Used() {
-					if obj.isReplaceRequest {
-						route.RequestContinue(ctx)
-					} else {
-						route.Continue(ctx)
-					}
-				}
-			} else {
-				route.Continue(ctx)
 			}
+			if !route.Used() {
+				if obj.isReplaceRequest {
+					route.RequestContinue(ctx)
+				} else {
+					route.Continue(ctx)
+				}
+			}
+		} else {
+			route.Continue(ctx)
 		}
 	}
+}
+func (obj *Page) iframeToTargetMain(ctx context.Context, rd cdp.RecvData) {
+	jsonData, err := gson.Decode(rd.Params)
+	if err != nil {
+		return
+	}
+	if jsonData.Get("waitingForDebugger").Bool() {
+		targetId := jsonData.Get("targetInfo.targetId").String()
+		sessionId := jsonData.Get("sessionId").String()
+		if targetId != "" && sessionId != "" {
+			if iframe, err := obj.newPageWithTargetId(targetId); err == nil {
+				obj.addIframe(targetId, iframe)
+			}
+			obj.webSock.Cdp(obj.ctx, sessionId, "Runtime.runIfWaitingForDebugger")
+		}
+	}
+}
+
+func (obj *Page) GetFrame(frameId string) *Page {
+	obj.frameLock.Lock()
+	defer obj.frameLock.Unlock()
+	return obj.frames[frameId]
+}
+func (obj *Page) clearFrames() {
+	obj.frameLock.Lock()
+	defer obj.frameLock.Unlock()
+	for _, iframe := range obj.frames {
+		iframe.Close()
+	}
+	clear(obj.frames)
+}
+func (obj *Page) framesRequest(ctx context.Context, RequestFunc func(context.Context, *cdp.Route)) {
+	obj.frameLock.Lock()
+	defer obj.frameLock.Unlock()
+	for _, iframe := range obj.frames {
+		iframe.Request(ctx, RequestFunc)
+	}
+}
+func (obj *Page) addIframe(key string, iframe *Page) {
+	obj.frameLock.Lock()
+	defer obj.frameLock.Unlock()
+	if iframe, ok := obj.frames[key]; ok {
+		iframe.Close()
+	}
+	obj.frames[key] = iframe
 }
 
 func (obj *Page) addEvent(method string, fun func(ctx context.Context, rd cdp.RecvData)) {
@@ -168,14 +184,14 @@ func (obj *Page) addEvent(method string, fun func(ctx context.Context, rd cdp.Re
 //go:embed stealthRaw.js
 var stealthRaw string
 
-func (obj *Page) init(globalReqCli *requests.Client, option PageOption) error {
+func (obj *Page) init() error {
 	var err error
 	if obj.webSock, err = cdp.NewWebSock(
 		obj.ctx,
-		globalReqCli,
-		fmt.Sprintf("ws://%s/devtools/page/%s", obj.addr, obj.id),
+		obj.globalReqCli,
+		fmt.Sprintf("ws://%s/devtools/page/%s", obj.addr, obj.targetId),
 		cdp.WebSockOption{
-			Proxy: option.Proxy,
+			Proxy: obj.option.Proxy,
 		},
 	); err != nil {
 		return err
@@ -183,17 +199,54 @@ func (obj *Page) init(globalReqCli *requests.Client, option PageOption) error {
 	obj.addEvent("Page.frameStartedLoading", obj.pageStartLoadMain)
 	obj.addEvent("Page.frameStoppedLoading", obj.pageEndLoadMain)
 	obj.addEvent("Page.domContentEventFired", obj.domLoadMain)
-	obj.addEvent("Page.frameNavigated", obj.frameLoadMain)
 	obj.addEvent("Fetch.requestPaused", obj.routeMain)
+	obj.addEvent("Target.attachedToTarget", obj.iframeToTargetMain)
 	if _, err = obj.webSock.PageEnable(obj.ctx); err != nil {
 		return err
 	}
-	if option.Stealth || obj.stealth {
+	if _, err = obj.webSock.TargetSetAutoAttach(obj.ctx); err != nil {
+		return err
+	}
+	if obj.option.Stealth {
 		if err = obj.AddScript(obj.ctx, createFp()); err != nil {
 			return err
 		}
 	}
 	return obj.AddScript(obj.ctx, `Object.defineProperty(window, "RTCPeerConnection",{"get":undefined});Object.defineProperty(window, "mozRTCPeerConnection",{"get":undefined});Object.defineProperty(window, "webkitRTCPeerConnection",{"get":undefined});`)
+}
+
+func (obj *Page) newPageWithTargetId(targetId string) (*Page, error) {
+	ctx, cnl := context.WithCancel(obj.ctx)
+	page := &Page{
+		option:           obj.option,
+		addr:             obj.addr,
+		proxyAddr:        obj.proxyAddr,
+		targetId:         targetId,
+		ctx:              ctx,
+		cnl:              cnl,
+		globalReqCli:     obj.globalReqCli,
+		isReplaceRequest: obj.isReplaceRequest,
+		baseUrl:          obj.baseUrl,
+		loadNotices:      make(chan struct{}, 1),
+		stopNotices:      make(chan struct{}, 1),
+		networkNotices:   make(chan struct{}, 1),
+		frames:           make(map[string]*Page),
+
+		requestFunc: obj.requestFunc,
+	}
+	if err := page.init(); err != nil {
+		return nil, err
+	}
+	if obj.requestFunc != nil {
+		if err := page.Request(obj.ctx, obj.requestFunc); err != nil {
+			return nil, err
+		}
+	} else if obj.isReplaceRequest {
+		if err := page.Request(obj.ctx, defaultRequestFunc); err != nil {
+			return nil, err
+		}
+	}
+	return page, nil
 }
 
 type FpOption struct {
@@ -431,7 +484,7 @@ func (obj *Page) WaitNetwork(preCtx context.Context, timeout ...time.Duration) e
 		ctx, cnl = context.WithCancel(preCtx)
 	}
 	defer cnl()
-	if obj.requestFunc == nil && obj.responseFunc == nil {
+	if obj.requestFunc == nil {
 		obj.isReplaceRequest = true
 		if err := obj.Request(ctx, nil); err != nil {
 			return err
@@ -478,7 +531,7 @@ func (obj *Page) GoTo(preCtx context.Context, url string) error {
 func (obj *Page) Eval(ctx context.Context, expression string, params map[string]any) (*gson.Client, error) {
 	var value string
 	if params != nil {
-		con, err := json.Marshal(params)
+		con, err := gson.Encode(params)
 		if err != nil {
 			return nil, err
 		}
@@ -492,21 +545,25 @@ func (obj *Page) Eval(ctx context.Context, expression string, params map[string]
 	return gson.Decode(rs.Result)
 }
 func (obj *Page) Close() (err error) {
+	obj.clearFrames()
 	err = obj.close()
-	obj.preWebSock.TargetCloseTarget(obj.id)
+	obj.webSock.TargetCloseTarget(obj.targetId)
 	obj.webSock.Close()
 	obj.cnl()
 	return
 }
+func (obj *Page) Cdp(ctx context.Context, method string, params ...map[string]any) (cdp.RecvData, error) {
+	return obj.webSock.Cdp(ctx, "", method, params...)
+}
 func (obj *Page) close() error {
-	_, err := obj.globalReqCli.Request(context.TODO(), "get", fmt.Sprintf("http://%s/json/close/%s", obj.addr, obj.id), requests.RequestOption{
+	_, err := obj.globalReqCli.Request(context.TODO(), "get", fmt.Sprintf("http://%s/json/close/%s", obj.addr, obj.targetId), requests.RequestOption{
 		TryNum:   10,
 		DisProxy: true,
 		ResultCallBack: func(ctx context.Context, c *requests.Client, r *requests.Response) error {
 			switch r.Text() {
-			case "Target is closing", fmt.Sprintf("No such target id: %s", obj.id):
+			case "Target is closing", fmt.Sprintf("No such target id: %s", obj.targetId):
 			}
-			if text := r.Text(); text == "Target is closing" || text == fmt.Sprintf("No such target id: %s", obj.id) {
+			if text := r.Text(); text == "Target is closing" || text == fmt.Sprintf("No such target id: %s", obj.targetId) {
 				return nil
 			}
 			return errors.New("req close target error")
@@ -529,19 +586,10 @@ func (obj *Page) Request(ctx context.Context, RequestFunc func(context.Context, 
 	var err error
 	if obj.requestFunc != nil {
 		_, err = obj.webSock.FetchRequestEnable(ctx)
-	} else if obj.responseFunc == nil {
+	} else {
 		_, err = obj.webSock.FetchDisable(ctx)
 	}
-	return err
-}
-func (obj *Page) Response(ctx context.Context, ResponseFunc func(context.Context, *cdp.Route)) error {
-	obj.responseFunc = ResponseFunc
-	var err error
-	if obj.responseFunc != nil {
-		_, err = obj.webSock.FetchResponseEnable(ctx)
-	} else if obj.requestFunc == nil {
-		_, err = obj.webSock.FetchDisable(ctx)
-	}
+	obj.framesRequest(ctx, RequestFunc)
 	return err
 }
 func (obj *Page) Html(ctx context.Context, contents ...string) (*bs4.Client, error) {
@@ -553,8 +601,33 @@ func (obj *Page) Html(ctx context.Context, contents ...string) (*bs4.Client, err
 	if err != nil {
 		return nil, err
 	}
+	mainHtml := bs4.NewClientWithNode(cdp.ParseJsonDom(data.Get("root")))
+	for _, iframe := range mainHtml.Finds("iframe") {
+		if gospiderFrameId := iframe.Get("gospiderFrameId"); gospiderFrameId != "" {
+			if framePage := obj.GetFrame(gospiderFrameId); framePage != nil {
+				if frameHtml, err := framePage.Html(ctx); err == nil {
+					iframe.SetHtml(frameHtml.String())
+				}
+			}
+		}
+	}
+	return mainHtml, nil
+}
+func (obj *Page) mainHtml(ctx context.Context, contents ...string) (*bs4.Client, error) {
+	r, err := obj.webSock.DOMGetDocuments(ctx)
+	if err != nil {
+		return nil, err
+	}
+	data, err := gson.Decode(r.Result)
+	if err != nil {
+		return nil, err
+	}
 	return bs4.NewClientWithNode(cdp.ParseJsonDom(data.Get("root"))), nil
 }
+func (obj *Page) DevtoolsUrl() string {
+	return fmt.Sprintf("http://%s/devtools/inspector.html?ws=%s/devtools/page/%s", obj.proxyAddr, obj.proxyAddr, obj.targetId)
+}
+
 func (obj *Page) setHtml(ctx context.Context, nodeId int64, content string) error {
 	_, err := obj.webSock.DOMSetOuterHTML(ctx, nodeId, content)
 	return err
@@ -599,7 +672,7 @@ func (obj *Page) WaitSelector(ctx context.Context, selector string, timeouts ...
 }
 
 func (obj *Page) QuerySelector(ctx context.Context, selector string) (*Dom, error) {
-	html, err := obj.Html(ctx)
+	html, err := obj.mainHtml(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -617,12 +690,13 @@ func (obj *Page) QuerySelector(ctx context.Context, selector string) (*Dom, erro
 		baseUrl: obj.baseUrl,
 		webSock: obj.webSock,
 		nodeId:  int64(nodeId),
+		frameId: ele.Get("gospiderFrameId"),
 		ele:     ele,
 	}
 	return dom, err
 }
 func (obj *Page) QuerySelectorAll(ctx context.Context, selector string) ([]*Dom, error) {
-	html, err := obj.Html(ctx)
+	html, err := obj.mainHtml(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -873,4 +947,7 @@ func (obj *Page) ClearCache(ctx context.Context) (err error) {
 func (obj *Page) ClearStorage(ctx context.Context) (err error) {
 	_, err = obj.webSock.StorageClear(ctx, obj.baseUrl)
 	return
+}
+func (obj *Page) TargetId() string {
+	return obj.targetId
 }
