@@ -21,6 +21,7 @@ import (
 	"github.com/gospider007/cdp"
 	"github.com/gospider007/cmd"
 	"github.com/gospider007/conf"
+	"github.com/gospider007/gson"
 	"github.com/gospider007/gtls"
 	"github.com/gospider007/proxy"
 	"github.com/gospider007/re"
@@ -30,17 +31,21 @@ import (
 )
 
 // https://github.com/microsoft/playwright/blob/main/packages/playwright-core/browsers.json
-var debian12_x64 = "builds/chromium/%s/chromium-linux.zip"
-var debian12_arm64 = "builds/chromium/%s/chromium-linux-arm64.zip"
-var mac13 = "builds/chromium/%s/chromium-mac.zip"
-var mac13_arm64 = "builds/chromium/%s/chromium-mac-arm64.zip"
-var win64 = "builds/chromium/%s/chromium-win64.zip"
+const revision = "1091"
 
-var PLAYWRIGHT_CDN_MIRRORS = []string{
+var playwright_cdn_mirrors = []string{
+	"playwright.azureedge.net",
 	"playwright-verizon.azureedge.net",
 	"playwright-akamai.azureedge.net",
-	"playwright.azureedge.net",
 }
+
+const playwright_cdn_mirror = "playwright.azureedge.net"
+
+// var mac13_arm64 = fmt.Sprintf("builds/chromium/%s/chromium-mac-arm64.zip", revision)
+// var debian12_arm64 = fmt.Sprintf("builds/chromium/%s/chromium-linux-arm64.zip", revision)
+var debian12_x64 = fmt.Sprintf("https://%s/builds/chromium/%s/chromium-linux.zip", playwright_cdn_mirror, revision)
+var mac13 = fmt.Sprintf("https://%s/builds/chromium/%s/chromium-mac.zip", playwright_cdn_mirror, revision)
+var win64 = fmt.Sprintf("https://%s/builds/chromium/%s/chromium-win64.zip", playwright_cdn_mirror, revision)
 
 type Client struct {
 	proxy            string
@@ -54,6 +59,7 @@ type Client struct {
 	cnl              context.CancelFunc
 	webSock          *cdp.WebSock
 	stealth          bool //是否开启随机指纹
+	browserContextId string
 }
 type ClientOption struct {
 	Host       string
@@ -76,15 +82,6 @@ type downClient struct {
 
 var oneDown = &downClient{}
 
-// https://storage.googleapis.com/chromium-browser-snapshots/Win_x64/LAST_CHANGE
-var winVersion = "1187053"
-
-// https://storage.googleapis.com/chromium-browser-snapshots/Mac/LAST_CHANGE
-var macVersion = "1187067"
-
-// https://storage.googleapis.com/chromium-browser-snapshots/Linux_x64/LAST_CHANGE
-var linuxVersion = "1187079"
-
 func verifyEvalPath(path string) error {
 	if strings.HasSuffix(path, "chrome.exe") || strings.HasSuffix(path, "Chromium.app") || strings.HasSuffix(path, "chrome") || strings.HasSuffix(path, "chromium") {
 		return nil
@@ -105,17 +102,17 @@ func (obj *downClient) getChromePath(preCtx context.Context) (string, error) {
 	var chromeDownUrl string
 	switch runtime.GOOS {
 	case "windows":
-		chromeDir = tools.PathJoin(chromeDir, winVersion)
+		chromeDir = tools.PathJoin(chromeDir, revision)
 		chromePath = tools.PathJoin(chromeDir, "chrome-win", "chrome.exe")
-		chromeDownUrl = fmt.Sprintf("https://storage.googleapis.com/chromium-browser-snapshots/Win_x64/%s/chrome-win.zip", winVersion)
+		chromeDownUrl = win64
 	case "darwin":
-		chromeDir = tools.PathJoin(chromeDir, macVersion)
+		chromeDir = tools.PathJoin(chromeDir, revision)
 		chromePath = tools.PathJoin(chromeDir, "chrome-mac", "Chromium.app")
-		chromeDownUrl = fmt.Sprintf("https://storage.googleapis.com/chromium-browser-snapshots/Mac/%s/chrome-mac.zip", macVersion)
+		chromeDownUrl = mac13
 	case "linux":
-		chromeDir = tools.PathJoin(chromeDir, linuxVersion)
+		chromeDir = tools.PathJoin(chromeDir, revision)
 		chromePath = tools.PathJoin(chromeDir, "chrome-linux", "chrome")
-		chromeDownUrl = fmt.Sprintf("https://storage.googleapis.com/chromium-browser-snapshots/Linux_x64/%s/chrome-linux.zip", linuxVersion)
+		chromeDownUrl = debian12_x64
 	default:
 		return "", errors.New("dont know goos")
 	}
@@ -356,7 +353,7 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 		preCtx = context.TODO()
 	}
 	globalReqCli, err := requests.NewClient(preCtx, requests.ClientOption{
-		TryNum:         2,
+		MaxRetries:     2,
 		Proxy:          option.Proxy,
 		GetProxy:       option.GetProxy,
 		Ja3:            true,
@@ -449,7 +446,7 @@ func (obj *Client) init() (err error) {
 				}
 				return errors.New("code error")
 			},
-			TryNum: 10,
+			MaxRetries: 10,
 		})
 	if err != nil {
 		if obj.cmdCli.Err() != nil {
@@ -475,6 +472,21 @@ func (obj *Client) init() (err error) {
 		fmt.Sprintf("ws://%s/devtools/browser/%s", obj.addr, browWsRs.Group(1)),
 		cdp.WebSockOption{},
 	)
+	if err != nil {
+		return err
+	}
+	contextData, err := obj.webSock.TargetCreateBrowserContext(obj.ctx)
+	if err != nil {
+		return err
+	}
+	contextResult, err := gson.Decode(contextData.Result)
+	if err != nil {
+		return err
+	}
+	obj.browserContextId = contextResult.Get("browserContextId").String()
+	if obj.browserContextId == "" {
+		return errors.New("not found browserContextId")
+	}
 	return err
 }
 
@@ -512,7 +524,7 @@ type PageOption struct {
 
 // 新建标签页
 func (obj *Client) NewPage(preCtx context.Context, options ...PageOption) (*Page, error) {
-	rs, err := obj.webSock.TargetCreateTarget(preCtx, "")
+	rs, err := obj.webSock.TargetCreateTarget(preCtx, obj.browserContextId, "")
 	if err != nil {
 		return nil, err
 	}

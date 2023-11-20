@@ -390,11 +390,11 @@ func (obj *Page) AddScript(ctx context.Context, script string) error {
 	return err
 }
 func (obj *Page) Screenshot(ctx context.Context, rect cdp.Rect, options ...cdp.ScreenshotOption) ([]byte, error) {
-	jsonData, err := obj.Eval(ctx, `()=>{return document.documentElement.scrollTop}`, nil)
+	scrollTop, err := obj.Eval(ctx, `()=>{return document.documentElement.scrollTop}`, nil)
 	if err != nil {
 		return nil, err
 	}
-	rect.Y += jsonData.Get("result.value").Float()
+	rect.Y += scrollTop.Float()
 	rs, err := obj.webSock.PageCaptureScreenshot(ctx, rect, options...)
 	if err != nil {
 		return nil, err
@@ -528,10 +528,10 @@ func (obj *Page) GoTo(preCtx context.Context, url string) error {
 }
 
 // ex:   ()=>{}  或者  (params)=>{}
-func (obj *Page) Eval(ctx context.Context, expression string, params map[string]any) (*gson.Client, error) {
+func (obj *Page) Eval(ctx context.Context, expression string, params ...map[string]any) (*gson.Client, error) {
 	var value string
-	if params != nil {
-		con, err := gson.Encode(params)
+	if len(params) > 0 {
+		con, err := gson.Encode(params[0])
 		if err != nil {
 			return nil, err
 		}
@@ -542,7 +542,24 @@ func (obj *Page) Eval(ctx context.Context, expression string, params map[string]
 	if err != nil {
 		return nil, err
 	}
-	return gson.Decode(rs.Result)
+	result, err := gson.Decode(rs.Result)
+	if err != nil {
+		return nil, err
+	}
+	if exceptionDetails := result.Get("exceptionDetails"); exceptionDetails.Exists() {
+		if exception := exceptionDetails.Get("exception.description"); exception.Exists() {
+			return nil, errors.New(exception.String())
+		}
+		if exception := exceptionDetails.Get("text"); exception.Exists() {
+			return nil, errors.New(exception.String())
+		}
+		return nil, errors.New(exceptionDetails.String())
+	}
+	if value := result.Get("result.value"); !value.Exists() {
+		return nil, errors.New("not found result")
+	} else {
+		return value, nil
+	}
 }
 func (obj *Page) Close() (err error) {
 	obj.clearFrames()
@@ -557,8 +574,8 @@ func (obj *Page) Cdp(ctx context.Context, method string, params ...map[string]an
 }
 func (obj *Page) close() error {
 	_, err := obj.globalReqCli.Request(context.TODO(), "get", fmt.Sprintf("http://%s/json/close/%s", obj.addr, obj.targetId), requests.RequestOption{
-		TryNum:   10,
-		DisProxy: true,
+		MaxRetries: 10,
+		DisProxy:   true,
 		ResultCallBack: func(ctx context.Context, c *requests.Client, r *requests.Response) error {
 			switch r.Text() {
 			case "Target is closing", fmt.Sprintf("No such target id: %s", obj.targetId):
