@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"net/http"
 	"net/url"
 	"os"
 	"runtime"
@@ -23,7 +22,6 @@ import (
 	"github.com/gospider007/conf"
 	"github.com/gospider007/gson"
 	"github.com/gospider007/gtls"
-	"github.com/gospider007/proxy"
 	"github.com/gospider007/re"
 	"github.com/gospider007/requests"
 	"github.com/gospider007/tools"
@@ -50,11 +48,9 @@ var win64 = fmt.Sprintf("https://%s/builds/chromium/%s/chromium-win64.zip", play
 type Client struct {
 	proxy            string
 	isReplaceRequest bool
-	proxyClient      *proxy.Client
 	cmdCli           *cmd.Client
 	globalReqCli     *requests.Client
 	addr             string
-	proxyAddr        string
 	ctx              context.Context
 	cnl              context.CancelFunc
 	webSock          *cdp.WebSock
@@ -392,19 +388,7 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 		if proxyHost == "" {
 			return client, errors.New("获取内网地址失败")
 		}
-		client.proxyClient, err = proxy.NewClient(nil, proxy.ClientOption{
-			Addr:      net.JoinHostPort(proxyHost, strconv.Itoa(option.Port)),
-			DisVerify: true,
-			HttpConnectCallBack: func(r *http.Request) error {
-				r.Host = fmt.Sprintf("127.0.0.1:%d", option.Port)
-				r.Header.Del("Origin")
-				return nil
-			},
-		})
-		go client.proxyClient.Run()
-		client.proxyAddr = net.JoinHostPort(proxyHost, strconv.Itoa(option.Port))
 	} else {
-		client.proxyAddr = net.JoinHostPort(option.Host, strconv.Itoa(option.Port))
 	}
 	client.addr = net.JoinHostPort(option.Host, strconv.Itoa(option.Port))
 	go tools.Signal(preCtx, client.Close)
@@ -502,9 +486,6 @@ func (obj *Client) Addr() string {
 
 // 关闭浏览器
 func (obj *Client) Close() {
-	if obj.proxyClient != nil {
-		obj.proxyClient.Close()
-	}
 	if obj.globalReqCli != nil {
 		obj.globalReqCli.Close()
 	}
@@ -553,7 +534,6 @@ func (obj *Client) NewPageWithTargetId(preCtx context.Context, targetId string, 
 		option:           option,
 		targetId:         targetId,
 		addr:             obj.addr,
-		proxyAddr:        obj.proxyAddr,
 		ctx:              ctx,
 		cnl:              cnl,
 		globalReqCli:     obj.globalReqCli,

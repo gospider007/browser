@@ -23,7 +23,6 @@ import (
 type Page struct {
 	option           PageOption
 	addr             string
-	proxyAddr        string
 	targetId         string
 	mouseX           float64
 	mouseY           float64
@@ -220,7 +219,6 @@ func (obj *Page) newPageWithTargetId(targetId string) (*Page, error) {
 	page := &Page{
 		option:           obj.option,
 		addr:             obj.addr,
-		proxyAddr:        obj.proxyAddr,
 		targetId:         targetId,
 		ctx:              ctx,
 		cnl:              cnl,
@@ -642,7 +640,7 @@ func (obj *Page) mainHtml(ctx context.Context, contents ...string) (*bs4.Client,
 	return bs4.NewClientWithNode(cdp.ParseJsonDom(data.Get("root"))), nil
 }
 func (obj *Page) DevtoolsUrl() string {
-	return fmt.Sprintf("http://%s/devtools/inspector.html?ws=%s/devtools/page/%s", obj.proxyAddr, obj.proxyAddr, obj.targetId)
+	return fmt.Sprintf("http://%s/devtools/inspector.html?ws=%s/devtools/page/%s", obj.addr, obj.addr, obj.targetId)
 }
 
 func (obj *Page) setHtml(ctx context.Context, nodeId int64, content string) error {

@@ -8,11 +8,10 @@ require (
 	github.com/gospider007/cmd v0.0.0-20231104022930-f80743d2c012
 	github.com/gospider007/conf v0.0.0-20231024083436-9154e93052df
 	github.com/gospider007/gson v0.0.0-20231119141525-66095080057d
-	github.com/gospider007/gtls v0.0.0-20231109073720-32fe741c06d3
-	github.com/gospider007/proxy v0.0.0-20231120062703-aaae41ba0ec6
+	github.com/gospider007/gtls v0.0.0-20231120122450-e763299259db
 	github.com/gospider007/re v0.0.0-20231024115818-adfd03636256
-	github.com/gospider007/requests v0.0.0-20231120073813-d5410e4ab1e9
-	github.com/gospider007/tools v0.0.0-20231119141642-40c946cfdb81
+	github.com/gospider007/requests v0.0.0-20231121021403-c7e857ed37cf
+	github.com/gospider007/tools v0.0.0-20231120122411-d631cc2fc371
 	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa
 )
 
