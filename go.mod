@@ -10,7 +10,7 @@ require (
 	github.com/gospider007/gson v0.0.0-20231119141525-66095080057d
 	github.com/gospider007/gtls v0.0.0-20231120122450-e763299259db
 	github.com/gospider007/re v0.0.0-20231024115818-adfd03636256
-	github.com/gospider007/requests v0.0.0-20231121021403-c7e857ed37cf
+	github.com/gospider007/requests v0.0.0-20231121084309-cd34ebadf275
 	github.com/gospider007/tools v0.0.0-20231120122411-d631cc2fc371
 	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa
 )
@@ -22,8 +22,8 @@ require (
 	github.com/caddyserver/certmagic v0.19.2 // indirect
 	github.com/cloudflare/circl v1.3.6 // indirect
 	github.com/gaukas/godicttls v0.0.4 // indirect
-	github.com/gospider007/bar v0.0.0-20231024075629-3f50832a4cbf // indirect
-	github.com/gospider007/blog v0.0.0-20231024075658-5da1a801a2c8 // indirect
+	github.com/gospider007/bar v0.0.0-20231121084140-33c7b6797626 // indirect
+	github.com/gospider007/blog v0.0.0-20231121084103-59a004dafccf // indirect
 	github.com/gospider007/ja3 v0.0.0-20231029025157-38fc2f8f2d91 // indirect
 	github.com/gospider007/kinds v0.0.0-20231024093643-7a4424f2d30e // indirect
 	github.com/gospider007/net v0.0.0-20231028084010-313c148cf0a1 // indirect

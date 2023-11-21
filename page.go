@@ -488,8 +488,8 @@ func (obj *Page) WaitNetwork(preCtx context.Context, timeout ...time.Duration) e
 			return err
 		}
 	}
-	msTime := time.Millisecond * 1500
-	basTime := time.Millisecond * 300
+	msTime := time.Millisecond * 800
+	basTime := time.Millisecond * 200
 	msN := int(msTime/basTime) + 1
 	msT := time.NewTimer(basTime)
 	defer msT.Stop()
@@ -513,7 +513,7 @@ func (obj *Page) WaitNetwork(preCtx context.Context, timeout ...time.Duration) e
 				zeroNum = 0
 			}
 		}
-		if zeroNum > msN {
+		if zeroNum >= msN {
 			return nil
 		}
 		msT.Reset(basTime)
@@ -639,10 +639,6 @@ func (obj *Page) mainHtml(ctx context.Context, contents ...string) (*bs4.Client,
 	}
 	return bs4.NewClientWithNode(cdp.ParseJsonDom(data.Get("root"))), nil
 }
-func (obj *Page) DevtoolsUrl() string {
-	return fmt.Sprintf("http://%s/devtools/inspector.html?ws=%s/devtools/page/%s", obj.addr, obj.addr, obj.targetId)
-}
-
 func (obj *Page) setHtml(ctx context.Context, nodeId int64, content string) error {
 	_, err := obj.webSock.DOMSetOuterHTML(ctx, nodeId, content)
 	return err

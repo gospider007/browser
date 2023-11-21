@@ -311,9 +311,9 @@ func downChrome(preCtx context.Context, chromeDir, chromeDownUrl string) error {
 	if err != nil {
 		return err
 	}
+	log.Printf("准备环境中...")
 	for _, file := range zipData.File {
 		filePath := tools.PathJoin(chromeDir, file.Name)
-		log.Printf("解压文件: %s", filePath)
 		if file.FileInfo().IsDir() {
 			os.MkdirAll(filePath, 0777)
 			continue
@@ -336,6 +336,7 @@ func downChrome(preCtx context.Context, chromeDir, chromeDownUrl string) error {
 			return err
 		}
 	}
+	log.Printf("准备环境ok")
 	return err
 }
 
