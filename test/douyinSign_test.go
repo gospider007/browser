@@ -12,7 +12,7 @@ import (
 	"github.com/gospider007/tools"
 )
 
-var signFunc = `(params) => {
+var signFunc2 = `(params) => {
 	return new Promise((resolve, reject) => {
 		let xhr = new XMLHttpRequest();
 		xhr.open(params.method, params.url);
@@ -74,7 +74,7 @@ func douyinSign() {
 	log.Print("开始测试 sign 生成")
 	t := time.Now()
 	for i := 0; i < 100; i++ {
-		rsTest, err := page.Eval(nil, signFunc, map[string]interface{}{
+		rsTest, err := page.Eval(nil, signFunc2, map[string]interface{}{
 			"method": "GET",
 			"url":    "/aweme/v1/web/search/item/?device_platform=webapp&aid=6383&channel=channel_pc_web&search_channel=aweme_video_web&sort_type=0&publish_time=0&keyword=孙悟空&search_source=normal_search&query_correct_type=1&is_filter_search=0&from_group_id=&offset=0&count=10&pc_client_type=1&version_code=170400&version_name=17.4.0&cookie_enabled=true&screen_width=1920&screen_height=1080&browser_language=zh-CN&browser_platform=Win32&browser_name=Edge&browser_version=113.0.1774.57&browser_online=true&engine_name=Blink&engine_version=113.0.0.0&os_name=Windows&os_version=10&cpu_core_num=6&device_memory=8&platform=PC&downlink=1.6&effective_type=4g&round_trip_time=100",
 		})
