@@ -4,7 +4,7 @@
 <p align="center"><strong>Browser</strong> <em>- A next-generation Browser client for Golang.</em></p>
 <p align="center">
 <a href="https://github.com/gospider007/browser">
-    <img src="https://img.shields.io/github/last-commit/gospider007/requests">
+    <img src="https://img.shields.io/github/last-commit/gospider007/browser">
 </a>
 <a href="https://github.com/gospider007/browser">
     <img src="https://img.shields.io/badge/build-passing-brightgreen">
@@ -19,7 +19,7 @@ Browser is a fully featured Browser client library for Golang. Manipulate browse
 ## Features
   * 一次编译到处运行,支持win,mac,linux
   * 无头环境与有头环境没有任何差别,只要有头测试成功,无头不会有任何问题
-  * 基于强大的tls 指纹请求库 Requests，弥补浏览器模拟其他跨平台环境时在tls 指纹方面的特征,从而被反爬
+  * 基于强大的tls 指纹请求库 [Requests](https://github.com/gospider007/requests) ，弥补浏览器模拟其他跨平台环境时在tls 指纹方面的特征,从而被反爬
   * 没有任何人机操控的痕迹,目前没有发现被检测到人机操控的网站
   * ifrmae 跨域反爬，无限嵌套接管所有iframe，注入指纹
   * 支持指纹模拟,伪造任意的指纹,用以对抗反指纹网站
@@ -35,7 +35,7 @@ Initially Browser started supporting `go modules`
 ## CDP 调试
   * 浏览器打开 chrome://inspect/#devices
   * 点击 Open dedicated DevTools for Node
-  * 添加连接，例如: 127.0.0.1:9200 ， 完成后返回： chrome://inspect/#devices 这个页面，就可以调试了
+  * 添加连接，例如: 127.0.0.1:9200 ,完成后返回： chrome://inspect/#devices 这个页面，就可以调试了
 ## Installation
 
 ```bash
