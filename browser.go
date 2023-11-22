@@ -206,12 +206,13 @@ func (obj *Client) runChrome(option *ClientOption) error {
 var chromeArgs = []string{
 	// "--disable-site-isolation-trials", //被识别
 	// "--virtual-time-budget=1000", //缩短setTimeout  setInterval 的时间1000秒:目前不生效，不知道以后会不会生效，等生效了再打开
+	// "--ignore-certificate-errors", //开启会造成http 自动升级https
 
 	// 自动化选项禁用
 	"--useAutomationExtension=false",                //禁用自动化扩展。
 	"--excludeSwitches=enable-automation",           //禁用自动化
 	"--disable-blink-features=AutomationControlled", //禁用 Blink 引擎的自动化控制。
-	//稳定性选项
+	// 稳定性选项
 	"--no-sandbox",      //禁用 Chrome 的沙盒模式。
 	"--set-uid-sandbox", //命令行参数用于设置 Chrome 进程运行时使用的 UID，从而提高 Chrome 浏览器的安全性
 	"--set-gid-sandbox", //命令行参数用于设置 Chrome 进程运行时使用的 GID，从而提高 Chrome 浏览器的安全性
@@ -254,7 +255,6 @@ var chromeArgs = []string{
 
 	"--no-service-autorun", //不自动运行服务。
 
-	"--ignore-certificate-errors",
 	"--aggressive-cache-discard",               //启用缓存丢弃。
 	"--disable-ipc-flooding-protection",        //禁用 IPC 洪水保护。
 	"--disable-default-apps",                   //禁用默认应用

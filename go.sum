@@ -35,6 +35,8 @@ github.com/gospider007/cdp v0.0.0-20231120073903-71cb54d2f3ff h1:VIVtuNsnh/rP+wV
 github.com/gospider007/cdp v0.0.0-20231120073903-71cb54d2f3ff/go.mod h1:j3ma58pZlXRwYV91V7Yx5eV68VVc9oe2zM0OnNTIYAs=
 github.com/gospider007/cdp v0.0.0-20231122025052-d0a73d9447c1 h1:yfqk2t8KQb2rZvpsVSgxDvDoWh6YBPVG4dpuDwp2gks=
 github.com/gospider007/cdp v0.0.0-20231122025052-d0a73d9447c1/go.mod h1:BBkLfUFzbPyhGFZs0MC0Wz9PGmCzItaVUmesXewW4HU=
+github.com/gospider007/cdp v0.0.0-20231122062835-2fedd0b9c009 h1:rb29EDEwy6FT8DGFGJvAZl0Ma+grQw4gOrBL4fUM9cU=
+github.com/gospider007/cdp v0.0.0-20231122062835-2fedd0b9c009/go.mod h1:BBkLfUFzbPyhGFZs0MC0Wz9PGmCzItaVUmesXewW4HU=
 github.com/gospider007/chanx v0.0.0-20231024081700-522ff183916d h1:mZEXpFAQLauplUbS0He8HEpxFuFrTU4Wqr+iNJNfZbY=
 github.com/gospider007/chanx v0.0.0-20231024081700-522ff183916d/go.mod h1:OZ+tVRnKXfPryK2K1V4CRyKeleZN+C3Qj/whqUzLdPs=
 github.com/gospider007/cmd v0.0.0-20231104022930-f80743d2c012 h1:TNMJ1Z0uGVskUlV+XvCyLDWUTy2iZCvYuGMG38Okw2g=

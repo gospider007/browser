@@ -488,7 +488,7 @@ func (obj *Page) WaitNetwork(preCtx context.Context, timeout ...time.Duration) e
 			return err
 		}
 	}
-	msTime := time.Millisecond * 800
+	msTime := time.Millisecond * 1200
 	basTime := time.Millisecond * 200
 	msN := int(msTime/basTime) + 1
 	msT := time.NewTimer(basTime)
@@ -561,8 +561,8 @@ func (obj *Page) Eval(ctx context.Context, expression string, params ...map[stri
 }
 func (obj *Page) Close() (err error) {
 	obj.clearFrames()
-	err = obj.close()
 	obj.webSock.TargetCloseTarget(obj.targetId)
+	err = obj.close()
 	obj.webSock.Close()
 	obj.cnl()
 	return
