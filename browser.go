@@ -491,6 +491,7 @@ func (obj *Client) Close() {
 		obj.globalReqCli.Close()
 	}
 	if obj.webSock != nil {
+		obj.webSock.TargetDisposeBrowserContext(obj.browserContextId)
 		obj.webSock.BrowserClose()
 	}
 	if obj.cmdCli != nil {

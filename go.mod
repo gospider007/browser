@@ -4,15 +4,15 @@ go 1.21.3
 
 require (
 	github.com/gospider007/bs4 v0.0.0-20231119141556-162d71807dcc
-	github.com/gospider007/cdp v0.0.0-20231120073903-71cb54d2f3ff
+	github.com/gospider007/cdp v0.0.0-20231122025052-d0a73d9447c1
 	github.com/gospider007/cmd v0.0.0-20231104022930-f80743d2c012
 	github.com/gospider007/conf v0.0.0-20231024083436-9154e93052df
 	github.com/gospider007/gson v0.0.0-20231119141525-66095080057d
 	github.com/gospider007/gtls v0.0.0-20231120122450-e763299259db
 	github.com/gospider007/re v0.0.0-20231024115818-adfd03636256
-	github.com/gospider007/requests v0.0.0-20231121084309-cd34ebadf275
+	github.com/gospider007/requests v0.0.0-20231122021400-868bc9ca39b3
 	github.com/gospider007/thread v0.0.0-20231104023224-8566b260fa7a
-	github.com/gospider007/tools v0.0.0-20231120122411-d631cc2fc371
+	github.com/gospider007/tools v0.0.0-20231122021245-1cafbac3ef46
 	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa
 )
 
