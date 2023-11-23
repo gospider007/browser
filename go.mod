@@ -3,14 +3,14 @@ module github.com/gospider007/browser
 go 1.21.3
 
 require (
-	github.com/gospider007/bs4 v0.0.0-20231119141556-162d71807dcc
-	github.com/gospider007/cdp v0.0.0-20231122062835-2fedd0b9c009
-	github.com/gospider007/cmd v0.0.0-20231104022930-f80743d2c012
+	github.com/gospider007/bs4 v0.0.0-20231123090151-001db0b91941
+	github.com/gospider007/cdp v0.0.0-20231123090443-adc7a8cb3e95
+	github.com/gospider007/cmd v0.0.0-20231123090224-ff77e3469798
 	github.com/gospider007/conf v0.0.0-20231024083436-9154e93052df
 	github.com/gospider007/gson v0.0.0-20231119141525-66095080057d
 	github.com/gospider007/gtls v0.0.0-20231120122450-e763299259db
 	github.com/gospider007/re v0.0.0-20231024115818-adfd03636256
-	github.com/gospider007/requests v0.0.0-20231122021400-868bc9ca39b3
+	github.com/gospider007/requests v0.0.0-20231123090403-f6d27b3f1012
 	github.com/gospider007/thread v0.0.0-20231104023224-8566b260fa7a
 	github.com/gospider007/tools v0.0.0-20231122021245-1cafbac3ef46
 	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa

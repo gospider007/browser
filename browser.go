@@ -39,8 +39,8 @@ var playwright_cdn_mirrors = []string{
 
 const playwright_cdn_mirror = "playwright.azureedge.net"
 
-// var mac13_arm64 = fmt.Sprintf("builds/chromium/%s/chromium-mac-arm64.zip", revision)
-// var debian12_arm64 = fmt.Sprintf("builds/chromium/%s/chromium-linux-arm64.zip", revision)
+var mac13_arm64 = fmt.Sprintf("https://%s/builds/chromium/%s/chromium-mac-arm64.zip", playwright_cdn_mirror, revision)
+var debian12_arm64 = fmt.Sprintf("https://%s/builds/chromium/%s/chromium-linux-arm64.zip", playwright_cdn_mirror, revision)
 var debian12_x64 = fmt.Sprintf("https://%s/builds/chromium/%s/chromium-linux.zip", playwright_cdn_mirror, revision)
 var mac13 = fmt.Sprintf("https://%s/builds/chromium/%s/chromium-mac.zip", playwright_cdn_mirror, revision)
 var win64 = fmt.Sprintf("https://%s/builds/chromium/%s/chromium-win64.zip", playwright_cdn_mirror, revision)
@@ -206,8 +206,6 @@ func (obj *Client) runChrome(option *ClientOption) error {
 var chromeArgs = []string{
 	// "--disable-site-isolation-trials", //被识别
 	// "--virtual-time-budget=1000", //缩短setTimeout  setInterval 的时间1000秒:目前不生效，不知道以后会不会生效，等生效了再打开
-	// "--ignore-certificate-errors", //开启会造成http 自动升级https
-
 	// 自动化选项禁用
 	"--useAutomationExtension=false",                //禁用自动化扩展。
 	"--excludeSwitches=enable-automation",           //禁用自动化
@@ -217,7 +215,7 @@ var chromeArgs = []string{
 	"--set-uid-sandbox", //命令行参数用于设置 Chrome 进程运行时使用的 UID，从而提高 Chrome 浏览器的安全性
 	"--set-gid-sandbox", //命令行参数用于设置 Chrome 进程运行时使用的 GID，从而提高 Chrome 浏览器的安全性
 	"--enable-features=NetworkService,NetworkServiceInProcess",
-	"--disable-features=WebRtcHideLocalIpsWithMdns,EnablePasswordsAccountStorage,FlashDeprecationWarning,UserAgentClientHint,AutoUpdate,site-per-process,Profiles,EasyBakeWebBundler,MultipleCompositingThreads,AudioServiceOutOfProcess,TranslateUI,BackgroundSync,ClientHints,NetworkQualityEstimator,PasswordGeneration,PrefetchPrivacyChanges,TabHoverCards,ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,TabFreezing,TabDiscarding", // 禁用一些 Chrome 功能。
+	"--disable-features=WebRtcHideLocalIpsWithMdns,EnablePasswordsAccountStorage,FlashDeprecationWarning,UserAgentClientHint,AutoUpdate,site-per-process,Profiles,EasyBakeWebBundler,MultipleCompositingThreads,AudioServiceOutOfProcess,TranslateUI,BackgroundSync,ClientHints,NetworkQualityEstimator,PasswordGeneration,PrefetchPrivacyChanges,TabHoverCards,ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,TabFreezing,TabDiscarding,HttpsUpgrades", // 禁用一些 Chrome 功能。
 	"--blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4,imagesEnabled=true", //Blink 设置。
 	"--ignore-ssl-errors=true", //忽略 SSL 错误。
 	"--disable-setuid-sandbox", //重要headless
@@ -254,7 +252,7 @@ var chromeArgs = []string{
 	"--allow-pre-commit-input", //允许在提交前输入词语。
 
 	"--no-service-autorun", //不自动运行服务。
-
+	"--ignore-certificate-errors",
 	"--aggressive-cache-discard",               //启用缓存丢弃。
 	"--disable-ipc-flooding-protection",        //禁用 IPC 洪水保护。
 	"--disable-default-apps",                   //禁用默认应用
@@ -295,11 +293,12 @@ var chromeArgs = []string{
 	"--disable-media-stream",                               //禁用媒体流功能。这个参数可以防止Chrome访问您的摄像头和麦克风，增强隐私。
 	"--disable-preconnect",                                 //禁用预连接。预连接是一种优化技术，可以在您点击链接之前预先建立与目标服务器的连接，以加快页面加载速度。禁用预连接可以减少被追踪的可能性。
 	"--force-color-profile=srgb",
-	"--disable-dev-shm-usage",          //禁用Chrome在/dev/shm文件系统中分配的共享内存
-	"--disable-background-mode",        // 禁用浏览器后台模式。
-	"--disable-hardware-acceleration",  //禁用硬件加速功能，这可以在某些旧的计算机和旧的显卡上降低Chrome的资源消耗，但可能会影响一些图形性能和视频播放。
-	"--disable-renderer-backgrounding", //禁用渲染器后台化。,反爬用到
-	"--disable-web-security",           //关闭同源策略，抖音需要
+	"--disable-dev-shm-usage",               //禁用Chrome在/dev/shm文件系统中分配的共享内存
+	"--disable-background-mode",             // 禁用浏览器后台模式。
+	"--disable-hardware-acceleration",       //禁用硬件加速功能，这可以在某些旧的计算机和旧的显卡上降低Chrome的资源消耗，但可能会影响一些图形性能和视频播放。
+	"--disable-renderer-backgrounding",      //禁用渲染器后台化。,反爬用到
+	"--disable-web-security",                //关闭同源策略，抖音需要
+	"--disable-search-engine-choice-screen", //用于禁用搜索引擎选择屏幕。该选项通常用于自定义 Chrome 浏览器的行为。
 }
 
 func downChrome(preCtx context.Context, chromeDir, chromeDownUrl string) error {
