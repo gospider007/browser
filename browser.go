@@ -17,6 +17,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gospider007/blog"
 	"github.com/gospider007/cdp"
 	"github.com/gospider007/cmd"
 	"github.com/gospider007/conf"
@@ -27,6 +28,74 @@ import (
 	"github.com/gospider007/tools"
 	"golang.org/x/exp/slices"
 )
+
+// https://github.com/microsoft/playwright/blob/main/packages/playwright-core/src/server/registry/nativeDeps.ts
+var libsChrome = []string{
+	"libasound2",
+	"libatk-bridge2.0-0",
+	"libatk1.0-0",
+	"libatspi2.0-0",
+	"libcairo2",
+	"libcups2",
+	"libdbus-1-3",
+	"libdrm2",
+	"libgbm1",
+	"libglib2.0-0",
+	"libnspr4",
+	"libnss3",
+	"libpango-1.0-0",
+	"libx11-6",
+	"libxcb1",
+	"libxcomposite1",
+	"libxdamage1",
+	"libxext6",
+	"libxfixes3",
+	"libxkbcommon0",
+	"libxrandr2",
+}
+
+// https://github.com/microsoft/playwright/blob/main/packages/playwright-core/src/server/registry/nativeDeps.ts
+var libsPackage = map[string]string{
+	"libsoup-3.0.so.0":       "libsoup-3.0-0",
+	"libasound.so.2":         "libasound2",
+	"libatk-1.0.so.0":        "libatk1.0-0",
+	"libatk-bridge-2.0.so.0": "libatk-bridge2.0-0",
+	"libatspi.so.0":          "libatspi2.0-0",
+	"libcairo.so.2":          "libcairo2",
+	"libcups.so.2":           "libcups2",
+	"libdbus-1.so.3":         "libdbus-1-3",
+	"libdrm.so.2":            "libdrm2",
+	"libgbm.so.1":            "libgbm1",
+	"libgio-2.0.so.0":        "libglib2.0-0",
+	"libglib-2.0.so.0":       "libglib2.0-0",
+	"libgobject-2.0.so.0":    "libglib2.0-0",
+	"libnspr4.so":            "libnspr4",
+	"libnss3.so":             "libnss3",
+	"libnssutil3.so":         "libnss3",
+	"libpango-1.0.so.0":      "libpango-1.0-0",
+	"libsmime3.so":           "libnss3",
+	"libX11.so.6":            "libx11-6",
+	"libxcb.so.1":            "libxcb1",
+	"libXcomposite.so.1":     "libxcomposite1",
+	"libXdamage.so.1":        "libxdamage1",
+	"libXext.so.6":           "libxext6",
+	"libXfixes.so.3":         "libxfixes3",
+	"libxkbcommon.so.0":      "libxkbcommon0",
+	"libXrandr.so.2":         "libxrandr2",
+}
+
+func PrintLibs() {
+	log.Print(blog.Color(1, "debian libs\n"), blog.Color(2, "apt install -y ", strings.Join(libsChrome, " ")))
+	libsPackage2 := map[string]string{}
+	for key, val := range libsPackage {
+		libsPackage2[val] = key
+	}
+	libs2 := []string{}
+	for _, val := range libsChrome {
+		libs2 = append(libs2, libsPackage2[val])
+	}
+	log.Print(blog.Color(1, "centos libs\n"), blog.Color(2, "yum install -y ", strings.Join(libs2, " ")))
+}
 
 // https://github.com/microsoft/playwright/blob/main/packages/playwright-core/browsers.json
 const revision = "1091"
@@ -215,7 +284,7 @@ var chromeArgs = []string{
 	"--set-uid-sandbox", //命令行参数用于设置 Chrome 进程运行时使用的 UID，从而提高 Chrome 浏览器的安全性
 	"--set-gid-sandbox", //命令行参数用于设置 Chrome 进程运行时使用的 GID，从而提高 Chrome 浏览器的安全性
 	"--enable-features=NetworkService,NetworkServiceInProcess",
-	"--disable-features=WebRtcHideLocalIpsWithMdns,EnablePasswordsAccountStorage,FlashDeprecationWarning,UserAgentClientHint,AutoUpdate,site-per-process,Profiles,EasyBakeWebBundler,MultipleCompositingThreads,AudioServiceOutOfProcess,TranslateUI,BackgroundSync,ClientHints,NetworkQualityEstimator,PasswordGeneration,PrefetchPrivacyChanges,TabHoverCards,ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,TabFreezing,TabDiscarding,HttpsUpgrades", // 禁用一些 Chrome 功能。
+	"--disable-features=WebRtcHideLocalIpsWithMdns,EnablePasswordsAccountStorage,FlashDeprecationWarning,UserAgentClientHint,AutoUpdate,site-per-process,Profiles,EasyBakeWebBundler,MultipleCompositingThreads,AudioServiceOutOfProcess,TranslateUI,BlinkGenPropertyTrees,BackgroundSync,ClientHints,NetworkQualityEstimator,PasswordGeneration,PrefetchPrivacyChanges,TabHoverCards,ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,TabFreezing,TabDiscarding,HttpsUpgrades", // 禁用一些 Chrome 功能。
 	"--blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4,imagesEnabled=true", //Blink 设置。
 	"--ignore-ssl-errors=true", //忽略 SSL 错误。
 	"--disable-setuid-sandbox", //重要headless
@@ -293,12 +362,22 @@ var chromeArgs = []string{
 	"--disable-media-stream",                               //禁用媒体流功能。这个参数可以防止Chrome访问您的摄像头和麦克风，增强隐私。
 	"--disable-preconnect",                                 //禁用预连接。预连接是一种优化技术，可以在您点击链接之前预先建立与目标服务器的连接，以加快页面加载速度。禁用预连接可以减少被追踪的可能性。
 	"--force-color-profile=srgb",
-	"--disable-dev-shm-usage",               //禁用Chrome在/dev/shm文件系统中分配的共享内存
-	"--disable-background-mode",             // 禁用浏览器后台模式。
-	"--disable-hardware-acceleration",       //禁用硬件加速功能，这可以在某些旧的计算机和旧的显卡上降低Chrome的资源消耗，但可能会影响一些图形性能和视频播放。
-	"--disable-renderer-backgrounding",      //禁用渲染器后台化。,反爬用到
-	"--disable-web-security",                //关闭同源策略，抖音需要
-	"--disable-search-engine-choice-screen", //用于禁用搜索引擎选择屏幕。该选项通常用于自定义 Chrome 浏览器的行为。
+	"--disable-dev-shm-usage",                //禁用Chrome在/dev/shm文件系统中分配的共享内存
+	"--disable-background-mode",              // 禁用浏览器后台模式。
+	"--disable-hardware-acceleration",        //禁用硬件加速功能，这可以在某些旧的计算机和旧的显卡上降低Chrome的资源消耗，但可能会影响一些图形性能和视频播放。
+	"--disable-renderer-backgrounding",       //禁用渲染器后台化。,反爬用到
+	"--disable-web-security",                 //关闭同源策略，抖音需要
+	"--disable-search-engine-choice-screen",  //用于禁用搜索引擎选择屏幕。该选项通常用于自定义 Chrome 浏览器的行为。
+	"--renderer",                             //使进程作为渲染器而不是浏览器运行。
+	"--disable-renderer-accessibility",       //关闭渲染器中的辅助功能。
+	"--disable-renderer-priority-management", //根本不管理渲染器进程优先级。
+	"--allow-running-insecure-content",       //在安全页面上加载不安全内容时禁用警告消息，这可以节省测试时间。
+	"--disable-add-to-shelf",                 //禁用“添加到工具架”功能，该功能对于自动测试是不必要的。
+	"--disable-checker-imaging",              //禁用检查器成像，减少测试期间不必要的图像处理。
+	"--disable-datasaver-prompt",             //禁用与测试方案无关的数据保护程序提示
+	"--disable-desktop-notifications",        //禁用桌面通知，避免在测试期间中断。
+	"--disable-notifications",                //禁用浏览器通知，避免在测试期间中断。
+	"--test-type",
 }
 
 func downChrome(preCtx context.Context, chromeDir, chromeDownUrl string) error {
@@ -349,12 +428,12 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 		preCtx = context.TODO()
 	}
 	globalReqCli, err := requests.NewClient(preCtx, requests.ClientOption{
-		MaxRetries:     2,
-		Proxy:          option.Proxy,
-		GetProxy:       option.GetProxy,
-		Ja3:            true,
-		MaxRedirectNum: -1,
-		DisDecode:      true,
+		MaxRetries:  2,
+		Proxy:       option.Proxy,
+		GetProxy:    option.GetProxy,
+		Ja3:         true,
+		MaxRedirect: -1,
+		DisDecode:   true,
 	})
 	if err != nil {
 		return nil, err
@@ -478,6 +557,9 @@ func (obj *Client) init() (err error) {
 func (obj *Client) Done() <-chan struct{} {
 	return obj.webSock.Done()
 }
+func (obj *Client) Error() (err error) {
+	return obj.webSock.Error()
+}
 
 // 返回浏览器远程控制的地址
 func (obj *Client) Addr() string {
@@ -492,6 +574,7 @@ func (obj *Client) Close() {
 	if obj.webSock != nil {
 		obj.webSock.TargetDisposeBrowserContext(obj.browserContextId)
 		obj.webSock.BrowserClose()
+		obj.webSock.Close()
 	}
 	if obj.cmdCli != nil {
 		obj.cmdCli.Close()
@@ -514,9 +597,9 @@ func (obj *Client) NewPage(preCtx context.Context, options ...PageOption) (*Page
 	if !ok {
 		return nil, errors.New("not found targetId")
 	}
-	return obj.NewPageWithTargetId(preCtx, targetId, options...)
+	return obj.NewPageWithTargetId(preCtx, targetId, "page", options...)
 }
-func (obj *Client) NewPageWithTargetId(preCtx context.Context, targetId string, options ...PageOption) (*Page, error) {
+func (obj *Client) NewPageWithTargetId(preCtx context.Context, targetId string, targetType string, options ...PageOption) (*Page, error) {
 	var option PageOption
 	if len(options) > 0 {
 		option = options[0]
@@ -534,6 +617,7 @@ func (obj *Client) NewPageWithTargetId(preCtx context.Context, targetId string, 
 	page := &Page{
 		option:           option,
 		targetId:         targetId,
+		targetType:       targetType,
 		addr:             obj.addr,
 		ctx:              ctx,
 		cnl:              cnl,

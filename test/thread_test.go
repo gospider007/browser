@@ -15,14 +15,18 @@ func test(ctx context.Context, browCli *browser.Client, num int) {
 		log.Fatal(err)
 	}
 	defer page.Close()
-	err = page.GoTo(ctx, "https://www.baidu.com")
+	log.Print(num, " goto")
+	// err = page.GoTo(ctx, "https://www.baidu.com")
+	err = page.GoTo(ctx, "http://www.baidu.com/")
 	if err != nil {
 		log.Panic(err)
 	}
-	err = page.WaitNetwork(ctx)
+	log.Print(num, " 开始等待")
+	err = page.WaitPageStop(ctx)
 	if err != nil {
 		log.Panic(err)
 	}
+	log.Print(num, " 开始等待 ok")
 }
 func TestThread(t *testing.T) {
 	client, err := browser.NewClient(nil)
@@ -30,8 +34,9 @@ func TestThread(t *testing.T) {
 		log.Fatal(err)
 	}
 	defer client.Close()
-	thCli := thread.NewClient(nil, 100)
-	for i := 0; i < 100; i++ {
+	var total int64 = 100
+	thCli := thread.NewClient(nil, total)
+	for i := 0; i < int(total); i++ {
 		_, err = thCli.Write(&thread.Task{
 			Func: test,
 			Args: []any{client, i},

@@ -24,6 +24,7 @@ type Page struct {
 	option           PageOption
 	addr             string
 	targetId         string
+	targetType       string
 	mouseX           float64
 	mouseY           float64
 	ctx              context.Context
@@ -47,29 +48,30 @@ type Page struct {
 
 func defaultRequestFunc(ctx context.Context, r *cdp.Route) { r.RequestContinue(ctx) }
 func (obj *Page) delStopNotice() {
+	obj.pageStop = false
+	obj.delLoadNotice()
 	select {
 	case <-obj.stopNotices:
 	default:
 	}
-	select {
-	case <-obj.loadNotices:
-	default:
-	}
 }
 func (obj *Page) delLoadNotice() {
+	obj.domLoad = false
 	select {
 	case <-obj.loadNotices:
 	default:
 	}
 }
 func (obj *Page) addStopNotice() {
+	obj.pageStop = true
+	obj.addLoadNotice()
 	select {
 	case obj.stopNotices <- struct{}{}:
 	default:
 	}
-	obj.addLoadNotice()
 }
 func (obj *Page) addLoadNotice() {
+	obj.domLoad = true
 	select {
 	case obj.loadNotices <- struct{}{}:
 	default:
@@ -83,22 +85,17 @@ func (obj *Page) addNetworkNotice() {
 	}
 }
 func (obj *Page) pageStartLoadMain(ctx context.Context, rd cdp.RecvData) {
-	if obj.targetId == rd.Params["frameId"].(string) {
-		obj.domLoad = false
-		obj.pageStop = false
+	if frameId := rd.Params["frameId"].(string); frameId == obj.targetId {
 		obj.clearFrames()
 		obj.delStopNotice()
 	}
 }
 func (obj *Page) pageEndLoadMain(ctx context.Context, rd cdp.RecvData) {
-	if obj.targetId == rd.Params["frameId"].(string) {
-		obj.domLoad = true
-		obj.pageStop = true
+	if frameId := rd.Params["frameId"].(string); frameId == obj.targetId {
 		obj.addStopNotice()
 	}
 }
 func (obj *Page) domLoadMain(ctx context.Context, rd cdp.RecvData) {
-	obj.domLoad = true
 	obj.addLoadNotice()
 }
 func (obj *Page) routeMain(ctx context.Context, rd cdp.RecvData) {
@@ -139,7 +136,7 @@ func (obj *Page) iframeToTargetMain(ctx context.Context, rd cdp.RecvData) {
 		targetId := jsonData.Get("targetInfo.targetId").String()
 		sessionId := jsonData.Get("sessionId").String()
 		if targetId != "" && sessionId != "" {
-			if iframe, err := obj.newPageWithTargetId(targetId); err == nil {
+			if iframe, err := obj.newPageWithTargetId(targetId, jsonData.Get("targetInfo.type").String()); err == nil {
 				obj.addIframe(targetId, iframe)
 			}
 			obj.webSock.Cdp(obj.ctx, sessionId, "Runtime.runIfWaitingForDebugger")
@@ -214,7 +211,7 @@ func (obj *Page) init() error {
 	return obj.AddScript(obj.ctx, `Object.defineProperty(window, "RTCPeerConnection",{"get":undefined});Object.defineProperty(window, "mozRTCPeerConnection",{"get":undefined});Object.defineProperty(window, "webkitRTCPeerConnection",{"get":undefined});`)
 }
 
-func (obj *Page) newPageWithTargetId(targetId string) (*Page, error) {
+func (obj *Page) newPageWithTargetId(targetId string, targetType string) (*Page, error) {
 	ctx, cnl := context.WithCancel(obj.ctx)
 	page := &Page{
 		option:           obj.option,
@@ -418,7 +415,7 @@ func (obj *Page) Reload(ctx context.Context) error {
 	_, err := obj.webSock.PageReload(ctx)
 	return err
 }
-func (obj *Page) WaitPageStop(preCtx context.Context, timeout ...time.Duration) error {
+func (obj *Page) WaitDomLoad(preCtx context.Context, timeout ...time.Duration) (err error) {
 	var ctx context.Context
 	var cnl context.CancelFunc
 	if preCtx == nil {
@@ -430,21 +427,9 @@ func (obj *Page) WaitPageStop(preCtx context.Context, timeout ...time.Duration) 
 		ctx, cnl = context.WithCancel(preCtx)
 	}
 	defer cnl()
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-obj.ctx.Done():
-			return obj.ctx.Err()
-		case <-obj.stopNotices:
-			if obj.pageStop {
-				obj.addStopNotice()
-				return nil
-			}
-		}
-	}
+	return obj.waitMain(ctx, obj.loadNotices, func() bool { return obj.domLoad })
 }
-func (obj *Page) WaitDomLoad(preCtx context.Context, timeout ...time.Duration) error {
+func (obj *Page) WaitPageStop(preCtx context.Context, timeout ...time.Duration) (err error) {
 	var ctx context.Context
 	var cnl context.CancelFunc
 	if preCtx == nil {
@@ -456,20 +441,9 @@ func (obj *Page) WaitDomLoad(preCtx context.Context, timeout ...time.Duration) e
 		ctx, cnl = context.WithCancel(preCtx)
 	}
 	defer cnl()
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-obj.ctx.Done():
-			return obj.ctx.Err()
-		case <-obj.loadNotices:
-			if obj.domLoad {
-				obj.addLoadNotice()
-				return nil
-			}
-		}
-	}
+	return obj.waitMain(ctx, obj.stopNotices, func() bool { return obj.pageStop })
 }
+
 func (obj *Page) WaitNetwork(preCtx context.Context, timeout ...time.Duration) error {
 	var ctx context.Context
 	var cnl context.CancelFunc
@@ -488,6 +462,10 @@ func (obj *Page) WaitNetwork(preCtx context.Context, timeout ...time.Duration) e
 			return err
 		}
 	}
+	return obj.waitMain(ctx, obj.networkNotices, func() bool { return obj.pageStop && obj.networkNoticesSize.Load() <= 0 })
+}
+
+func (obj *Page) waitMain(ctx context.Context, notices <-chan struct{}, okFunc func() bool) error {
 	msTime := time.Millisecond * 1200
 	basTime := time.Millisecond * 200
 	msN := int(msTime/basTime) + 1
@@ -500,14 +478,14 @@ func (obj *Page) WaitNetwork(preCtx context.Context, timeout ...time.Duration) e
 			return ctx.Err()
 		case <-obj.ctx.Done():
 			return obj.ctx.Err()
-		case <-obj.networkNotices:
-			if obj.pageStop && obj.networkNoticesSize.Load() <= 0 {
+		case <-notices:
+			if okFunc() {
 				zeroNum++
 			} else {
 				zeroNum = 0
 			}
 		case <-msT.C:
-			if obj.pageStop && obj.networkNoticesSize.Load() <= 0 {
+			if okFunc() {
 				zeroNum++
 			} else {
 				zeroNum = 0
@@ -519,6 +497,7 @@ func (obj *Page) WaitNetwork(preCtx context.Context, timeout ...time.Duration) e
 		msT.Reset(basTime)
 	}
 }
+
 func (obj *Page) GoTo(preCtx context.Context, url string) error {
 	obj.baseUrl = url
 	_, err := obj.webSock.PageNavigate(preCtx, url)
