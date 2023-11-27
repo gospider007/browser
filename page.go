@@ -42,8 +42,7 @@ type Page struct {
 	networkNotices     chan struct{}
 	networkNoticesSize atomic.Int64
 	requestFunc        func(context.Context, *cdp.Route)
-	frameLock          sync.Mutex
-	frames             map[string]*Page
+	frames             sync.Map
 }
 
 func defaultRequestFunc(ctx context.Context, r *cdp.Route) { r.RequestContinue(ctx) }
@@ -144,33 +143,31 @@ func (obj *Page) iframeToTargetMain(ctx context.Context, rd cdp.RecvData) {
 	}
 }
 
-func (obj *Page) GetFrame(frameId string) *Page {
-	obj.frameLock.Lock()
-	defer obj.frameLock.Unlock()
-	return obj.frames[frameId]
+func (obj *Page) GetFrame(frameId string) (*Page, bool) {
+	frame, ok := obj.frames.Load(frameId)
+	if !ok {
+		return nil, false
+	}
+	return frame.(*Page), true
 }
 func (obj *Page) clearFrames() {
-	obj.frameLock.Lock()
-	defer obj.frameLock.Unlock()
-	for _, iframe := range obj.frames {
-		iframe.Close()
-	}
-	clear(obj.frames)
+	obj.frames.Range(func(key, value any) bool {
+		obj.frames.Delete(key)
+		return true
+	})
 }
 func (obj *Page) framesRequest(ctx context.Context, RequestFunc func(context.Context, *cdp.Route)) {
-	obj.frameLock.Lock()
-	defer obj.frameLock.Unlock()
-	for _, iframe := range obj.frames {
-		iframe.Request(ctx, RequestFunc)
-	}
+	obj.frames.Range(func(key, value any) bool {
+		value.(*Page).Request(ctx, RequestFunc)
+		return true
+	})
 }
 func (obj *Page) addIframe(key string, iframe *Page) {
-	obj.frameLock.Lock()
-	defer obj.frameLock.Unlock()
-	if iframe, ok := obj.frames[key]; ok {
-		iframe.Close()
+	frame, ok := obj.frames.Load(key)
+	if ok {
+		frame.(*Page).Close()
 	}
-	obj.frames[key] = iframe
+	obj.frames.Store(key, iframe)
 }
 
 func (obj *Page) addEvent(method string, fun func(ctx context.Context, rd cdp.RecvData)) {
@@ -225,9 +222,7 @@ func (obj *Page) newPageWithTargetId(targetId string, targetType string) (*Page,
 		loadNotices:      make(chan struct{}, 1),
 		stopNotices:      make(chan struct{}, 1),
 		networkNotices:   make(chan struct{}, 1),
-		frames:           make(map[string]*Page),
-
-		requestFunc: obj.requestFunc,
+		requestFunc:      obj.requestFunc,
 	}
 	if err := page.init(); err != nil {
 		return nil, err
@@ -598,7 +593,7 @@ func (obj *Page) Html(ctx context.Context, contents ...string) (*bs4.Client, err
 	mainHtml := bs4.NewClientWithNode(cdp.ParseJsonDom(data.Get("root")))
 	for _, iframe := range mainHtml.Finds("iframe") {
 		if gospiderFrameId := iframe.Get("gospiderFrameId"); gospiderFrameId != "" {
-			if framePage := obj.GetFrame(gospiderFrameId); framePage != nil {
+			if framePage, ok := obj.GetFrame(gospiderFrameId); ok {
 				if frameHtml, err := framePage.Html(ctx); err == nil {
 					iframe.SetHtml(frameHtml.String())
 				}
@@ -660,7 +655,14 @@ func (obj *Page) WaitSelector(ctx context.Context, selector string, timeouts ...
 	}
 	return nil, errors.New("超时")
 }
-
+func (obj *Page) Frames() []*Page {
+	frames := []*Page{}
+	obj.frames.Range(func(key, value any) bool {
+		frames = append(frames, value.(*Page))
+		return true
+	})
+	return frames
+}
 func (obj *Page) QuerySelector(ctx context.Context, selector string) (*Dom, error) {
 	html, err := obj.mainHtml(ctx)
 	if err != nil {
@@ -701,6 +703,7 @@ func (obj *Page) QuerySelectorAll(ctx context.Context, selector string) ([]*Dom,
 			baseUrl: obj.baseUrl,
 			webSock: obj.webSock,
 			nodeId:  int64(nodeId),
+			frameId: ele.Get("gospiderFrameId"),
 			ele:     ele,
 		}
 		doms = append(doms, dom)

@@ -626,7 +626,6 @@ func (obj *Client) NewPageWithTargetId(preCtx context.Context, targetId string, 
 		loadNotices:      make(chan struct{}, 1),
 		stopNotices:      make(chan struct{}, 1),
 		networkNotices:   make(chan struct{}, 1),
-		frames:           make(map[string]*Page),
 	}
 	if err := page.init(); err != nil {
 		return nil, err
