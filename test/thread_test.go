@@ -34,7 +34,7 @@ func TestThread(t *testing.T) {
 		log.Fatal(err)
 	}
 	defer client.Close()
-	var total int64 = 100
+	total := 100
 	thCli := thread.NewClient(nil, total)
 	for i := 0; i < int(total); i++ {
 		_, err = thCli.Write(&thread.Task{
