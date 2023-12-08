@@ -73,6 +73,8 @@ github.com/gospider007/requests v0.0.0-20231206095440-2d959bdeb3ce h1:4iqA8vjrTy
 github.com/gospider007/requests v0.0.0-20231206095440-2d959bdeb3ce/go.mod h1:85Z66Yyy7FX3WDQ7E/oemWr7h0WNwpUPIL7FNAxBmX4=
 github.com/gospider007/requests v0.0.0-20231207135307-8e4ddfd0cc8f h1:5tqF8xCM+GkdSiFtngWCmpk8+YpSCXUhMAkJmaD1ys8=
 github.com/gospider007/requests v0.0.0-20231207135307-8e4ddfd0cc8f/go.mod h1:M+umKtwqJ/eT4+ODJFLE3cMalZGelQySqfGyvxJimC8=
+github.com/gospider007/requests v0.0.0-20231208053000-42df54895867 h1:AVRj9IFu+YMBsp1M2E8LXF9TZmpaVpeO1IHn8pnc2y0=
+github.com/gospider007/requests v0.0.0-20231208053000-42df54895867/go.mod h1:M+umKtwqJ/eT4+ODJFLE3cMalZGelQySqfGyvxJimC8=
 github.com/gospider007/thread v0.0.0-20231124122508-04275b46bc0d h1:HzTjoOWRV+xc55/tTyLgD2hNFWF6UL23nyOrkmS8w6s=
 github.com/gospider007/thread v0.0.0-20231124122508-04275b46bc0d/go.mod h1:ezSko2n0PzR49lfo6TX7FCvxED9stEuNge/VaKAbKE4=
 github.com/gospider007/tools v0.0.0-20231122021245-1cafbac3ef46 h1:vskdS8WLAveNSDHsAAdwiD+LBLMHq3AND1nGnVydwfM=

@@ -11,7 +11,7 @@ require (
 	github.com/gospider007/gson v0.0.0-20231119141525-66095080057d
 	github.com/gospider007/gtls v0.0.0-20231120122450-e763299259db
 	github.com/gospider007/re v0.0.0-20231024115818-adfd03636256
-	github.com/gospider007/requests v0.0.0-20231207135307-8e4ddfd0cc8f
+	github.com/gospider007/requests v0.0.0-20231208053000-42df54895867
 	github.com/gospider007/thread v0.0.0-20231124122508-04275b46bc0d
 	github.com/gospider007/tools v0.0.0-20231202084937-8b2bc66f8198
 	golang.org/x/exp v0.0.0-20231206192017-f3f8817b8deb
