@@ -10,6 +10,7 @@ require (
 	github.com/gospider007/conf v0.0.0-20231024083436-9154e93052df
 	github.com/gospider007/gson v0.0.0-20231119141525-66095080057d
 	github.com/gospider007/gtls v0.0.0-20231120122450-e763299259db
+	github.com/gospider007/ja3 v0.0.0-20231208073248-8fd919857f6f
 	github.com/gospider007/re v0.0.0-20231024115818-adfd03636256
 	github.com/gospider007/requests v0.0.0-20231208073338-7929aefcc8b2
 	github.com/gospider007/thread v0.0.0-20231124122508-04275b46bc0d
@@ -26,7 +27,6 @@ require (
 	github.com/gaukas/godicttls v0.0.4 // indirect
 	github.com/gospider007/bar v0.0.0-20231201075546-252b6e7b6a54 // indirect
 	github.com/gospider007/chanx v0.0.0-20231024081700-522ff183916d // indirect
-	github.com/gospider007/ja3 v0.0.0-20231208073248-8fd919857f6f // indirect
 	github.com/gospider007/kinds v0.0.0-20231024093643-7a4424f2d30e // indirect
 	github.com/gospider007/net v0.0.0-20231028084010-313c148cf0a1 // indirect
 	github.com/gospider007/websocket v0.0.0-20231128065110-6296f87425c4 // indirect

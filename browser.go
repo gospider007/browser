@@ -23,6 +23,7 @@ import (
 	"github.com/gospider007/conf"
 	"github.com/gospider007/gson"
 	"github.com/gospider007/gtls"
+	"github.com/gospider007/ja3"
 	"github.com/gospider007/re"
 	"github.com/gospider007/requests"
 	"github.com/gospider007/tools"
@@ -139,6 +140,7 @@ type ClientOption struct {
 	Width      int64                                                   //browser width,1200
 	Height     int64                                                   //browser height,605
 	Stealth    bool                                                    //is stealth
+	Ja3Spec    ja3.Ja3Spec                                             //ja3
 }
 
 type downClient struct {
@@ -433,6 +435,7 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 		Proxy:       option.Proxy,
 		GetProxy:    option.GetProxy,
 		Ja3:         true,
+		Ja3Spec:     option.Ja3Spec,
 		MaxRedirect: -1,
 	})
 	if err != nil {
