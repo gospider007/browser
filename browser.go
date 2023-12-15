@@ -493,7 +493,7 @@ func (obj *Client) init() (err error) {
 		requests.RequestOption{
 			Timeout:  time.Second * 3,
 			DisProxy: true,
-			ErrCallBack: func(ctx context.Context, _ *requests.Client, _ *requests.Response, err error) error {
+			ErrCallBack: func(ctx context.Context, _ *requests.RequestOption, _ *requests.Response, err error) error {
 				select {
 				case <-obj.cmdCli.Ctx().Done():
 					return obj.cmdCli.Ctx().Err()
@@ -506,7 +506,7 @@ func (obj *Client) init() (err error) {
 				}
 				return nil
 			},
-			ResultCallBack: func(ctx context.Context, cl *requests.Client, r *requests.Response) error {
+			ResultCallBack: func(ctx context.Context, _ *requests.RequestOption, r *requests.Response) error {
 				if r.StatusCode() == 200 {
 					return nil
 				}

@@ -548,7 +548,7 @@ func (obj *Page) close() error {
 	_, err := obj.globalReqCli.Request(context.TODO(), "get", fmt.Sprintf("http://%s/json/close/%s", obj.addr, obj.targetId), requests.RequestOption{
 		MaxRetries: 10,
 		DisProxy:   true,
-		ResultCallBack: func(ctx context.Context, c *requests.Client, r *requests.Response) error {
+		ResultCallBack: func(ctx context.Context, _ *requests.RequestOption, r *requests.Response) error {
 			switch r.Text() {
 			case "Target is closing", fmt.Sprintf("No such target id: %s", obj.targetId):
 			}
