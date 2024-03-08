@@ -410,46 +410,73 @@ func (obj *Page) Reload(ctx context.Context) error {
 	_, err := obj.webSock.PageReload(ctx)
 	return err
 }
-func (obj *Page) WaitDomLoad(preCtx context.Context, timeout ...time.Duration) (err error) {
-	var ctx context.Context
-	var cnl context.CancelFunc
-	if preCtx == nil {
-		preCtx = obj.ctx
+func (obj *Page) WaitDomLoad(ctx context.Context, msTimes ...time.Duration) (err error) {
+	var msTime time.Duration
+	if len(msTimes) > 0 {
+		msTime = msTimes[0]
 	}
-	if len(timeout) > 0 {
-		ctx, cnl = context.WithTimeout(preCtx, timeout[0])
-	} else {
-		ctx, cnl = context.WithCancel(preCtx)
-	}
-	defer cnl()
-	return obj.waitMain(ctx, obj.loadNotices, func() bool { return obj.domLoad })
+	return obj.waitMain(ctx, msTime, obj.loadNotices, func() bool { return obj.domLoad })
 }
-func (obj *Page) WaitPageStop(preCtx context.Context, timeout ...time.Duration) (err error) {
+func (obj *Page) WaitDomLoadWithTimeout(preCtx context.Context, timeout time.Duration, msTimes ...time.Duration) (err error) {
 	var ctx context.Context
 	var cnl context.CancelFunc
 	if preCtx == nil {
 		preCtx = obj.ctx
 	}
-	if len(timeout) > 0 {
-		ctx, cnl = context.WithTimeout(preCtx, timeout[0])
-	} else {
-		ctx, cnl = context.WithCancel(preCtx)
+	var msTime time.Duration
+	if len(msTimes) > 0 {
+		msTime = msTimes[0]
 	}
+	ctx, cnl = context.WithTimeout(preCtx, timeout)
 	defer cnl()
-	return obj.waitMain(ctx, obj.stopNotices, func() bool { return obj.pageStop })
+	return obj.waitMain(ctx, msTime, obj.loadNotices, func() bool { return obj.domLoad })
+}
+func (obj *Page) WaitPageStop(ctx context.Context, msTimes ...time.Duration) (err error) {
+	var msTime time.Duration
+	if len(msTimes) > 0 {
+		msTime = msTimes[0]
+	}
+	return obj.waitMain(ctx, msTime, obj.stopNotices, func() bool { return obj.pageStop })
+}
+func (obj *Page) WaitPageStopWithTimeout(preCtx context.Context, timeout time.Duration, msTimes ...time.Duration) (err error) {
+	var ctx context.Context
+	var cnl context.CancelFunc
+	if preCtx == nil {
+		preCtx = obj.ctx
+	}
+	var msTime time.Duration
+	if len(msTimes) > 0 {
+		msTime = msTimes[0]
+	}
+	ctx, cnl = context.WithTimeout(preCtx, timeout)
+	defer cnl()
+	return obj.waitMain(ctx, msTime, obj.stopNotices, func() bool { return obj.pageStop })
 }
 
-func (obj *Page) WaitNetwork(preCtx context.Context, timeout ...time.Duration) error {
+func (obj *Page) WaitNetwork(ctx context.Context, msTimes ...time.Duration) error {
+	var msTime time.Duration
+	if len(msTimes) > 0 {
+		msTime = msTimes[0]
+	}
+	if obj.requestFunc == nil {
+		obj.isReplaceRequest = true
+		if err := obj.Request(ctx, nil); err != nil {
+			return err
+		}
+	}
+	return obj.waitMain(ctx, msTime, obj.networkNotices, func() bool { return obj.pageStop && obj.networkNoticesSize.Load() <= 0 })
+}
+func (obj *Page) WaitNetworkWithTimeout(preCtx context.Context, timeout time.Duration, msTimes ...time.Duration) error {
 	var ctx context.Context
 	var cnl context.CancelFunc
 	if preCtx == nil {
 		preCtx = obj.ctx
 	}
-	if len(timeout) > 0 {
-		ctx, cnl = context.WithTimeout(preCtx, timeout[0])
-	} else {
-		ctx, cnl = context.WithCancel(preCtx)
+	var msTime time.Duration
+	if len(msTimes) > 0 {
+		msTime = msTimes[0]
 	}
+	ctx, cnl = context.WithTimeout(preCtx, timeout)
 	defer cnl()
 	if obj.requestFunc == nil {
 		obj.isReplaceRequest = true
@@ -457,11 +484,13 @@ func (obj *Page) WaitNetwork(preCtx context.Context, timeout ...time.Duration) e
 			return err
 		}
 	}
-	return obj.waitMain(ctx, obj.networkNotices, func() bool { return obj.pageStop && obj.networkNoticesSize.Load() <= 0 })
+	return obj.waitMain(ctx, msTime, obj.networkNotices, func() bool { return obj.pageStop && obj.networkNoticesSize.Load() <= 0 })
 }
 
-func (obj *Page) waitMain(ctx context.Context, notices <-chan struct{}, okFunc func() bool) error {
-	msTime := time.Millisecond * 1200
+func (obj *Page) waitMain(ctx context.Context, msTime time.Duration, notices <-chan struct{}, okFunc func() bool) error {
+	if msTime == 0 {
+		msTime = time.Millisecond * 1200
+	}
 	basTime := time.Millisecond * 200
 	msN := int(msTime/basTime) + 1
 	msT := time.NewTimer(basTime)
@@ -613,10 +642,11 @@ func (obj *Page) mainHtml(ctx context.Context, contents ...string) (*bs4.Client,
 	}
 	return bs4.NewClientWithNode(cdp.ParseJsonDom(data.Get("root"))), nil
 }
-func (obj *Page) setHtml(ctx context.Context, nodeId int64, content string) error {
-	_, err := obj.webSock.DOMSetOuterHTML(ctx, nodeId, content)
-	return err
-}
+
+//	func (obj *Page) setHtml(ctx context.Context, nodeId int64, content string) error {
+//		_, err := obj.webSock.DOMSetOuterHTML(ctx, nodeId, content)
+//		return err
+//	}
 func (obj *Page) WaitSelector(ctx context.Context, selector string, timeouts ...time.Duration) (*Dom, error) {
 	if ctx == nil {
 		ctx = obj.ctx

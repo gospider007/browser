@@ -101,16 +101,16 @@ func PrintLibs() {
 // https://github.com/microsoft/playwright/blob/main/packages/playwright-core/browsers.json
 const revision = "1091"
 
-var playwright_cdn_mirrors = []string{
-	"playwright.azureedge.net",
-	"playwright-verizon.azureedge.net",
-	"playwright-akamai.azureedge.net",
-}
+// var playwright_cdn_mirrors = []string{
+// 	"playwright.azureedge.net",
+// 	"playwright-verizon.azureedge.net",
+// 	"playwright-akamai.azureedge.net",
+// }
 
 const playwright_cdn_mirror = "playwright.azureedge.net"
 
-var mac13_arm64 = fmt.Sprintf("https://%s/builds/chromium/%s/chromium-mac-arm64.zip", playwright_cdn_mirror, revision)
-var debian12_arm64 = fmt.Sprintf("https://%s/builds/chromium/%s/chromium-linux-arm64.zip", playwright_cdn_mirror, revision)
+// var mac13_arm64 = fmt.Sprintf("https://%s/builds/chromium/%s/chromium-mac-arm64.zip", playwright_cdn_mirror, revision)
+// var debian12_arm64 = fmt.Sprintf("https://%s/builds/chromium/%s/chromium-linux-arm64.zip", playwright_cdn_mirror, revision)
 var debian12_x64 = fmt.Sprintf("https://%s/builds/chromium/%s/chromium-linux.zip", playwright_cdn_mirror, revision)
 var mac13 = fmt.Sprintf("https://%s/builds/chromium/%s/chromium-mac.zip", playwright_cdn_mirror, revision)
 var win64 = fmt.Sprintf("https://%s/builds/chromium/%s/chromium-win64.zip", playwright_cdn_mirror, revision)
@@ -470,7 +470,6 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 		if proxyHost == "" {
 			return client, errors.New("获取内网地址失败")
 		}
-	} else {
 	}
 	client.addr = net.JoinHostPort(option.Host, strconv.Itoa(option.Port))
 	go tools.Signal(preCtx, client.Close)
