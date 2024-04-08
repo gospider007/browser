@@ -491,6 +491,9 @@ func (obj *Page) waitMain(ctx context.Context, msTime time.Duration, notices <-c
 	if msTime == 0 {
 		msTime = time.Millisecond * 1200
 	}
+	if ctx == nil {
+		ctx = obj.ctx
+	}
 	basTime := time.Millisecond * 200
 	msN := int(msTime/basTime) + 1
 	msT := time.NewTimer(basTime)
