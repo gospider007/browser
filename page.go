@@ -613,7 +613,7 @@ func (obj *Page) Request(ctx context.Context, RequestFunc func(context.Context, 
 	obj.framesRequest(ctx, RequestFunc)
 	return err
 }
-func (obj *Page) Html(ctx context.Context, contents ...string) (*bs4.Client, error) {
+func (obj *Page) Html(ctx context.Context) (*bs4.Client, error) {
 	r, err := obj.webSock.DOMGetDocuments(ctx)
 	if err != nil {
 		return nil, err
@@ -634,7 +634,12 @@ func (obj *Page) Html(ctx context.Context, contents ...string) (*bs4.Client, err
 	}
 	return mainHtml, nil
 }
-func (obj *Page) mainHtml(ctx context.Context, contents ...string) (*bs4.Client, error) {
+
+func (obj *Page) SetHtml(ctx context.Context, contents string) error {
+	_, err := obj.webSock.DOMSetOuterHTML(ctx, 0, contents)
+	return err
+}
+func (obj *Page) mainHtml(ctx context.Context) (*bs4.Client, error) {
 	r, err := obj.webSock.DOMGetDocuments(ctx)
 	if err != nil {
 		return nil, err
@@ -645,11 +650,6 @@ func (obj *Page) mainHtml(ctx context.Context, contents ...string) (*bs4.Client,
 	}
 	return bs4.NewClientWithNode(cdp.ParseJsonDom(data.Get("root"))), nil
 }
-
-//	func (obj *Page) setHtml(ctx context.Context, nodeId int64, content string) error {
-//		_, err := obj.webSock.DOMSetOuterHTML(ctx, nodeId, content)
-//		return err
-//	}
 func (obj *Page) WaitSelector(ctx context.Context, selector string, timeouts ...time.Duration) (*Dom, error) {
 	if ctx == nil {
 		ctx = obj.ctx
