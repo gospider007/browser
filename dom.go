@@ -55,7 +55,10 @@ func (obj *Dom) FrameId() string {
 func (obj *Dom) String() string {
 	return obj.ele.String()
 }
-
+func (obj *Dom) SetHtml(ctx context.Context, contents string) error {
+	_, err := obj.webSock.DOMSetOuterHTML(ctx, obj.nodeId, contents)
+	return err
+}
 func (obj *Dom) Focus(ctx context.Context) error {
 	_, err := obj.webSock.DOMFocus(ctx, obj.nodeId)
 	return err

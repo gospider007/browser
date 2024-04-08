@@ -635,10 +635,6 @@ func (obj *Page) Html(ctx context.Context) (*bs4.Client, error) {
 	return mainHtml, nil
 }
 
-func (obj *Page) SetHtml(ctx context.Context, contents string) error {
-	_, err := obj.webSock.DOMSetOuterHTML(ctx, 0, contents)
-	return err
-}
 func (obj *Page) mainHtml(ctx context.Context) (*bs4.Client, error) {
 	r, err := obj.webSock.DOMGetDocuments(ctx)
 	if err != nil {
