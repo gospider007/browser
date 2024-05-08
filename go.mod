@@ -16,6 +16,7 @@ require (
 	github.com/gospider007/thread v0.0.0-20231201075505-f2f792cf3aa7
 	github.com/gospider007/tools v0.0.0-20231202084937-8b2bc66f8198
 	golang.org/x/exp v0.0.0-20240404231335-c0f41cb1a7a0
+	golang.org/x/text v0.14.0
 )
 
 require (
@@ -52,6 +53,5 @@ require (
 	golang.org/x/net v0.24.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/sys v0.19.0 // indirect
-	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/tools v0.20.0 // indirect
 )

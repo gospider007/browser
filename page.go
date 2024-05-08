@@ -18,9 +18,12 @@ import (
 	"github.com/gospider007/re"
 	"github.com/gospider007/requests"
 	"github.com/gospider007/tools"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 type Page struct {
+	userAgent        string
 	option           PageOption
 	addr             string
 	targetId         string
@@ -201,7 +204,7 @@ func (obj *Page) init() error {
 		return err
 	}
 	if obj.option.Stealth {
-		if err = obj.AddScript(obj.ctx, createFp()); err != nil {
+		if err = obj.AddScript(obj.ctx, createFp(FpOption{UserAgent: obj.userAgent})); err != nil {
 			return err
 		}
 	}
@@ -249,6 +252,28 @@ type FpOption struct {
 }
 
 func createFp(options ...FpOption) string {
+	var option FpOption
+	if len(options) > 0 {
+		option = options[0]
+	}
+	if option.Browser == "" {
+		option.Browser = "chrome"
+	}
+	if option.Device == "" {
+		option.Device = "desktop"
+	}
+	if option.OperatingSystem == "" {
+		option.OperatingSystem = "windows"
+	}
+	if option.UserAgent == "" {
+		option.UserAgent = requests.UserAgent
+	}
+	if option.Locale == "" {
+		option.Locale = "zh-CN"
+	}
+	if len(option.Locales) == 0 {
+		option.Locales = []string{"zh-CN", "en", "en-GB", "en-US"}
+	}
 	screen := map[string]any{
 		"availHeight":      672,
 		"availWidth":       1280,
@@ -318,35 +343,34 @@ func createFp(options ...FpOption) string {
 			},
 		},
 	}
-	appVersion := re.Sub("Mozilla/", "", requests.UserAgent)
-	version := re.Search(`Chrome/(\d+)?\.`, requests.UserAgent).Group(1)
+	appVersion := re.Sub(`^.*?Mozilla/`, "", option.UserAgent)
+	version := re.Search(`Chrome/(\d+)?\.`, option.UserAgent).Group(1)
+	brands := []map[string]any{}
+	if strings.Contains(option.UserAgent, " Edg") || option.Browser == "edge" {
+		brands = append(brands, map[string]any{
+			"brand":   "Microsoft Edge",
+			"version": version,
+		})
+	}
+	brands = append(brands,
+		map[string]any{"brand": "Not;A=Brand",
+			"version": "8"},
+		map[string]any{"brand": "Chromium",
+			"version": version},
+	)
+	var mobile bool
+	if option.Device == "mobile" {
+		mobile = true
+	}
 	navigator := map[string]any{
-		"userAgent": requests.UserAgent,
+		"userAgent": option.UserAgent,
 		"userAgentData": map[string]any{
-			"brands": []map[string]any{
-				{
-					"brand":   "Microsoft Edge",
-					"version": version,
-				},
-				{
-					"brand":   "Not;A=Brand",
-					"version": "8",
-				},
-				{
-					"brand":   "Chromium",
-					"version": version,
-				},
-			},
-			"mobile":   false,
-			"platform": "Windows",
+			"brands":   brands,
+			"mobile":   mobile,
+			"platform": cases.Title(language.English).String(option.Device),
 		},
-		"language": "zh-CN",
-		"languages": []string{
-			"zh-CN",
-			"en",
-			"en-GB",
-			"en-US",
-		},
+		"language":            option.Locale,
+		"languages":           option.Locales,
 		"platform":            "Win32",
 		"deviceMemory":        8,
 		"hardwareConcurrency": 8,

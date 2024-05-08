@@ -116,6 +116,7 @@ var mac13 = fmt.Sprintf("https://%s/builds/chromium/%s/chromium-mac.zip", playwr
 var win64 = fmt.Sprintf("https://%s/builds/chromium/%s/chromium-win64.zip", playwright_cdn_mirror, revision)
 
 type Client struct {
+	userAgent        string
 	proxy            string
 	isReplaceRequest bool
 	cmdCli           *cmd.Client
@@ -450,7 +451,11 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 	if option.Height == 0 {
 		option.Height = 605
 	}
+	if option.UserAgent == "" {
+		option.UserAgent = requests.UserAgent
+	}
 	client = &Client{
+		userAgent:    option.UserAgent,
 		proxy:        option.Proxy,
 		globalReqCli: globalReqCli,
 		stealth:      option.Stealth,
@@ -617,6 +622,7 @@ func (obj *Client) NewPageWithTargetId(preCtx context.Context, targetId string, 
 	}
 	ctx, cnl := context.WithCancel(obj.ctx)
 	page := &Page{
+		userAgent:        obj.userAgent,
 		option:           option,
 		targetId:         targetId,
 		targetType:       targetType,
