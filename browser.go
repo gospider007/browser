@@ -151,7 +151,7 @@ type downClient struct {
 var oneDown = &downClient{}
 
 func verifyEvalPath(path string) error {
-	if strings.HasSuffix(path, "chrome.exe") || strings.HasSuffix(path, "Chromium.app") || strings.HasSuffix(path, "chrome") || strings.HasSuffix(path, "chromium") {
+	if strings.HasSuffix(path, "chrome.exe") || strings.HasSuffix(path, "Chromium") || strings.HasSuffix(path, "chrome") || strings.HasSuffix(path, "chromium") {
 		return nil
 	}
 	if strings.HasSuffix(path, "msedge.exe") || strings.HasSuffix(path, "msedge") {
@@ -175,7 +175,7 @@ func (obj *downClient) getChromePath(preCtx context.Context) (string, error) {
 		chromeDownUrl = win64
 	case "darwin":
 		chromeDir = tools.PathJoin(chromeDir, revision)
-		chromePath = tools.PathJoin(chromeDir, "chrome-mac", "Chromium.app")
+		chromePath = tools.PathJoin(chromeDir, "chrome-mac", "Chromium.app", "Contents", "MacOS", "Chromium")
 		chromeDownUrl = mac13
 	case "linux":
 		chromeDir = tools.PathJoin(chromeDir, revision)
