@@ -637,6 +637,7 @@ func (obj *Page) Request(ctx context.Context, RequestFunc func(context.Context, 
 	obj.framesRequest(ctx, RequestFunc)
 	return err
 }
+
 func (obj *Page) Html(ctx context.Context) (*bs4.Client, error) {
 	r, err := obj.webSock.DOMGetDocuments(ctx)
 	if err != nil {
@@ -646,7 +647,11 @@ func (obj *Page) Html(ctx context.Context) (*bs4.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	mainHtml := bs4.NewClientWithNode(cdp.ParseJsonDom(data.Get("root")))
+	parseDom, err := obj.parseJsonDom(ctx, data.Get("root"))
+	if err != nil {
+		return nil, err
+	}
+	mainHtml := bs4.NewClientWithNode(parseDom)
 	for _, iframe := range mainHtml.Finds("iframe") {
 		if gospiderFrameId := iframe.Get("gospiderFrameId"); gospiderFrameId != "" {
 			if framePage, ok := obj.GetFrame(gospiderFrameId); ok {
@@ -668,7 +673,11 @@ func (obj *Page) mainHtml(ctx context.Context) (*bs4.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	return bs4.NewClientWithNode(cdp.ParseJsonDom(data.Get("root"))), nil
+	parseDom, err := obj.parseJsonDom(ctx, data.Get("root"))
+	if err != nil {
+		return nil, err
+	}
+	return bs4.NewClientWithNode(parseDom), nil
 }
 func (obj *Page) WaitSelector(ctx context.Context, selector string, timeouts ...time.Duration) (*Dom, error) {
 	if ctx == nil {
