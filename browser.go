@@ -99,7 +99,7 @@ func PrintLibs() {
 }
 
 // https://github.com/microsoft/playwright/blob/main/packages/playwright-core/browsers.json
-const revision = "1091"
+const revision = "1136"
 
 // var playwright_cdn_mirrors = []string{
 // 	"playwright.azureedge.net",
@@ -206,7 +206,7 @@ func (obj *Client) runChrome(option *ClientOption) error {
 		}
 	}
 	if option.UserAgent == "" {
-		option.UserAgent = requests.UserAgent
+		option.UserAgent = tools.UserAgent
 	}
 	if option.ChromePath == "" {
 		option.ChromePath, err = oneDown.getChromePath(obj.ctx)
@@ -452,7 +452,7 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 		option.Height = 605
 	}
 	if option.UserAgent == "" {
-		option.UserAgent = requests.UserAgent
+		option.UserAgent = tools.UserAgent
 	}
 	client = &Client{
 		userAgent:    option.UserAgent,
