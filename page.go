@@ -138,7 +138,7 @@ func (obj *Page) iframeToTargetMain(ctx context.Context, rd cdp.RecvData) {
 		targetId := jsonData.Get("targetInfo.targetId").String()
 		sessionId := jsonData.Get("sessionId").String()
 		if targetId != "" && sessionId != "" {
-			if iframe, err := obj.newPageWithTargetId(targetId, jsonData.Get("targetInfo.type").String()); err == nil {
+			if iframe, err := obj.newPageWithTargetId(targetId); err == nil {
 				obj.addIframe(targetId, iframe)
 			}
 			obj.webSock.Cdp(obj.ctx, sessionId, "Runtime.runIfWaitingForDebugger")
@@ -211,7 +211,7 @@ func (obj *Page) init() error {
 	return obj.AddScript(obj.ctx, `Object.defineProperty(window, "RTCPeerConnection",{"get":undefined});Object.defineProperty(window, "mozRTCPeerConnection",{"get":undefined});Object.defineProperty(window, "webkitRTCPeerConnection",{"get":undefined});`)
 }
 
-func (obj *Page) newPageWithTargetId(targetId string, targetType string) (*Page, error) {
+func (obj *Page) newPageWithTargetId(targetId string) (*Page, error) {
 	ctx, cnl := context.WithCancel(obj.ctx)
 	page := &Page{
 		option:           obj.option,
@@ -526,9 +526,9 @@ func (obj *Page) waitMain(ctx context.Context, msTime time.Duration, notices <-c
 	for {
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			return context.Cause(ctx)
 		case <-obj.ctx.Done():
-			return obj.ctx.Err()
+			return context.Cause(obj.ctx)
 		case <-notices:
 			if okFunc() {
 				zeroNum++
@@ -712,7 +712,7 @@ func (obj *Page) WaitSelector(ctx context.Context, selector string, timeouts ...
 		select {
 		case <-t.C:
 		case <-ctx.Done():
-			return nil, ctx.Err()
+			return nil, context.Cause(ctx)
 		}
 	}
 	return nil, errors.New("超时")
@@ -778,6 +778,9 @@ func (obj *Page) baseMove(ctx context.Context, x, y float64, kind int, steps ...
 	var step int
 	if len(steps) > 0 {
 		step = steps[0]
+	}
+	if step == 0 {
+		step = int(x+y)/100 + 1
 	}
 	if step < 1 {
 		step = 1
@@ -855,7 +858,16 @@ func (obj *Page) Wheel(ctx context.Context, x, y float64) error {
 		})
 	return err
 }
+
 func (obj *Page) Down(ctx context.Context, point cdp.Point) error {
+	x := point.X - obj.mouseX
+	y := point.Y - obj.mouseY
+	if x != 0 && y != 0 {
+		err := obj.Move(ctx, x, y)
+		if err != nil {
+			return err
+		}
+	}
 	_, err := obj.webSock.InputDispatchMouseEvent(ctx,
 		cdp.DispatchMouseEventOption{
 			Type:       "mousePressed",

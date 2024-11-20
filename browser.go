@@ -109,10 +109,12 @@ const revision = "1136"
 
 const playwright_cdn_mirror = "playwright.azureedge.net"
 
+// from https://playwright.azureedge.net/builds/chromium/1134/chromium-mac-arm64.zip
+
 // var mac13_arm64 = fmt.Sprintf("https://%s/builds/chromium/%s/chromium-mac-arm64.zip", playwright_cdn_mirror, revision)
 // var debian12_arm64 = fmt.Sprintf("https://%s/builds/chromium/%s/chromium-linux-arm64.zip", playwright_cdn_mirror, revision)
 var debian12_x64 = fmt.Sprintf("https://%s/builds/chromium/%s/chromium-linux.zip", playwright_cdn_mirror, revision)
-var mac13 = fmt.Sprintf("https://%s/builds/chromium/%s/chromium-mac.zip", playwright_cdn_mirror, revision)
+var mac13 = fmt.Sprintf("https://%s/builds/chromium/%s/chromium-arm64.zip", playwright_cdn_mirror, revision)
 var win64 = fmt.Sprintf("https://%s/builds/chromium/%s/chromium-win64.zip", playwright_cdn_mirror, revision)
 
 type Client struct {
@@ -247,6 +249,8 @@ func (obj *Client) runChrome(option *ClientOption) error {
 	args = append(args, fmt.Sprintf(`--user-data-dir=%s`, option.UserDir))
 	args = append(args, fmt.Sprintf("--remote-debugging-port=%d", option.Port))
 	args = append(args, fmt.Sprintf("--window-size=%d,%d", option.Width, option.Height))
+	args = append(args, fmt.Sprintf("--parent-pid=%d", os.Getpid()))
+	args = append(args, fmt.Sprintf("--custom-parent-pid=%d", os.Getpid()))
 	for _, arg := range option.Args {
 		if !slices.Contains(args, arg) {
 			args = append(args, arg)
@@ -500,7 +504,7 @@ func (obj *Client) init() (err error) {
 			ErrCallBack: func(ctx context.Context, _ *requests.RequestOption, _ *requests.Response, err error) error {
 				select {
 				case <-obj.cmdCli.Ctx().Done():
-					return obj.cmdCli.Ctx().Err()
+					return context.Cause(obj.cmdCli.Ctx())
 				case <-ctx.Done():
 					return nil
 				case <-time.After(time.Second):
@@ -514,6 +518,7 @@ func (obj *Client) init() (err error) {
 				if r.StatusCode() == 200 {
 					return nil
 				}
+				time.Sleep(time.Second)
 				return errors.New("code error")
 			},
 			MaxRetries: 10,
@@ -596,7 +601,8 @@ type PageOption struct {
 
 // 新建标签页
 func (obj *Client) NewPage(preCtx context.Context, options ...PageOption) (*Page, error) {
-	rs, err := obj.webSock.TargetCreateTarget(preCtx, obj.browserContextId, "")
+	rs, err := obj.webSock.TargetCreateTarget(preCtx, "")
+	// rs, err := obj.webSock.TargetCreateTarget(preCtx, obj.browserContextId, "")
 	if err != nil {
 		return nil, err
 	}
