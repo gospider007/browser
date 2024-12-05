@@ -99,7 +99,7 @@ func PrintLibs() {
 }
 
 // https://github.com/microsoft/playwright/blob/main/packages/playwright-core/browsers.json
-const revision = "1136"
+const revision = "1150"
 
 // var playwright_cdn_mirrors = []string{
 // 	"playwright.azureedge.net",
@@ -109,12 +109,12 @@ const revision = "1136"
 
 const playwright_cdn_mirror = "playwright.azureedge.net"
 
-// from https://playwright.azureedge.net/builds/chromium/1134/chromium-mac-arm64.zip
+// from https://playwright.azureedge.net/builds/chromium/1150/chromium-mac-arm64.zip
 
 // var mac13_arm64 = fmt.Sprintf("https://%s/builds/chromium/%s/chromium-mac-arm64.zip", playwright_cdn_mirror, revision)
 // var debian12_arm64 = fmt.Sprintf("https://%s/builds/chromium/%s/chromium-linux-arm64.zip", playwright_cdn_mirror, revision)
 var debian12_x64 = fmt.Sprintf("https://%s/builds/chromium/%s/chromium-linux.zip", playwright_cdn_mirror, revision)
-var mac13 = fmt.Sprintf("https://%s/builds/chromium/%s/chromium-arm64.zip", playwright_cdn_mirror, revision)
+var mac13 = fmt.Sprintf("https://%s/builds/chromium/%s/chromium-mac-arm64.zip", playwright_cdn_mirror, revision)
 var win64 = fmt.Sprintf("https://%s/builds/chromium/%s/chromium-win64.zip", playwright_cdn_mirror, revision)
 
 type Client struct {
@@ -388,6 +388,7 @@ var chromeArgs = []string{
 }
 
 func downChrome(preCtx context.Context, chromeDir, chromeDownUrl string) error {
+	log.Print("download chrome... ", chromeDownUrl)
 	resp, err := requests.Get(preCtx, chromeDownUrl, requests.RequestOption{Bar: true})
 	if err != nil {
 		return err
