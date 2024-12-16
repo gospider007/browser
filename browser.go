@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/http"
 	"net/url"
 	"os"
 	"runtime"
@@ -24,6 +25,7 @@ import (
 	"github.com/gospider007/gson"
 	"github.com/gospider007/gtls"
 	"github.com/gospider007/ja3"
+	"github.com/gospider007/proxy"
 	"github.com/gospider007/re"
 	"github.com/gospider007/requests"
 	"github.com/gospider007/tools"
@@ -54,6 +56,9 @@ var libsChrome = []string{
 	"libxkbcommon0",
 	"libxrandr2",
 }
+
+// apt install -y libasound2 libatk-bridge2.0-0 libatk1.0-0 libatspi2.0-0 libcairo2 libcups2 libdbus-1-3 libdrm2 libgbm1 libglib2.0-0 libnspr4 libnss3 libpango-1.0-0 libx11-6 libxcb1 libxcomposite1 libxdamage1 libxext6 libxfixes3 libxkbcommon0 libxrandr2
+// yum install -y libasound.so.2 libatk-bridge-2.0.so.0 libatk-1.0.so.0 libatspi.so.0 libcairo.so.2 libcups.so.2 libdbus-1.so.3 libdrm.so.2 libgbm.so.1 libgio-2.0.so.0 libnspr4.so libnss3.so libpango-1.0.so.0 libX11.so.6 libxcb.so.1 libXcomposite.so.1 libXdamage.so.1 libXext.so.6 libXfixes.so.3 libxkbcommon.so.0 libXrandr.so.2
 
 // https://github.com/microsoft/playwright/blob/main/packages/playwright-core/src/server/registry/nativeDeps.ts
 var libsPackage = map[string]string{
@@ -124,6 +129,7 @@ type Client struct {
 	cmdCli           *cmd.Client
 	globalReqCli     *requests.Client
 	addr             string
+	proxyAddr        string
 	ctx              context.Context
 	cnl              context.CancelFunc
 	webSock          *cdp.WebSock
@@ -282,6 +288,8 @@ func (obj *Client) runChrome(option *ClientOption) error {
 var chromeArgs = []string{
 	// "--disable-site-isolation-trials", //被识别
 	// "--virtual-time-budget=1000", //缩短setTimeout  setInterval 的时间1000秒:目前不生效，不知道以后会不会生效，等生效了再打开
+	//远程调试
+	"--remote-allow-origins=*",
 	// 自动化选项禁用
 	"--useAutomationExtension=false",                //禁用自动化扩展。
 	"--excludeSwitches=enable-automation",           //禁用自动化
@@ -480,8 +488,24 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 		if proxyHost == "" {
 			return client, errors.New("获取内网地址失败")
 		}
+
+		client.addr = net.JoinHostPort(option.Host, strconv.Itoa(option.Port))
+		proxCli, err := proxy.NewClient(client.ctx, proxy.ClientOption{
+			DisVerify: true,
+			HttpConnectCallBack: func(r *http.Request) error {
+				r.Host = client.addr
+				return nil
+			},
+		})
+		if err != nil {
+			return client, err
+		}
+		go proxCli.Run()
+		client.proxyAddr = proxCli.Addr()
+	} else {
+		client.addr = net.JoinHostPort(option.Host, strconv.Itoa(option.Port))
+		client.proxyAddr = client.addr
 	}
-	client.addr = net.JoinHostPort(option.Host, strconv.Itoa(option.Port))
 	go tools.Signal(preCtx, client.Close)
 	return client, client.init()
 }
@@ -579,6 +603,11 @@ func (obj *Client) Addr() string {
 	return obj.addr
 }
 
+// 返回浏览器远程控制的代理地址
+func (obj *Client) ProxyAddr() string {
+	return obj.proxyAddr
+}
+
 // 关闭浏览器
 func (obj *Client) Close() {
 	if obj.globalReqCli != nil {
@@ -603,7 +632,6 @@ type PageOption struct {
 // 新建标签页
 func (obj *Client) NewPage(preCtx context.Context, options ...PageOption) (*Page, error) {
 	rs, err := obj.webSock.TargetCreateTarget(preCtx, "")
-	// rs, err := obj.webSock.TargetCreateTarget(preCtx, obj.browserContextId, "")
 	if err != nil {
 		return nil, err
 	}
@@ -612,6 +640,12 @@ func (obj *Client) NewPage(preCtx context.Context, options ...PageOption) (*Page
 		return nil, errors.New("not found targetId")
 	}
 	return obj.NewPageWithTargetId(preCtx, targetId, "page", options...)
+}
+
+// 设置浏览器的地理位置
+func (obj *Client) SetGeolocation(preCtx context.Context, latitude float64, longitude float64) error {
+	_, err := obj.webSock.EmulationSetGeolocationOverride(preCtx, latitude, longitude)
+	return err
 }
 func (obj *Client) NewPageWithTargetId(preCtx context.Context, targetId string, targetType string, options ...PageOption) (*Page, error) {
 	var option PageOption

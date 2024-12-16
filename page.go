@@ -46,6 +46,7 @@ type Page struct {
 	networkNoticesSize atomic.Int64
 	requestFunc        func(context.Context, *cdp.Route)
 	frames             sync.Map
+	storageEnable      bool
 }
 
 func defaultRequestFunc(ctx context.Context, r *cdp.Route) { r.RequestContinue(ctx) }
@@ -95,6 +96,12 @@ func (obj *Page) pageStartLoadMain(ctx context.Context, rd cdp.RecvData) {
 func (obj *Page) pageEndLoadMain(ctx context.Context, rd cdp.RecvData) {
 	if frameId := rd.Params["frameId"].(string); frameId == obj.targetId {
 		obj.addStopNotice()
+	}
+}
+func (obj *Page) frameNavigated(ctx context.Context, rd cdp.RecvData) {
+	jsonData, _ := gson.Decode(rd.Params)
+	if jsonData.Get("frame.id").String() == obj.targetId {
+		obj.baseUrl = jsonData.Get("frame.url").String()
 	}
 }
 func (obj *Page) domLoadMain(ctx context.Context, rd cdp.RecvData) {
@@ -195,6 +202,7 @@ func (obj *Page) init() error {
 	obj.addEvent("Page.frameStartedLoading", obj.pageStartLoadMain)
 	obj.addEvent("Page.frameStoppedLoading", obj.pageEndLoadMain)
 	obj.addEvent("Page.domContentEventFired", obj.domLoadMain)
+	obj.addEvent("Page.frameNavigated", obj.frameNavigated)
 	obj.addEvent("Fetch.requestPaused", obj.routeMain)
 	obj.addEvent("Target.attachedToTarget", obj.iframeToTargetMain)
 	if _, err = obj.webSock.PageEnable(obj.ctx); err != nil {
@@ -955,26 +963,30 @@ func (obj *Page) SetTouch(ctx context.Context, hasTouch bool) error {
 	return err
 }
 
-func (obj *Page) SetCookies(ctx context.Context, href string, cookies ...cdp.Cookie) error {
+func (obj *Page) SetCookies(ctx context.Context, cookies ...cdp.Cookie) error {
 	if len(cookies) == 0 {
 		return nil
 	}
-	if href == "" {
-		href = obj.baseUrl
+	if obj.baseUrl == "" {
+		return errors.New("not found base url")
 	}
-	var err error
+	uu, err := uurl.Parse(obj.baseUrl)
+	if err != nil {
+		return err
+	}
+	securityOrigin := fmt.Sprintf("%s://%s", uu.Scheme, uu.Host) + "/"
 	for i := 0; i < len(cookies); i++ {
-		if cookies[i].Domain == "" {
-			if cookies[i].Url == "" {
-				cookies[i].Url = href
+		if cookies[i].Url == "" {
+			cookies[i].Url = securityOrigin
+			if cookies[i].Domain == "" {
+				cookies[i].Domain = uu.Hostname()
 			}
-			if cookies[i].Url != "" {
-				us, err := uurl.Parse(cookies[i].Url)
-				if err != nil {
-					return err
-				}
-				cookies[i].Domain = us.Hostname()
+		} else if cookies[i].Domain == "" {
+			us, err := uurl.Parse(cookies[i].Url)
+			if err != nil {
+				return err
 			}
+			cookies[i].Domain = us.Hostname()
 		}
 	}
 	_, err = obj.webSock.NetworkSetCookies(ctx, cookies)
@@ -1017,4 +1029,24 @@ func (obj *Page) ClearStorage(ctx context.Context) (err error) {
 }
 func (obj *Page) TargetId() string {
 	return obj.targetId
+}
+
+func (obj *Page) SetDOMStorageItem(ctx context.Context, key, val string, isLocalStorage bool) error {
+	if obj.baseUrl == "" {
+		return errors.New("not found base url")
+	}
+	uu, err := uurl.Parse(obj.baseUrl)
+	if err != nil {
+		return err
+	}
+	securityOrigin := fmt.Sprintf("%s://%s", uu.Scheme, uu.Host) + "/"
+	if !obj.storageEnable {
+		_, err = obj.webSock.StorageEnable(ctx, securityOrigin)
+		if err != nil {
+			return err
+		}
+		obj.storageEnable = true
+	}
+	_, err = obj.webSock.SetDOMStorageItem(ctx, securityOrigin, key, val, isLocalStorage)
+	return err
 }
