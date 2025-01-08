@@ -149,7 +149,7 @@ type ClientOption struct {
 	Width      int64                                                   //browser width,1200
 	Height     int64                                                   //browser height,605
 	Stealth    bool                                                    //is stealth
-	Ja3Spec    ja3.Ja3Spec                                             //ja3
+	Ja3Spec    ja3.Spec                                                //ja3
 }
 
 type downClient struct {
@@ -397,7 +397,11 @@ var chromeArgs = []string{
 
 func downChrome(preCtx context.Context, chromeDir, chromeDownUrl string) error {
 	log.Print("download chrome... ", chromeDownUrl)
-	resp, err := requests.Get(preCtx, chromeDownUrl, requests.RequestOption{Bar: true})
+	resp, err := requests.Get(preCtx, chromeDownUrl, requests.RequestOption{
+		ClientOption: requests.ClientOption{
+			Bar: true,
+		},
+	})
 	if err != nil {
 		return err
 	}
@@ -524,29 +528,31 @@ func (obj *Client) init() (err error) {
 	resp, err = obj.globalReqCli.Request(obj.ctx, "get",
 		fmt.Sprintf("http://%s/json/version", obj.addr),
 		requests.RequestOption{
-			Timeout:  time.Second * 3,
+			ClientOption: requests.ClientOption{
+				Timeout: time.Second * 3,
+				ErrCallBack: func(ctx context.Context, _ *requests.RequestOption, _ *requests.Response, err error) error {
+					select {
+					case <-obj.cmdCli.Ctx().Done():
+						return context.Cause(obj.cmdCli.Ctx())
+					case <-ctx.Done():
+						return nil
+					case <-time.After(time.Second):
+					}
+					if obj.cmdCli.Err() != nil {
+						return obj.cmdCli.Err()
+					}
+					return nil
+				},
+				ResultCallBack: func(ctx context.Context, _ *requests.RequestOption, r *requests.Response) error {
+					if r.StatusCode() == 200 {
+						return nil
+					}
+					time.Sleep(time.Second)
+					return errors.New("code error")
+				},
+				MaxRetries: 10,
+			},
 			DisProxy: true,
-			ErrCallBack: func(ctx context.Context, _ *requests.RequestOption, _ *requests.Response, err error) error {
-				select {
-				case <-obj.cmdCli.Ctx().Done():
-					return context.Cause(obj.cmdCli.Ctx())
-				case <-ctx.Done():
-					return nil
-				case <-time.After(time.Second):
-				}
-				if obj.cmdCli.Err() != nil {
-					return obj.cmdCli.Err()
-				}
-				return nil
-			},
-			ResultCallBack: func(ctx context.Context, _ *requests.RequestOption, r *requests.Response) error {
-				if r.StatusCode() == 200 {
-					return nil
-				}
-				time.Sleep(time.Second)
-				return errors.New("code error")
-			},
-			MaxRetries: 10,
 		})
 	if err != nil {
 		if obj.cmdCli.Err() != nil {
