@@ -613,11 +613,11 @@ func (obj *Page) close() error {
 		DisProxy: true,
 		ClientOption: requests.ClientOption{
 			MaxRetries: 10,
-			ResultCallBack: func(ctx context.Context, _ *requests.RequestOption, r *requests.Response) error {
-				switch r.Text() {
+			ResultCallBack: func(ctx *requests.Response) error {
+				switch ctx.Text() {
 				case "Target is closing", fmt.Sprintf("No such target id: %s", obj.targetId):
 				}
-				if text := r.Text(); text == "Target is closing" || text == fmt.Sprintf("No such target id: %s", obj.targetId) {
+				if text := ctx.Text(); text == "Target is closing" || text == fmt.Sprintf("No such target id: %s", obj.targetId) {
 					return nil
 				}
 				return errors.New("req close target error")

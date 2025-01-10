@@ -144,12 +144,12 @@ type ClientOption struct {
 	Args       []string //start args
 	Headless   bool     //is headless
 	UserAgent  string
-	Proxy      string                                                  //support http,https,socks5,ex: http://127.0.0.1:7005
-	GetProxy   func(ctx context.Context, url *url.URL) (string, error) //pr
-	Width      int64                                                   //browser width,1200
-	Height     int64                                                   //browser height,605
-	Stealth    bool                                                    //is stealth
-	Ja3Spec    ja3.Spec                                                //ja3
+	Proxy      string                                       //support http,https,socks5,ex: http://127.0.0.1:7005
+	GetProxy   func(ctx *requests.Response) (string, error) //pr
+	Width      int64                                        //browser width,1200
+	Height     int64                                        //browser height,605
+	Stealth    bool                                         //is stealth
+	Ja3Spec    ja3.Spec                                     //ja3
 }
 
 type downClient struct {
@@ -530,11 +530,11 @@ func (obj *Client) init() (err error) {
 		requests.RequestOption{
 			ClientOption: requests.ClientOption{
 				Timeout: time.Second * 3,
-				ErrCallBack: func(ctx context.Context, _ *requests.RequestOption, _ *requests.Response, err error) error {
+				ErrCallBack: func(ctx *requests.Response) error {
 					select {
 					case <-obj.cmdCli.Ctx().Done():
 						return context.Cause(obj.cmdCli.Ctx())
-					case <-ctx.Done():
+					case <-ctx.Context().Done():
 						return nil
 					case <-time.After(time.Second):
 					}
@@ -543,8 +543,8 @@ func (obj *Client) init() (err error) {
 					}
 					return nil
 				},
-				ResultCallBack: func(ctx context.Context, _ *requests.RequestOption, r *requests.Response) error {
-					if r.StatusCode() == 200 {
+				ResultCallBack: func(ctx *requests.Response) error {
+					if ctx.StatusCode() == 200 {
 						return nil
 					}
 					time.Sleep(time.Second)
