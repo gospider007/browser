@@ -37,7 +37,7 @@ func TestThread(t *testing.T) {
 	total := 100
 	thCli := thread.NewClient(nil, total)
 	for i := 0; i < int(total); i++ {
-		_, err = thCli.Write(&thread.Task{
+		_, err = thCli.Write(nil, &thread.Task{
 			Func: test,
 			Args: []any{client, i},
 		})
