@@ -24,7 +24,6 @@ import (
 	"github.com/gospider007/conf"
 	"github.com/gospider007/gson"
 	"github.com/gospider007/gtls"
-	"github.com/gospider007/ja3"
 	"github.com/gospider007/proxy"
 	"github.com/gospider007/re"
 	"github.com/gospider007/requests"
@@ -149,7 +148,7 @@ type ClientOption struct {
 	Width      int64                                        //browser width,1200
 	Height     int64                                        //browser height,605
 	Stealth    bool                                         //is stealth
-	Ja3Spec    ja3.Spec                                     //ja3
+	Ja3Spec    any                                          //ja3
 }
 
 type downClient struct {
