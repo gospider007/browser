@@ -451,8 +451,7 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 		MaxRetries:  2,
 		Proxy:       option.Proxy,
 		GetProxy:    option.GetProxy,
-		Ja3:         true,
-		Ja3Spec:     option.Ja3Spec,
+		Spec:        true,
 		MaxRedirect: -1,
 	})
 	if err != nil {
