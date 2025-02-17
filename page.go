@@ -592,7 +592,10 @@ func (obj *Page) Eval(ctx context.Context, expression string, params ...map[stri
 		return nil, errors.New(exceptionDetails.String())
 	}
 	if value := result.Get("result.value"); !value.Exists() {
-		return nil, errors.New("not found result")
+		if result.Get("result.type").String() == "undefined" {
+			return nil, nil
+		}
+		return nil, errors.New(result.String())
 	} else {
 		return value, nil
 	}
@@ -979,6 +982,9 @@ func (obj *Page) SetCookies(ctx context.Context, cookies ...cdp.Cookie) error {
 	securityOrigin := fmt.Sprintf("%s://%s", uu.Scheme, uu.Host) + "/"
 	for i := 0; i < len(cookies); i++ {
 		if cookies[i].Url == "" {
+			if obj.baseUrl != "" {
+
+			}
 			cookies[i].Url = securityOrigin
 			if cookies[i].Domain == "" {
 				cookies[i].Domain = uu.Hostname()
