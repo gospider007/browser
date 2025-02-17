@@ -1,6 +1,6 @@
 module github.com/gospider007/browser
 
-go 1.23.0
+go 1.24.0
 
 require (
 	github.com/gospider007/blog v0.0.0-20241205091827-6bcaf48620d4
@@ -15,13 +15,13 @@ require (
 	github.com/gospider007/requests v0.0.0-20250212051602-5c275b161c64
 	github.com/gospider007/thread v0.0.0-20250122022252-529316516836
 	github.com/gospider007/tools v0.0.0-20250208030917-26051a107d8c
-	golang.org/x/exp v0.0.0-20250210185358-939b2ce775ac
+	golang.org/x/exp v0.0.0-20250215185904-eff6e970281f
 	golang.org/x/net v0.35.0
 	golang.org/x/text v0.22.0
 )
 
 require (
-	github.com/PuerkitoBio/goquery v1.10.1 // indirect
+	github.com/PuerkitoBio/goquery v1.10.2 // indirect
 	github.com/STARRY-S/zip v0.2.1 // indirect
 	github.com/andybalholm/brotli v1.1.1 // indirect
 	github.com/andybalholm/cascadia v1.3.3 // indirect
@@ -52,7 +52,7 @@ require (
 	github.com/klauspost/compress v1.17.11 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.9 // indirect
 	github.com/klauspost/pgzip v1.2.6 // indirect
-	github.com/libdns/libdns v0.2.2 // indirect
+	github.com/libdns/libdns v0.2.3 // indirect
 	github.com/mholt/acmez/v3 v3.0.1 // indirect
 	github.com/mholt/archives v0.1.0 // indirect
 	github.com/miekg/dns v1.1.63 // indirect
@@ -85,4 +85,5 @@ require (
 	golang.org/x/sync v0.11.0 // indirect
 	golang.org/x/sys v0.30.0 // indirect
 	golang.org/x/tools v0.30.0 // indirect
+	google.golang.org/protobuf v1.36.2 // indirect
 )
