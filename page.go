@@ -972,20 +972,16 @@ func (obj *Page) SetCookies(ctx context.Context, cookies ...cdp.Cookie) error {
 	if len(cookies) == 0 {
 		return nil
 	}
-	if obj.baseUrl == "" {
-		return errors.New("not found base url")
-	}
-	uu, err := uurl.Parse(obj.baseUrl)
-	if err != nil {
-		return err
-	}
-	securityOrigin := fmt.Sprintf("%s://%s", uu.Scheme, uu.Host) + "/"
 	for i := 0; i < len(cookies); i++ {
 		if cookies[i].Url == "" {
-			if obj.baseUrl != "" {
-
+			if obj.baseUrl == "" {
+				return errors.New("not found base url")
 			}
-			cookies[i].Url = securityOrigin
+			uu, err := uurl.Parse(obj.baseUrl)
+			if err != nil {
+				return err
+			}
+			cookies[i].Url = fmt.Sprintf("%s://%s", uu.Scheme, uu.Host) + "/"
 			if cookies[i].Domain == "" {
 				cookies[i].Domain = uu.Hostname()
 			}
@@ -997,7 +993,7 @@ func (obj *Page) SetCookies(ctx context.Context, cookies ...cdp.Cookie) error {
 			cookies[i].Domain = us.Hostname()
 		}
 	}
-	_, err = obj.webSock.NetworkSetCookies(ctx, cookies)
+	_, err := obj.webSock.NetworkSetCookies(ctx, cookies)
 	return err
 }
 func (obj *Page) GetCookies(ctx context.Context, urls ...string) (cdp.Cookies, error) {
