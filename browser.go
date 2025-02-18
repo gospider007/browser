@@ -690,3 +690,9 @@ func (obj *Client) NewPageWithTargetId(preCtx context.Context, targetId string, 
 	}
 	return page, nil
 }
+func (obj *Client) BrowserSetPermission(ctx context.Context, permission string, setting string, origins ...string) error {
+	return obj.webSock.BrowserSetPermission(ctx, permission, setting, origins...)
+}
+func (obj *Client) BrowserGrantPermissions(ctx context.Context, permissions []string, origins ...string) error {
+	return obj.webSock.BrowserGrantPermissions(ctx, permissions, origins...)
+}
