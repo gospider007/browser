@@ -448,10 +448,10 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 		preCtx = context.TODO()
 	}
 	globalReqCli, err := requests.NewClient(preCtx, requests.ClientOption{
-		MaxRetries:  2,
-		Proxy:       option.Proxy,
-		GetProxy:    option.GetProxy,
-		Spec:        true,
+		MaxRetries: 2,
+		Proxy:      option.Proxy,
+		GetProxy:   option.GetProxy,
+		// Spec:        true,
 		MaxRedirect: -1,
 	})
 	if err != nil {
@@ -620,7 +620,7 @@ func (obj *Client) Close() {
 	if obj.webSock != nil {
 		obj.webSock.TargetDisposeBrowserContext(obj.browserContextId)
 		obj.webSock.BrowserClose()
-		obj.webSock.Close()
+		obj.webSock.CloseWithError(errors.New("browser closed"))
 	}
 	if obj.cmdCli != nil {
 		obj.cmdCli.Close()

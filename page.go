@@ -604,7 +604,7 @@ func (obj *Page) Close() (err error) {
 	obj.clearFrames()
 	obj.webSock.TargetCloseTarget(obj.targetId)
 	err = obj.close()
-	obj.webSock.Close()
+	obj.webSock.CloseWithError(errors.New("page closed"))
 	obj.cnl()
 	return
 }
