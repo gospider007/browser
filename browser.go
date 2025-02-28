@@ -212,9 +212,6 @@ func (obj *Client) runChrome(option *ClientOption) error {
 			return err
 		}
 	}
-	if option.UserAgent == "" {
-		option.UserAgent = tools.UserAgent
-	}
 	if option.ChromePath == "" {
 		option.ChromePath, err = oneDown.getChromePath(obj.ctx)
 		if err != nil {
@@ -465,9 +462,6 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 	}
 	if option.Height == 0 {
 		option.Height = 605
-	}
-	if option.UserAgent == "" {
-		option.UserAgent = tools.UserAgent
 	}
 	client = &Client{
 		userAgent:    option.UserAgent,

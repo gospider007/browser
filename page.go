@@ -273,9 +273,6 @@ func createFp(options ...FpOption) string {
 	if option.OperatingSystem == "" {
 		option.OperatingSystem = "windows"
 	}
-	if option.UserAgent == "" {
-		option.UserAgent = tools.UserAgent
-	}
 	if option.Locale == "" {
 		option.Locale = "zh-CN"
 	}
@@ -401,7 +398,6 @@ func createFp(options ...FpOption) string {
 		"videoCard":         videoCard,
 		"multimediaDevices": multimediaDevices,
 		"navigator":         navigator,
-		"userAgent":         tools.UserAgent,
 		"historyLength":     5,
 	}
 	val, _ := gson.Encode(fp)
