@@ -594,6 +594,53 @@ func (obj *Client) init() (err error) {
 	return err
 }
 
+// 浏览器初始化
+func (obj *Client) Targets() ([]string, error) {
+	resp, err := obj.globalReqCli.Request(obj.ctx, "get",
+		fmt.Sprintf("http://%s/json", obj.addr),
+		requests.RequestOption{
+			ClientOption: requests.ClientOption{
+				Timeout: time.Second * 3,
+				ErrCallBack: func(ctx *requests.Response) error {
+					select {
+					case <-obj.cmdCli.Ctx().Done():
+						return context.Cause(obj.cmdCli.Ctx())
+					case <-ctx.Context().Done():
+						return nil
+					case <-time.After(time.Second):
+					}
+					if obj.cmdCli.Err() != nil {
+						return obj.cmdCli.Err()
+					}
+					return nil
+				},
+				ResultCallBack: func(ctx *requests.Response) error {
+					if ctx.StatusCode() == 200 {
+						return nil
+					}
+					time.Sleep(time.Second)
+					return errors.New("code error")
+				},
+				MaxRetries: 10,
+			},
+			DisProxy: true,
+		})
+	if err != nil {
+		return nil, err
+	}
+	jsonData, err := resp.Json()
+	if err != nil {
+		return nil, err
+	}
+	targetId := []string{}
+	for _, page := range jsonData.Array() {
+		if page.Get("type").String() == "page" {
+			targetId = append(targetId, page.Get("id").String())
+		}
+	}
+	return targetId, nil
+}
+
 // 浏览器是否结束的 chan
 func (obj *Client) Done() <-chan struct{} {
 	return obj.webSock.Done()
@@ -643,7 +690,7 @@ func (obj *Client) NewPage(preCtx context.Context, options ...PageOption) (*Page
 	if !ok {
 		return nil, errors.New("not found targetId")
 	}
-	return obj.NewPageWithTargetId(preCtx, targetId, "page", options...)
+	return obj.NewPageWithTargetId(preCtx, targetId, options...)
 }
 
 // 设置浏览器的地理位置
@@ -651,7 +698,7 @@ func (obj *Client) SetGeolocation(preCtx context.Context, latitude float64, long
 	_, err := obj.webSock.EmulationSetGeolocationOverride(preCtx, latitude, longitude)
 	return err
 }
-func (obj *Client) NewPageWithTargetId(preCtx context.Context, targetId string, targetType string, options ...PageOption) (*Page, error) {
+func (obj *Client) NewPageWithTargetId(preCtx context.Context, targetId string, options ...PageOption) (*Page, error) {
 	var option PageOption
 	if len(options) > 0 {
 		option = options[0]
@@ -670,7 +717,7 @@ func (obj *Client) NewPageWithTargetId(preCtx context.Context, targetId string, 
 		userAgent:        obj.userAgent,
 		option:           option,
 		targetId:         targetId,
-		targetType:       targetType,
+		targetType:       "page",
 		addr:             obj.addr,
 		ctx:              ctx,
 		cnl:              cnl,
