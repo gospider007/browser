@@ -143,12 +143,12 @@ type ClientOption struct {
 	Args       []string //start args
 	Headless   bool     //is headless
 	UserAgent  string
-	Proxy      string                                       //support http,https,socks5,ex: http://127.0.0.1:7005
-	GetProxy   func(ctx *requests.Response) (string, error) //pr
-	Width      int64                                        //browser width,1200
-	Height     int64                                        //browser height,605
-	Stealth    bool                                         //is stealth
-	Ja3Spec    any                                          //ja3
+	Proxy      string                                    //support http,https,socks5,ex: http://127.0.0.1:7005
+	GetProxy   func(ctx *requests.Response) (any, error) //pr
+	Width      int64                                     //browser width,1200
+	Height     int64                                     //browser height,605
+	Stealth    bool                                      //is stealth
+	Ja3Spec    any                                       //ja3
 }
 
 type downClient struct {

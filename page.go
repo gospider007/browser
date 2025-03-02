@@ -1030,6 +1030,14 @@ func (obj *Page) ClearStorage(ctx context.Context) (err error) {
 func (obj *Page) TargetId() string {
 	return obj.targetId
 }
+func (obj *Page) Activate(ctx context.Context) error {
+	_, err := obj.webSock.PageBringToFront(ctx)
+	return err
+}
+func (obj *Page) SetHtml(ctx context.Context, html string) error {
+	_, err := obj.webSock.PageSetDocumentContent(ctx, obj.targetId, html)
+	return err
+}
 
 func (obj *Page) SetDOMStorageItem(ctx context.Context, key, val string, isLocalStorage bool) error {
 	if obj.baseUrl == "" {
