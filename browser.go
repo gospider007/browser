@@ -114,11 +114,13 @@ const revision = "1150"
 const playwright_cdn_mirror = "playwright.azureedge.net"
 
 // from https://playwright.azureedge.net/builds/chromium/1150/chromium-mac-arm64.zip
+// from https://playwright.azureedge.net/builds/chromium/1150/chromium-mac.zip
 
 // var mac13_arm64 = fmt.Sprintf("https://%s/builds/chromium/%s/chromium-mac-arm64.zip", playwright_cdn_mirror, revision)
 // var debian12_arm64 = fmt.Sprintf("https://%s/builds/chromium/%s/chromium-linux-arm64.zip", playwright_cdn_mirror, revision)
 var debian12_x64 = fmt.Sprintf("https://%s/builds/chromium/%s/chromium-linux.zip", playwright_cdn_mirror, revision)
 var mac13 = fmt.Sprintf("https://%s/builds/chromium/%s/chromium-mac-arm64.zip", playwright_cdn_mirror, revision)
+var mac13_intel = fmt.Sprintf("https://%s/builds/chromium/%s/chromium-mac.zip", playwright_cdn_mirror, revision)
 var win64 = fmt.Sprintf("https://%s/builds/chromium/%s/chromium-win64.zip", playwright_cdn_mirror, revision)
 
 type Client struct {
@@ -183,7 +185,11 @@ func (obj *downClient) getChromePath(preCtx context.Context) (string, error) {
 	case "darwin":
 		chromeDir = tools.PathJoin(chromeDir, revision)
 		chromePath = tools.PathJoin(chromeDir, "chrome-mac", "Chromium.app", "Contents", "MacOS", "Chromium")
-		chromeDownUrl = mac13
+		if runtime.GOARCH == "arm64" {
+			chromeDownUrl = mac13
+		} else {
+			chromeDownUrl = mac13_intel
+		}
 	case "linux":
 		chromeDir = tools.PathJoin(chromeDir, revision)
 		chromePath = tools.PathJoin(chromeDir, "chrome-linux", "chrome")
@@ -492,12 +498,19 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 				r.Host = client.addr
 				return nil
 			},
+			// WsCallBack: func(mt websocket.MessageType, b []byte, wt proxy.WsType) error {
+			// 	// if wt == proxy.ClientSend {
+			// 	log.Print(wt, " == ", mt, string(b))
+			// 	// }
+			// 	return nil
+			// },
 		})
 		if err != nil {
 			return client, err
 		}
 		go proxCli.Run()
 		client.proxyAddr = proxCli.Addr()
+		// client.addr = client.proxyAddr
 	} else {
 		client.addr = net.JoinHostPort(option.Host, strconv.Itoa(option.Port))
 		client.proxyAddr = client.addr
