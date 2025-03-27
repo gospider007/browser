@@ -500,7 +500,7 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 			},
 			// WsCallBack: func(mt websocket.MessageType, b []byte, wt proxy.WsType) error {
 			// 	// if wt == proxy.ClientSend {
-			// 	log.Print(wt, " == ", mt, string(b))
+			// 	log.Print(wt, " == ", mt)
 			// 	// }
 			// 	return nil
 			// },
