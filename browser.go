@@ -493,7 +493,6 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 
 		client.addr = net.JoinHostPort(option.Host, strconv.Itoa(option.Port))
 		proxCli, err := proxy.NewClient(client.ctx, proxy.ClientOption{
-			DisVerify: true,
 			HttpConnectCallBack: func(r *http.Request) error {
 				r.Host = client.addr
 				return nil
