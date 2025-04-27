@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"net/http"
 	"net/url"
 	"os"
 	"runtime"
@@ -493,10 +492,10 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 
 		client.addr = net.JoinHostPort(option.Host, strconv.Itoa(option.Port))
 		proxCli, err := proxy.NewClient(client.ctx, proxy.ClientOption{
-			HttpConnectCallBack: func(r *http.Request) error {
-				r.Host = client.addr
-				return nil
-			},
+			// HttpConnectCallBack: func(r *http.Request) error {
+			// 	r.Host = client.addr
+			// 	return nil
+			// },
 			// WsCallBack: func(mt websocket.MessageType, b []byte, wt proxy.WsType) error {
 			// 	// if wt == proxy.ClientSend {
 			// 	log.Print(wt, " == ", mt)
