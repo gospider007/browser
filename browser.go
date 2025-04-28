@@ -479,17 +479,6 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 		if err = client.runChrome(&option); err != nil {
 			return
 		}
-		var proxyHost string
-		for _, addr := range gtls.GetHosts(4) {
-			if addr.IsGlobalUnicast() {
-				proxyHost = addr.String()
-				break
-			}
-		}
-		if proxyHost == "" {
-			return client, errors.New("获取内网地址失败")
-		}
-
 		client.addr = net.JoinHostPort(option.Host, strconv.Itoa(option.Port))
 		proxCli, err := proxy.NewClient(client.ctx, proxy.ClientOption{
 			// HttpConnectCallBack: func(r *http.Request) error {
