@@ -22,7 +22,6 @@ import (
 	"github.com/gospider007/cmd"
 	"github.com/gospider007/conf"
 	"github.com/gospider007/gson"
-	"github.com/gospider007/gtls"
 	"github.com/gospider007/proxy"
 	"github.com/gospider007/re"
 	"github.com/gospider007/requests"

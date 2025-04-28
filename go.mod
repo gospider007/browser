@@ -9,7 +9,6 @@ require (
 	github.com/gospider007/cmd v0.0.0-20250110063533-77e13dc2c2ae
 	github.com/gospider007/conf v0.0.0-20250107100154-6eb26b6e689c
 	github.com/gospider007/gson v0.0.0-20250110063619-6fd4001287da
-	github.com/gospider007/gtls v0.0.0-20250107100054-2a14fa6fc9c5
 	github.com/gospider007/proxy v0.0.0-20250212051747-ecb05461e726
 	github.com/gospider007/re v0.0.0-20241216142712-efbef8d55ea2
 	github.com/gospider007/requests v0.0.0-20250212051602-5c275b161c64
@@ -39,6 +38,7 @@ require (
 	github.com/google/pprof v0.0.0-20250403155104-27863c87afa6 // indirect
 	github.com/gospider007/bar v0.0.0-20241205091858-06f3c7e16dd9 // indirect
 	github.com/gospider007/chanx v0.0.0-20241120015105-e88179cbbddb // indirect
+	github.com/gospider007/gtls v0.0.0-20250107100054-2a14fa6fc9c5 // indirect
 	github.com/gospider007/http2 v0.0.0-20250211075152-9b93ea5934a7 // indirect
 	github.com/gospider007/http3 v0.0.0-20250211075910-8bad8da7d8cc // indirect
 	github.com/gospider007/ja3 v0.0.0-20250212035818-fe608eeab926 // indirect
