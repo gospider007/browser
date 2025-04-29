@@ -101,7 +101,10 @@ func PrintLibs() {
 }
 
 // https://github.com/microsoft/playwright/blob/main/packages/playwright-core/browsers.json
+
 const revision = "1150"
+
+// const revision = "1084"
 
 // var playwright_cdn_mirrors = []string{
 // 	"playwright.azureedge.net",

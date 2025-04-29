@@ -726,6 +726,44 @@ func (obj *Page) WaitSelector(ctx context.Context, selector string, timeouts ...
 	}
 	return nil, errors.New("超时")
 }
+func (obj *Page) WaitSelectors(ctx context.Context, selector string, timeouts ...time.Duration) ([]*Dom, error) {
+	if ctx == nil {
+		ctx = obj.ctx
+	}
+	var timeout time.Duration
+	if len(timeouts) > 0 {
+		timeout = timeouts[0]
+	} else {
+		timeout = time.Second * 30
+	}
+	startTime := time.Now()
+	var t *time.Timer
+	defer func() {
+		if t != nil {
+			t.Stop()
+		}
+	}()
+	for time.Since(startTime) <= timeout {
+		dom, err := obj.QuerySelectorAll(ctx, selector)
+		if err != nil {
+			return nil, err
+		}
+		if len(dom) > 0 {
+			return dom, nil
+		}
+		if t == nil {
+			t = time.NewTimer(time.Millisecond * 500)
+		} else {
+			t.Reset(time.Millisecond * 500)
+		}
+		select {
+		case <-t.C:
+		case <-ctx.Done():
+			return nil, context.Cause(ctx)
+		}
+	}
+	return nil, errors.New("超时")
+}
 func (obj *Page) Frames() []*Page {
 	frames := []*Page{}
 	obj.frames.Range(func(key, value any) bool {
