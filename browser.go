@@ -137,6 +137,7 @@ type Client struct {
 	webSock          *cdp.WebSock
 	stealth          bool //是否开启随机指纹
 	browserContextId string
+	proxCli          *proxy.Client
 }
 type ClientOption struct {
 	Host       string
@@ -482,7 +483,7 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 			return
 		}
 		client.addr = net.JoinHostPort(option.Host, strconv.Itoa(option.Port))
-		proxCli, err := proxy.NewClient(client.ctx, proxy.ClientOption{
+		client.proxCli, err = proxy.NewClient(proxy.ClientOption{
 			// HttpConnectCallBack: func(r *http.Request) error {
 			// 	r.Host = client.addr
 			// 	return nil
@@ -497,8 +498,8 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 		if err != nil {
 			return client, err
 		}
-		go proxCli.Run()
-		client.proxyAddr = proxCli.Addr()
+		go client.proxCli.Run()
+		client.proxyAddr = client.proxCli.Addr()
 		// client.addr = client.proxyAddr
 	} else {
 		client.addr = net.JoinHostPort(option.Host, strconv.Itoa(option.Port))
@@ -657,6 +658,9 @@ func (obj *Client) ProxyAddr() string {
 
 // 关闭浏览器
 func (obj *Client) Close() {
+	if obj.proxCli != nil {
+		obj.proxCli.Close()
+	}
 	if obj.globalReqCli != nil {
 		obj.globalReqCli.Close()
 	}
