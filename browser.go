@@ -250,7 +250,7 @@ func (obj *Client) runChrome(option *ClientOption) error {
 		if err != nil {
 			return err
 		}
-		if proxyUrl.User == nil {
+		if proxyUrl.User == nil && proxyUrl.Scheme == "http" {
 			args = append(args, fmt.Sprintf(`--proxy-server=%s`, proxyUrl.String()))
 		} else {
 			obj.isReplaceRequest = true
@@ -453,10 +453,9 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 		preCtx = context.TODO()
 	}
 	globalReqCli, err := requests.NewClient(preCtx, requests.ClientOption{
-		MaxRetries: 2,
-		Proxy:      option.Proxy,
-		GetProxy:   option.GetProxy,
-		// Spec:        true,
+		MaxRetries:  2,
+		Proxy:       option.Proxy,
+		GetProxy:    option.GetProxy,
 		MaxRedirect: -1,
 	})
 	if err != nil {
@@ -708,6 +707,9 @@ func (obj *Client) NewPageWithTargetId(preCtx context.Context, targetId string, 
 		if option.Proxy != "" && option.Proxy != obj.proxy {
 			isReplaceRequest = true
 		}
+	}
+	if option.Proxy == "" {
+		option.Proxy = obj.proxy
 	}
 	if !option.Stealth {
 		option.Stealth = obj.stealth

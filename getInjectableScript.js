@@ -1,54 +1,6 @@
 const { FingerprintInjector } = require('fingerprint-injector');
-const { FingerprintGenerator } = require('fingerprint-generator');
+const fingerprint_generator_1 = require("fingerprint-generator");
 const injector = new FingerprintInjector();
-const generator = new FingerprintGenerator();
-
-function inject() {
-    const { battery, navigator: { 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    extraProperties, userAgentData, webdriver, ...navigatorProps }, screen: allScreenProps, videoCard, historyLength, audioCodecs, videoCodecs,
-    // @ts-expect-error internal browser code
-     } = fp;
-    const { 
-    // window screen props
-    outerHeight, outerWidth, devicePixelRatio, innerWidth, innerHeight, screenX, pageXOffset, pageYOffset, 
-    // Document screen props
-    clientWidth, clientHeight, 
-    // Ignore hdr for now.
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    hasHDR, 
-    // window.screen props
-    ...newScreen } = allScreenProps;
-    const windowScreenProps = {
-        innerHeight,
-        outerHeight,
-        outerWidth,
-        innerWidth,
-        screenX,
-        pageXOffset,
-        pageYOffset,
-        devicePixelRatio,
-    };
-    const documentScreenProps = {
-        clientHeight,
-        clientWidth,
-    };
-    runHeadlessFixes();
-    if (userAgentData) {
-        overrideUserAgentData(userAgentData);
-    }
-    if (window.navigator.webdriver) {
-        navigatorProps.webdriver = false;
-    }
-    overrideInstancePrototype(window.navigator, navigatorProps);
-    overrideInstancePrototype(window.screen, newScreen);
-    overrideWindowDimensionsProps(windowScreenProps);
-    overrideDocumentDimensionsProps(documentScreenProps);
-    overrideInstancePrototype(window.history, { length: historyLength });
-    overrideWebGl(videoCard);
-    overrideCodecs(audioCodecs, videoCodecs);
-    overrideBattery(battery);
-}
 function inject2() {
     const changeCanvasMain=function() {
         function random(list) {
@@ -173,13 +125,19 @@ function inject2() {
     changeAudio()
 }
 function getInjectableFingerprintFunction() {
-    const mainFunctionString = inject.toString();
+    const generator = new fingerprint_generator_1.FingerprintGenerator();
+    const fingerprintWithHeaders =  generator.getFingerprint({
+            browsers: ["chrome"],
+            devices: ["desktop"],
+            operatingSystems: ["macos"],
+            mockWebRTC: true,
+        });
+    const mainFunctionString = injector.getInjectableScript(fingerprintWithHeaders);
     const mainFunctionString2 = inject2.toString();
-    return `(()=>{${injector.utilsJs}; 
-const fp="@@__gospiderFpData__@@"; 
-(${mainFunctionString})();
-(${mainFunctionString2})();
-})()`;
+    return `(()=>{
+        (${mainFunctionString})();
+        (${mainFunctionString2})();
+    })()`
 }
 
 const fs = require('fs');

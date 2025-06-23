@@ -14,9 +14,8 @@ require (
 	github.com/gospider007/requests v0.0.0-20250212051602-5c275b161c64
 	github.com/gospider007/thread v0.0.0-20250122022252-529316516836
 	github.com/gospider007/tools v0.0.0-20250413121648-446528a36c44
-	golang.org/x/exp v0.0.0-20250606033433-dcc06ee1d476
+	golang.org/x/exp v0.0.0-20250620022241-b7579e27df2b
 	golang.org/x/net v0.41.0
-	golang.org/x/text v0.26.0
 )
 
 require (
@@ -45,7 +44,7 @@ require (
 	github.com/gospider007/gtls v0.0.0-20250427082859-097a9e35c601 // indirect
 	github.com/gospider007/http2 v0.0.0-20250427082905-4aed0707e580 // indirect
 	github.com/gospider007/http3 v0.0.0-20250416085920-b642f3f91f47 // indirect
-	github.com/gospider007/ja3 v0.0.0-20250427082442-f7dc5fb959e6 // indirect
+	github.com/gospider007/ja3 v0.0.0-20250615121404-6d7f30dfa700 // indirect
 	github.com/gospider007/kinds v0.0.0-20250217075226-10f199f7215d // indirect
 	github.com/gospider007/net v0.0.0-20250221154115-3f297fc794c9 // indirect
 	github.com/gospider007/websocket v0.0.0-20250429035144-b1cf6819063a // indirect
@@ -89,6 +88,7 @@ require (
 	golang.org/x/mod v0.25.0 // indirect
 	golang.org/x/sync v0.15.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
+	golang.org/x/text v0.26.0 // indirect
 	golang.org/x/time v0.11.0 // indirect
 	golang.org/x/tools v0.34.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect

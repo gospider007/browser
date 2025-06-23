@@ -15,11 +15,8 @@ import (
 	"github.com/gospider007/bs4"
 	"github.com/gospider007/cdp"
 	"github.com/gospider007/gson"
-	"github.com/gospider007/re"
 	"github.com/gospider007/requests"
 	"github.com/gospider007/tools"
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
 )
 
 type Page struct {
@@ -212,11 +209,15 @@ func (obj *Page) init() error {
 		return err
 	}
 	if obj.option.Stealth {
-		if err = obj.AddScript(obj.ctx, createFp(FpOption{UserAgent: obj.userAgent})); err != nil {
+		if obj.userAgent == "" {
+			obj.userAgent = tools.UserAgent
+		}
+		if err = obj.AddScript(obj.ctx, stealthRaw); err != nil {
 			return err
 		}
 	}
-	return obj.AddScript(obj.ctx, `Object.defineProperty(window, "RTCPeerConnection",{"get":undefined});Object.defineProperty(window, "mozRTCPeerConnection",{"get":undefined});Object.defineProperty(window, "webkitRTCPeerConnection",{"get":undefined});`)
+	return nil
+	// return obj.AddScript(obj.ctx, `Object.defineProperty(window, "RTCPeerConnection",{"get":undefined});Object.defineProperty(window, "mozRTCPeerConnection",{"get":undefined});Object.defineProperty(window, "webkitRTCPeerConnection",{"get":undefined});`)
 }
 
 func (obj *Page) newPageWithTargetId(targetId string) (*Page, error) {
@@ -259,150 +260,6 @@ type FpOption struct {
 	Locale          string
 }
 
-func createFp(options ...FpOption) string {
-	var option FpOption
-	if len(options) > 0 {
-		option = options[0]
-	}
-	if option.Browser == "" {
-		option.Browser = "chrome"
-	}
-	if option.Device == "" {
-		option.Device = "desktop"
-	}
-	if option.OperatingSystem == "" {
-		option.OperatingSystem = "windows"
-	}
-	if option.Locale == "" {
-		option.Locale = "zh-CN"
-	}
-	if len(option.Locales) == 0 {
-		option.Locales = []string{"zh-CN", "en", "en-GB", "en-US"}
-	}
-	screen := map[string]any{
-		"availHeight":      672,
-		"availWidth":       1280,
-		"pixelDepth":       24,
-		"height":           720,
-		"width":            1280,
-		"availTop":         0,
-		"availLeft":        0,
-		"colorDepth":       24,
-		"innerHeight":      0,
-		"outerHeight":      672,
-		"outerWidth":       1280,
-		"innerWidth":       0,
-		"screenX":          0,
-		"pageXOffset":      0,
-		"pageYOffset":      0,
-		"devicePixelRatio": 1.5,
-		"clientWidth":      0,
-		"clientHeight":     18,
-		"hasHDR":           false,
-	}
-	audioCodecs := map[string]any{
-		"ogg": "probably",
-		"mp3": "probably",
-		"wav": "probably",
-		"m4a": "maybe",
-		"aac": "probably",
-	}
-	videoCodecs := map[string]any{
-		"ogg":  "probably",
-		"h264": "probably",
-		"webm": "probably",
-	}
-	battery := map[string]any{
-		"charging":        true,
-		"chargingTime":    0,
-		"dischargingTime": nil,
-		"level":           1,
-	}
-	videoCard := map[string]any{
-		"vendor":   "Google Inc. (Intel)",
-		"renderer": "ANGLE (Intel, Intel(R) UHD Graphics Direct3D11 vs_5_0 ps_5_0, D3D11)",
-	}
-	multimediaDevices := map[string]any{
-		"speakers": []map[string]any{
-			{
-				"deviceId": "",
-				"kind":     "audiooutput",
-				"label":    "",
-				"groupId":  "",
-			},
-		},
-		"micros": []map[string]any{
-			{
-				"deviceId": "",
-				"kind":     "audioinput",
-				"label":    "",
-				"groupId":  "",
-			},
-		},
-		"webcams": []map[string]any{
-			{
-				"deviceId": "",
-				"kind":     "videoinput",
-				"label":    "",
-				"groupId":  "",
-			},
-		},
-	}
-	appVersion := re.Sub(`^.*?Mozilla/`, "", option.UserAgent)
-	version := re.Search(`Chrome/(\d+)?\.`, option.UserAgent).Group(1)
-	brands := []map[string]any{}
-	if strings.Contains(option.UserAgent, " Edg") || option.Browser == "edge" {
-		brands = append(brands, map[string]any{
-			"brand":   "Microsoft Edge",
-			"version": version,
-		})
-	}
-	brands = append(brands,
-		map[string]any{"brand": "Not;A=Brand",
-			"version": "8"},
-		map[string]any{"brand": "Chromium",
-			"version": version},
-	)
-	var mobile bool
-	if option.Device == "mobile" {
-		mobile = true
-	}
-	navigator := map[string]any{
-		"userAgent": option.UserAgent,
-		"userAgentData": map[string]any{
-			"brands":   brands,
-			"mobile":   mobile,
-			"platform": cases.Title(language.English).String(option.Device),
-		},
-		"language":            option.Locale,
-		"languages":           option.Locales,
-		"platform":            "Win32",
-		"deviceMemory":        8,
-		"hardwareConcurrency": 8,
-		"maxTouchPoints":      10,
-		"product":             "Gecko",
-		"productSub":          "20030107",
-		"vendor":              "Google Inc.",
-		"vendorSub":           "",
-		"doNotTrack":          nil,
-		"appCodeName":         "Mozilla",
-		"appName":             "Netscape",
-		"appVersion":          appVersion,
-		"webdriver":           false,
-	}
-	fp := map[string]any{
-		"screen":            screen,
-		"audioCodecs":       audioCodecs,
-		"videoCodecs":       videoCodecs,
-		"battery":           battery,
-		"videoCard":         videoCard,
-		"multimediaDevices": multimediaDevices,
-		"navigator":         navigator,
-		"historyLength":     5,
-	}
-	val, _ := gson.Encode(fp)
-	return strings.ReplaceAll(stealthRaw, `"@@__gospiderFpData__@@"`, tools.BytesToString(val))
-}
 func (obj *Page) AddScript(ctx context.Context, script string) error {
 	_, err := obj.webSock.PageAddScriptToEvaluateOnNewDocument(ctx, script)
 	return err
@@ -1029,6 +886,25 @@ func (obj *Page) SetCookies(ctx context.Context, cookies ...cdp.Cookie) error {
 	}
 	_, err := obj.webSock.NetworkSetCookies(ctx, cookies)
 	return err
+}
+func (obj *Page) SetCookiesWitString(ctx context.Context, href string, cookies string) error {
+	for _, cookie := range strings.Split(cookies, "; ") {
+		kvs := strings.Split(cookie, "=")
+		if len(kvs) < 2 {
+			continue
+		}
+		name := kvs[0]
+		value := strings.Join(kvs[1:], "=")
+		err := obj.SetCookies(ctx, cdp.Cookie{
+			Name:  name,
+			Value: value,
+			Url:   href,
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 func (obj *Page) GetCookies(ctx context.Context, urls ...string) (cdp.Cookies, error) {
 	if len(urls) == 0 {
