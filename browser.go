@@ -22,7 +22,6 @@ import (
 	"github.com/gospider007/cmd"
 	"github.com/gospider007/conf"
 	"github.com/gospider007/gson"
-	"github.com/gospider007/proxy"
 	"github.com/gospider007/re"
 	"github.com/gospider007/requests"
 	"github.com/gospider007/tools"
@@ -131,13 +130,11 @@ type Client struct {
 	cmdCli           *cmd.Client
 	globalReqCli     *requests.Client
 	addr             string
-	proxyAddr        string
 	ctx              context.Context
 	cnl              context.CancelFunc
 	webSock          *cdp.WebSock
 	stealth          bool //是否开启随机指纹
 	browserContextId string
-	proxCli          *proxy.Client
 }
 type ClientOption struct {
 	Host       string
@@ -482,27 +479,8 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 			return
 		}
 		client.addr = net.JoinHostPort(option.Host, strconv.Itoa(option.Port))
-		client.proxCli, err = proxy.NewClient(proxy.ClientOption{
-			// HttpConnectCallBack: func(r *http.Request) error {
-			// 	r.Host = client.addr
-			// 	return nil
-			// },
-			// WsCallBack: func(mt websocket.MessageType, b []byte, wt proxy.WsType) error {
-			// 	// if wt == proxy.ClientSend {
-			// 	log.Print(wt, " == ", mt)
-			// 	// }
-			// 	return nil
-			// },
-		})
-		if err != nil {
-			return client, err
-		}
-		go client.proxCli.Run()
-		client.proxyAddr = client.proxCli.Addr()
-		// client.addr = client.proxyAddr
 	} else {
 		client.addr = net.JoinHostPort(option.Host, strconv.Itoa(option.Port))
-		client.proxyAddr = client.addr
 	}
 	go tools.Signal(preCtx, client.Close)
 	return client, client.init()
@@ -650,16 +628,8 @@ func (obj *Client) Addr() string {
 	return obj.addr
 }
 
-// 返回浏览器远程控制的代理地址
-func (obj *Client) ProxyAddr() string {
-	return obj.proxyAddr
-}
-
 // 关闭浏览器
 func (obj *Client) Close() {
-	if obj.proxCli != nil {
-		obj.proxCli.Close()
-	}
 	if obj.globalReqCli != nil {
 		obj.globalReqCli.Close()
 	}
