@@ -131,7 +131,7 @@ type Client struct {
 	globalReqCli     *requests.Client
 	addr             string
 	ctx              context.Context
-	cnl              context.CancelFunc
+	cnl              context.CancelCauseFunc
 	webSock          *cdp.WebSock
 	stealth          bool //是否开启随机指纹
 	browserContextId string
@@ -473,7 +473,7 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 		globalReqCli: globalReqCli,
 		stealth:      option.Stealth,
 	}
-	client.ctx, client.cnl = context.WithCancel(preCtx)
+	client.ctx, client.cnl = context.WithCancelCause(preCtx)
 	if option.Host == "" || option.Port == 0 {
 		if err = client.runChrome(&option); err != nil {
 			return
@@ -619,6 +619,9 @@ func (obj *Client) Targets() ([]string, error) {
 func (obj *Client) Done() <-chan struct{} {
 	return obj.webSock.Done()
 }
+func (obj *Client) Context() context.Context {
+	return obj.webSock.Context()
+}
 func (obj *Client) Error() (err error) {
 	return obj.webSock.Error()
 }
@@ -636,12 +639,12 @@ func (obj *Client) Close() {
 	if obj.webSock != nil {
 		obj.webSock.TargetDisposeBrowserContext(obj.browserContextId)
 		obj.webSock.BrowserClose()
-		obj.webSock.CloseWithError(errors.New("browser closed"))
+		obj.webSock.CloseWithError(errors.New("webSock browser closed"))
 	}
 	if obj.cmdCli != nil {
 		obj.cmdCli.Close()
 	}
-	obj.cnl()
+	obj.cnl(errors.New("client browser closed"))
 }
 
 type PageOption struct {

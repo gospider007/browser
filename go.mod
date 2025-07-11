@@ -5,15 +5,15 @@ go 1.24.0
 require (
 	github.com/gospider007/blog v0.0.0-20250302134054-8afc12c2a9a7
 	github.com/gospider007/bs4 v0.0.0-20250413121342-fed910fb00c9
-	github.com/gospider007/cdp v0.0.0-20250623092249-46535c0a54b0
-	github.com/gospider007/cmd v0.0.0-20250611163222-206843065053
+	github.com/gospider007/cdp v0.0.0-20250711035354-8bef1502ec46
+	github.com/gospider007/cmd v0.0.0-20250630120625-c70d67dbeef8
 	github.com/gospider007/conf v0.0.0-20250413121401-44c073ac3fe3
-	github.com/gospider007/gson v0.0.0-20250611163241-fa021e9c5531
+	github.com/gospider007/gson v0.0.0-20250630120534-cce6e3c6756d
 	github.com/gospider007/re v0.0.0-20250217075352-bcb79f285d6c
-	github.com/gospider007/requests v0.0.0-20250630063445-aec0c7aa2512
+	github.com/gospider007/requests v0.0.0-20250630143526-afb6720318d8
 	github.com/gospider007/tools v0.0.0-20250630120304-b22c2ddf35b5
 	golang.org/x/exp v0.0.0-20250620022241-b7579e27df2b
-	golang.org/x/net v0.41.0
+	golang.org/x/net v0.42.0
 )
 
 require (
@@ -36,14 +36,14 @@ require (
 	github.com/gobwas/ws v1.4.0 // indirect
 	github.com/golang/snappy v1.0.0 // indirect
 	github.com/google/gopacket v1.1.19 // indirect
-	github.com/google/pprof v0.0.0-20250629210550-e611ec304b22 // indirect
+	github.com/google/pprof v0.0.0-20250630185457-6e76a2b096b5 // indirect
 	github.com/gospider007/bar v0.0.0-20250217074946-47896d8de2ba // indirect
-	github.com/gospider007/gtls v0.0.0-20250610060422-446e017b9858 // indirect
-	github.com/gospider007/http2 v0.0.0-20250616085600-a49f075f841e // indirect
-	github.com/gospider007/http3 v0.0.0-20250625134649-90c214b46d1c // indirect
+	github.com/gospider007/gtls v0.0.0-20250630120509-4e99c91661ee // indirect
+	github.com/gospider007/http2 v0.0.0-20250711035043-daabc8e205b3 // indirect
+	github.com/gospider007/http3 v0.0.0-20250630120526-1066890881e5 // indirect
 	github.com/gospider007/ja3 v0.0.0-20250627013834-1d2966014638 // indirect
 	github.com/gospider007/kinds v0.0.0-20250217075226-10f199f7215d // indirect
-	github.com/gospider007/websocket v0.0.0-20250429035144-b1cf6819063a // indirect
+	github.com/gospider007/websocket v0.0.0-20250630120328-1ec26253d082 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
@@ -52,7 +52,7 @@ require (
 	github.com/libdns/libdns v1.1.0 // indirect
 	github.com/mholt/acmez/v3 v3.1.2 // indirect
 	github.com/mholt/archives v0.1.3 // indirect
-	github.com/miekg/dns v1.1.66 // indirect
+	github.com/miekg/dns v1.1.67 // indirect
 	github.com/mikelolasagasti/xz v1.0.1 // indirect
 	github.com/minio/minlz v1.0.1 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
@@ -79,13 +79,12 @@ require (
 	go.uber.org/zap v1.27.0 // indirect
 	go.uber.org/zap/exp v0.3.0 // indirect
 	go4.org v0.0.0-20230225012048-214862532bf5 // indirect
-	golang.org/x/crypto v0.39.0 // indirect
-	golang.org/x/image v0.28.0 // indirect
-	golang.org/x/mod v0.25.0 // indirect
-	golang.org/x/sync v0.15.0 // indirect
-	golang.org/x/sys v0.33.0 // indirect
-	golang.org/x/text v0.26.0 // indirect
-	golang.org/x/time v0.12.0 // indirect
+	golang.org/x/crypto v0.40.0 // indirect
+	golang.org/x/image v0.29.0 // indirect
+	golang.org/x/mod v0.26.0 // indirect
+	golang.org/x/sync v0.16.0 // indirect
+	golang.org/x/sys v0.34.0 // indirect
+	golang.org/x/text v0.27.0 // indirect
 	golang.org/x/tools v0.34.0 // indirect
 	gopkg.in/errgo.v2 v2.1.0 // indirect
 )
