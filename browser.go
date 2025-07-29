@@ -399,9 +399,7 @@ var chromeArgs = []string{
 func downChrome(preCtx context.Context, chromeDir, chromeDownUrl string) error {
 	log.Print("download chrome... ", chromeDownUrl)
 	resp, err := requests.Get(preCtx, chromeDownUrl, requests.RequestOption{
-		ClientOption: requests.ClientOption{
-			Bar: true,
-		},
+		Bar: true,
 	})
 	if err != nil {
 		return err
@@ -500,31 +498,29 @@ func (obj *Client) init() (err error) {
 	resp, err = obj.globalReqCli.Request(obj.ctx, "get",
 		fmt.Sprintf("http://%s/json/version", obj.addr),
 		requests.RequestOption{
-			ClientOption: requests.ClientOption{
-				Timeout: time.Second * 3,
-				ErrCallBack: func(ctx *requests.Response) error {
-					select {
-					case <-obj.cmdCli.Ctx().Done():
-						return context.Cause(obj.cmdCli.Ctx())
-					case <-ctx.Context().Done():
-						return nil
-					case <-time.After(time.Second):
-					}
-					if obj.cmdCli.Err() != nil {
-						return obj.cmdCli.Err()
-					}
+			Timeout: time.Second * 3,
+			ErrCallBack: func(ctx *requests.Response) error {
+				select {
+				case <-obj.cmdCli.Ctx().Done():
+					return context.Cause(obj.cmdCli.Ctx())
+				case <-ctx.Context().Done():
 					return nil
-				},
-				ResultCallBack: func(ctx *requests.Response) error {
-					if ctx.StatusCode() == 200 {
-						return nil
-					}
-					time.Sleep(time.Second)
-					return errors.New("code error")
-				},
-				MaxRetries: 10,
+				case <-time.After(time.Second):
+				}
+				if obj.cmdCli.Err() != nil {
+					return obj.cmdCli.Err()
+				}
+				return nil
 			},
-			DisProxy: true,
+			ResultCallBack: func(ctx *requests.Response) error {
+				if ctx.StatusCode() == 200 {
+					return nil
+				}
+				time.Sleep(time.Second)
+				return errors.New("code error")
+			},
+			MaxRetries: 10,
+			DisProxy:   true,
 		})
 	if err != nil {
 		if obj.cmdCli.Err() != nil {
@@ -573,31 +569,29 @@ func (obj *Client) Targets() ([]string, error) {
 	resp, err := obj.globalReqCli.Request(obj.ctx, "get",
 		fmt.Sprintf("http://%s/json", obj.addr),
 		requests.RequestOption{
-			ClientOption: requests.ClientOption{
-				Timeout: time.Second * 3,
-				ErrCallBack: func(ctx *requests.Response) error {
-					select {
-					case <-obj.cmdCli.Ctx().Done():
-						return context.Cause(obj.cmdCli.Ctx())
-					case <-ctx.Context().Done():
-						return nil
-					case <-time.After(time.Second):
-					}
-					if obj.cmdCli.Err() != nil {
-						return obj.cmdCli.Err()
-					}
+			Timeout: time.Second * 3,
+			ErrCallBack: func(ctx *requests.Response) error {
+				select {
+				case <-obj.cmdCli.Ctx().Done():
+					return context.Cause(obj.cmdCli.Ctx())
+				case <-ctx.Context().Done():
 					return nil
-				},
-				ResultCallBack: func(ctx *requests.Response) error {
-					if ctx.StatusCode() == 200 {
-						return nil
-					}
-					time.Sleep(time.Second)
-					return errors.New("code error")
-				},
-				MaxRetries: 10,
+				case <-time.After(time.Second):
+				}
+				if obj.cmdCli.Err() != nil {
+					return obj.cmdCli.Err()
+				}
+				return nil
 			},
-			DisProxy: true,
+			ResultCallBack: func(ctx *requests.Response) error {
+				if ctx.StatusCode() == 200 {
+					return nil
+				}
+				time.Sleep(time.Second)
+				return errors.New("code error")
+			},
+			MaxRetries: 10,
+			DisProxy:   true,
 		})
 	if err != nil {
 		return nil, err
