@@ -102,6 +102,7 @@ func PrintLibs() {
 // https://github.com/microsoft/playwright/blob/main/packages/playwright-core/browsers.json
 
 const revision = "1150"
+const userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36"
 
 // const revision = "1084"
 
@@ -290,6 +291,8 @@ func (obj *Client) runChrome(option *ClientOption) error {
 var chromeArgs = []string{
 	// "--disable-site-isolation-trials", //被识别
 	// "--virtual-time-budget=1000", //缩短setTimeout  setInterval 的时间1000秒:目前不生效，不知道以后会不会生效，等生效了再打开
+	// "--disable-web-security",                 //关闭同源策略，抖音需要, 开启会导致 cloudflare 验证不过
+
 	//远程调试
 	"--remote-allow-origins=*",
 	// 自动化选项禁用
@@ -384,8 +387,7 @@ var chromeArgs = []string{
 	"--disable-background-mode",       // 禁用浏览器后台模式。
 	"--disable-hardware-acceleration", //禁用硬件加速功能，这可以在某些旧的计算机和旧的显卡上降低Chrome的资源消耗，但可能会影响一些图形性能和视频播放。
 
-	"--disable-renderer-backgrounding", //禁用渲染器后台化。,反爬用到
-	// "--disable-web-security",                 //关闭同源策略，抖音需要, 开启会导致 cloudflare 验证不过
+	"--disable-renderer-backgrounding",       //禁用渲染器后台化。,反爬用到
 	"--disable-search-engine-choice-screen",  //用于禁用搜索引擎选择屏幕。该选项通常用于自定义 Chrome 浏览器的行为。
 	"--renderer",                             //使进程作为渲染器而不是浏览器运行。
 	"--disable-renderer-accessibility",       //关闭渲染器中的辅助功能。
@@ -468,6 +470,9 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 	}
 	if option.Height == 0 {
 		option.Height = 605
+	}
+	if option.UserAgent == "" {
+		option.UserAgent = userAgent
 	}
 	client = &Client{
 		userAgent:    option.UserAgent,
@@ -687,7 +692,6 @@ func (obj *Client) NewPageWithTargetId(preCtx context.Context, targetId string, 
 	}
 	ctx, cnl := context.WithCancel(obj.ctx)
 	page := &Page{
-		userAgent:        obj.userAgent,
 		option:           option,
 		targetId:         targetId,
 		targetType:       "page",

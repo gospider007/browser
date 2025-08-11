@@ -21,7 +21,6 @@ import (
 )
 
 type Page struct {
-	userAgent        string
 	option           PageOption
 	addr             string
 	targetId         string
@@ -222,9 +221,6 @@ func (obj *Page) init() error {
 		return err
 	}
 	if obj.option.Stealth {
-		if obj.userAgent == "" {
-			obj.userAgent = tools.UserAgent
-		}
 		if err = obj.AddScript(obj.ctx, stealthRaw); err != nil {
 			return err
 		}

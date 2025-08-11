@@ -1,7 +1,4 @@
-(()=>{
-//start
-// mainFunctionString
-((() => {
+(() => {
   "use strict";
   /* eslint-disable no-unused-vars */
   const isHeadlessChromium = /headless/i.test(navigator.userAgent) && navigator.plugins.length === 0;
@@ -707,25 +704,25 @@
   ;
   const fp = {
     "screen": {
-      "availTop": 0,
+      "availTop": 25,
       "availLeft": 0,
       "pageXOffset": 0,
       "pageYOffset": 0,
-      "screenX": 0,
+      "screenX": 1146,
       "hasHDR": false,
-      "width": 1792,
-      "height": 1120,
-      "availWidth": 1792,
-      "availHeight": 1120,
+      "width": 3440,
+      "height": 1440,
+      "availWidth": 3440,
+      "availHeight": 1359,
       "clientWidth": 0,
-      "clientHeight": 19,
+      "clientHeight": 18,
       "innerWidth": 0,
       "innerHeight": 0,
-      "outerWidth": 1792,
-      "outerHeight": 998,
+      "outerWidth": 1147,
+      "outerHeight": 1359,
       "colorDepth": 24,
       "pixelDepth": 24,
-      "devicePixelRatio": 2
+      "devicePixelRatio": 1
     },
     "audioCodecs": {
       "ogg": "probably",
@@ -741,36 +738,91 @@
     },
     "pluginsData": {
       "plugins": [{
-        "name": "Chrome PDF Plugin",
+        "name": "PDF Viewer",
         "description": "Portable Document Format",
         "filename": "internal-pdf-viewer",
         "mimeTypes": [{
-          "type": "application/x-google-chrome-pdf",
+          "type": "application/pdf",
           "suffixes": "pdf",
           "description": "Portable Document Format",
-          "enabledPlugin": "Chrome PDF Plugin"
+          "enabledPlugin": "PDF Viewer"
+        }, {
+          "type": "text/pdf",
+          "suffixes": "pdf",
+          "description": "Portable Document Format",
+          "enabledPlugin": "PDF Viewer"
         }]
       }, {
         "name": "Chrome PDF Viewer",
-        "description": "",
-        "filename": "mhjfbmdgcfjbbpaeojofohoefgiehjai",
+        "description": "Portable Document Format",
+        "filename": "internal-pdf-viewer",
         "mimeTypes": [{
           "type": "application/pdf",
           "suffixes": "pdf",
-          "description": "",
+          "description": "Portable Document Format",
+          "enabledPlugin": "Chrome PDF Viewer"
+        }, {
+          "type": "text/pdf",
+          "suffixes": "pdf",
+          "description": "Portable Document Format",
           "enabledPlugin": "Chrome PDF Viewer"
         }]
+      }, {
+        "name": "Chromium PDF Viewer",
+        "description": "Portable Document Format",
+        "filename": "internal-pdf-viewer",
+        "mimeTypes": [{
+          "type": "application/pdf",
+          "suffixes": "pdf",
+          "description": "Portable Document Format",
+          "enabledPlugin": "Chromium PDF Viewer"
+        }, {
+          "type": "text/pdf",
+          "suffixes": "pdf",
+          "description": "Portable Document Format",
+          "enabledPlugin": "Chromium PDF Viewer"
+        }]
+      }, {
+        "name": "Microsoft Edge PDF Viewer",
+        "description": "Portable Document Format",
+        "filename": "internal-pdf-viewer",
+        "mimeTypes": [{
+          "type": "application/pdf",
+          "suffixes": "pdf",
+          "description": "Portable Document Format",
+          "enabledPlugin": "Microsoft Edge PDF Viewer"
+        }, {
+          "type": "text/pdf",
+          "suffixes": "pdf",
+          "description": "Portable Document Format",
+          "enabledPlugin": "Microsoft Edge PDF Viewer"
+        }]
+      }, {
+        "name": "WebKit built-in PDF",
+        "description": "Portable Document Format",
+        "filename": "internal-pdf-viewer",
+        "mimeTypes": [{
+          "type": "application/pdf",
+          "suffixes": "pdf",
+          "description": "Portable Document Format",
+          "enabledPlugin": "WebKit built-in PDF"
+        }, {
+          "type": "text/pdf",
+          "suffixes": "pdf",
+          "description": "Portable Document Format",
+          "enabledPlugin": "WebKit built-in PDF"
+        }]
       }],
-      "mimeTypes": ["~~application/pdf~~pdf", "Portable Document Format~~application/x-google-chrome-pdf~~pdf"]
+      "mimeTypes": ["Portable Document Format~~application/pdf~~pdf", "Portable Document Format~~text/pdf~~pdf"]
     },
     "battery": {
       "charging": true,
-      "chargingTime": null,
+      "chargingTime": 1920,
       "dischargingTime": null,
-      "level": 0.12
+      "level": 0.92
     },
     "videoCard": {
-      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4 Pro, Unspecified Version)",
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Unspecified Version)",
       "vendor": "Google Inc. (Apple)"
     },
     "multimediaDevices": {
@@ -797,23 +849,26 @@
     "mockWebRTC": true,
     "slim": false,
     "navigator": {
-      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36",
+      // "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36",
       "userAgentData": {
         "brands": [{
-          "brand": "Not.A/Brand",
-          "version": "99"
-        }, {
           "brand": "Chromium",
           "version": "136"
+        }, {
+          "brand": "Google Chrome",
+          "version": "136"
+        }, {
+          "brand": "Not.A/Brand",
+          "version": "99"
         }],
         "mobile": false,
         "platform": "macOS"
       },
       "language": "en-US",
-      "languages": ["en-US"],
+      // "languages": ["en-US"],
       "platform": "MacIntel",
       "deviceMemory": 8,
-      "hardwareConcurrency": 8,
+      // "hardwareConcurrency": 8,
       "maxTouchPoints": 0,
       "product": "Gecko",
       "productSub": "20030107",
@@ -832,7 +887,7 @@
       },
       "webdriver": false
     },
-    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36",
+    // "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36",
     "historyLength": 2
   };
   (function inject() {
@@ -911,131 +966,128 @@
     overrideWebGl(videoCard);
     overrideCodecs(audioCodecs, videoCodecs);
     overrideBattery(battery);
-  })()
-})())();
-// mainFunctionString2
-(function inject2() {
-  const changeCanvasMain = function() {
-    function random(list) {
-      let min = 0;
-      let max = list.length
-      return list[Math.floor(Math.random() * (max - min)) + min];
-    }
-    let rsalt = random([...Array(7).keys()].map(a => a - 3))
-    let gsalt = random([...Array(7).keys()].map(a => a - 3))
-    let bsalt = random([...Array(7).keys()].map(a => a - 3))
-    let asalt = random([...Array(7).keys()].map(a => a - 3))
-    let ctxArr = [];
-    overridePropertyWithProxy(CanvasRenderingContext2D.prototype, 'getImageData', {
-      apply: function(target, ctx, args) {
-        const imageData = cache.Reflect.apply(target, ctx, args);
-        if (ctxArr.indexOf(ctx) != -1) {
+  })();
+  (function inject2() {
+    const changeCanvasMain = function() {
+      function random(list) {
+        let min = 0;
+        let max = list.length
+        return list[Math.floor(Math.random() * (max - min)) + min];
+      }
+      let rsalt = random([...Array(7).keys()].map(a => a - 3))
+      let gsalt = random([...Array(7).keys()].map(a => a - 3))
+      let bsalt = random([...Array(7).keys()].map(a => a - 3))
+      let asalt = random([...Array(7).keys()].map(a => a - 3))
+      let ctxArr = [];
+      overridePropertyWithProxy(CanvasRenderingContext2D.prototype, 'getImageData', {
+        apply: function(target, ctx, args) {
+          const imageData = cache.Reflect.apply(target, ctx, args);
+          if (ctxArr.indexOf(ctx) != -1) {
+            return imageData
+          }
+          let width = imageData.width
+          let height = imageData.height
+          for (let i = 0; i < height; i++) {
+            for (let j = 0; j < width; j++) {
+              const n = i * (width * 4) + (j * 4);
+              imageData.data[n + 0] = imageData.data[n + 0] + rsalt;
+              imageData.data[n + 1] = imageData.data[n + 1] + gsalt;
+              imageData.data[n + 2] = imageData.data[n + 2] + bsalt;
+              imageData.data[n + 3] = imageData.data[n + 3] + asalt;
+            }
+          }
+          ctx.putImageData(imageData, 0, 0);
+          ctxArr.push(ctx)
           return imageData
-        }
-        let width = imageData.width
-        let height = imageData.height
-        for (let i = 0; i < height; i++) {
-          for (let j = 0; j < width; j++) {
-            const n = i * (width * 4) + (j * 4);
-            imageData.data[n + 0] = imageData.data[n + 0] + rsalt;
-            imageData.data[n + 1] = imageData.data[n + 1] + gsalt;
-            imageData.data[n + 2] = imageData.data[n + 2] + bsalt;
-            imageData.data[n + 3] = imageData.data[n + 3] + asalt;
+        },
+        get: function(target, prop, receiver) {
+          useStrictModeExceptions(prop);
+          return Reflect.get(...arguments);
+        },
+      });
+      overridePropertyWithProxy(HTMLCanvasElement.prototype, 'toBlob', {
+        apply: function(target, ctx, args) {
+          var canvase = ctx.getContext("2d")
+          if (canvase) {
+            canvase.getImageData(0, 0, canvase.canvas.width, canvase.canvas.height)
           }
-        }
-        ctx.putImageData(imageData, 0, 0);
-        ctxArr.push(ctx)
-        return imageData
-      },
-      get: function(target, prop, receiver) {
-        useStrictModeExceptions(prop);
-        return Reflect.get(...arguments);
-      },
-    });
-    overridePropertyWithProxy(HTMLCanvasElement.prototype, 'toBlob', {
-      apply: function(target, ctx, args) {
-        var canvase = ctx.getContext("2d")
-        if (canvase) {
-          canvase.getImageData(0, 0, canvase.canvas.width, canvase.canvas.height)
-        }
-        return cache.Reflect.apply(target, ctx, args)
-      },
-      get: function(target, prop, receiver) {
-        useStrictModeExceptions(prop);
-        return Reflect.get(...arguments);
-      },
-    });
-    overridePropertyWithProxy(HTMLCanvasElement.prototype, 'toDataURL', {
-      apply: function(target, ctx, args) {
-        var canvase = ctx.getContext("2d")
-        if (canvase) {
-          canvase.getImageData(0, 0, canvase.canvas.width, canvase.canvas.height)
-        }
-        return cache.Reflect.apply(target, ctx, args)
-      },
-      get: function(target, prop, receiver) {
-        useStrictModeExceptions(prop);
-        return Reflect.get(...arguments);
-      },
-    });
-  };
-  const changeWebGlMain = function() {
-    const bufferData = {
-      apply: function(target, ctx, args) {
-        var index = Math.floor(Math.random() * arguments[1].length);
-        var noise = arguments[1][index] !== undefined ? 0.1 * Math.random() * arguments[1][index] : 0;
-        arguments[1][index] = arguments[1][index] + noise;
-        return cache.Reflect.apply(target, ctx, args);
-      },
-      get: function(target, prop, receiver) {
-        useStrictModeExceptions(prop);
-        return Reflect.get(...arguments);
-      },
+          return cache.Reflect.apply(target, ctx, args)
+        },
+        get: function(target, prop, receiver) {
+          useStrictModeExceptions(prop);
+          return Reflect.get(...arguments);
+        },
+      });
+      overridePropertyWithProxy(HTMLCanvasElement.prototype, 'toDataURL', {
+        apply: function(target, ctx, args) {
+          var canvase = ctx.getContext("2d")
+          if (canvase) {
+            canvase.getImageData(0, 0, canvase.canvas.width, canvase.canvas.height)
+          }
+          return cache.Reflect.apply(target, ctx, args)
+        },
+        get: function(target, prop, receiver) {
+          useStrictModeExceptions(prop);
+          return Reflect.get(...arguments);
+        },
+      });
     };
-    overridePropertyWithProxy(WebGLRenderingContext.prototype, 'bufferData', bufferData);
-    overridePropertyWithProxy(WebGL2RenderingContext.prototype, 'bufferData', bufferData);
-  };
-  const changeAudio = function() {
-    var BUFFER = null
-    overridePropertyWithProxy(AudioBuffer.prototype, 'getChannelData', {
-      apply: function(target, ctx, args) {
-        const results_1 = cache.Reflect.apply(target, ctx, args);
-        if (BUFFER !== results_1) {
-          BUFFER = results_1;
-          for (var i = 0; i < results_1.length; i += 100) {
-            let index = Math.floor(Math.random() * i);
-            results_1[index] = results_1[index] + Math.random() * 0.0000001;
+    const changeWebGlMain = function() {
+      const bufferData = {
+        apply: function(target, ctx, args) {
+          var index = Math.floor(Math.random() * arguments[1].length);
+          var noise = arguments[1][index] !== undefined ? 0.1 * Math.random() * arguments[1][index] : 0;
+          arguments[1][index] = arguments[1][index] + noise;
+          return cache.Reflect.apply(target, ctx, args);
+        },
+        get: function(target, prop, receiver) {
+          useStrictModeExceptions(prop);
+          return Reflect.get(...arguments);
+        },
+      };
+      overridePropertyWithProxy(WebGLRenderingContext.prototype, 'bufferData', bufferData);
+      overridePropertyWithProxy(WebGL2RenderingContext.prototype, 'bufferData', bufferData);
+    };
+    const changeAudio = function() {
+      var BUFFER = null
+      overridePropertyWithProxy(AudioBuffer.prototype, 'getChannelData', {
+        apply: function(target, ctx, args) {
+          const results_1 = cache.Reflect.apply(target, ctx, args);
+          if (BUFFER !== results_1) {
+            BUFFER = results_1;
+            for (var i = 0; i < results_1.length; i += 100) {
+              let index = Math.floor(Math.random() * i);
+              results_1[index] = results_1[index] + Math.random() * 0.0000001;
+            }
           }
-        }
-        return results_1;
-      },
-      get: function(target, prop, receiver) {
-        useStrictModeExceptions(prop);
-        return Reflect.get(...arguments);
-      },
-    });
-    var BUFFER2 = null
-    overridePropertyWithProxy(AnalyserNode.prototype, 'getFloatFrequencyData', {
-      apply: function(target, ctx, args) {
-        const results_1 = cache.Reflect.apply(target, ctx, args);
-        if (BUFFER2 !== results_1) {
-          BUFFER2 = results_1;
-          for (var i = 0; i < results_1.length; i += 100) {
-            let index = Math.floor(Math.random() * i);
-            results_1[index] = results_1[index] + Math.random() * 0.1;
+          return results_1;
+        },
+        get: function(target, prop, receiver) {
+          useStrictModeExceptions(prop);
+          return Reflect.get(...arguments);
+        },
+      });
+      var BUFFER2 = null
+      overridePropertyWithProxy(AnalyserNode.prototype, 'getFloatFrequencyData', {
+        apply: function(target, ctx, args) {
+          const results_1 = cache.Reflect.apply(target, ctx, args);
+          if (BUFFER2 !== results_1) {
+            BUFFER2 = results_1;
+            for (var i = 0; i < results_1.length; i += 100) {
+              let index = Math.floor(Math.random() * i);
+              results_1[index] = results_1[index] + Math.random() * 0.1;
+            }
           }
-        }
-        return results_1;
-      },
-      get: function(target, prop, receiver) {
-        useStrictModeExceptions(prop);
-        return Reflect.get(...arguments);
-      },
-    });
-  };
-  changeCanvasMain()
-  changeWebGlMain()
-  changeAudio()
+          return results_1;
+        },
+        get: function(target, prop, receiver) {
+          useStrictModeExceptions(prop);
+          return Reflect.get(...arguments);
+        },
+      });
+    };
+    changeCanvasMain()
+    changeWebGlMain()
+    changeAudio()
+  })();
 })();
-// end
-})()

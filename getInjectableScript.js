@@ -1,7 +1,7 @@
 const { FingerprintInjector } = require('fingerprint-injector');
 const fingerprint_generator_1 = require("fingerprint-generator");
 const injector = new FingerprintInjector();
-const beautify = require("js-beautify").js;
+const beautify = require("js-beautify").js_beautify;
 
 function prettierJs(code){
     code = beautify(code, { indent_size: 2 });
@@ -146,18 +146,14 @@ function getInjectableFingerprintFunction() {
         });
     var mainFunctionString = injector.getInjectableScript(fingerprintWithHeaders);
     mainFunctionString = prettierJs(mainFunctionString)
-    mainFunctionString2 = prettierJs(mainFunctionString2)
-    // mainFunctionString = mainFunctionString.replaceAll(`"userAgent": `, `// "userAgent": `);
-    // mainFunctionString = mainFunctionString.replaceAll(`"languages": `, `// "languages": `);
-    // mainFunctionString = mainFunctionString.replaceAll(`"hardwareConcurrency": `, `// "hardwareConcurrency": `);
-    return `(()=>{
-//start
-// mainFunctionString
-(${mainFunctionString})();
-// mainFunctionString2
-(${mainFunctionString2})();
-// end
-})()`
+    mainFunctionString = mainFunctionString.replaceAll("})()", "})();");
+    mainFunctionString = mainFunctionString.replaceAll("\n})();", `
+        (${mainFunctionString2})();`+"\n})();");
+    mainFunctionString = prettierJs(mainFunctionString)
+    mainFunctionString = mainFunctionString.replaceAll(`"userAgent": `, `// "userAgent": `);
+    mainFunctionString = mainFunctionString.replaceAll(`"languages": `, `// "languages": `);
+    mainFunctionString = mainFunctionString.replaceAll(`"hardwareConcurrency": `, `// "hardwareConcurrency": `);
+    return mainFunctionString
 }
 
 const fs = require('fs');
