@@ -100,11 +100,8 @@ func PrintLibs() {
 }
 
 // https://github.com/microsoft/playwright/blob/main/packages/playwright-core/browsers.json
-
-const revision = "1150"
-const userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36"
-
-// const revision = "1084"
+const revision = "1183"
+const userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
 
 // var playwright_cdn_mirrors = []string{
 // 	"playwright.azureedge.net",
