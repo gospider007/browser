@@ -107,6 +107,15 @@ func (obj *Page) parseJsonDom(ctx context.Context, data *gson.Client) (*html.Nod
 			curNode.AppendChild(node)
 		}
 	}
+	for _, children := range data.Get("shadowRoots").Array() {
+		node, err := obj.parseJsonDom(ctx, children)
+		if err != nil {
+			return nil, err
+		}
+		if node != nil {
+			curNode.AppendChild(node)
+		}
+	}
 	for _, children := range data.Get("contentDocument.children").Array() {
 		node, err := obj.parseJsonDom(ctx, children)
 		if err != nil {

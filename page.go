@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"log"
 	uurl "net/url"
 	"strconv"
 	"strings"
@@ -97,9 +98,18 @@ func (obj *Page) pageEndLoadMain(ctx context.Context, rd cdp.RecvData) {
 }
 func (obj *Page) frameNavigated(ctx context.Context, rd cdp.RecvData) {
 	jsonData, _ := gson.Decode(rd.Params)
-	if jsonData.Get("frame.id").String() == obj.targetId {
-		obj.baseUrl = jsonData.Get("frame.url").String()
+	targetId := jsonData.Get("frame.id").String()
+	if targetId == "" {
+		return
 	}
+	if targetId == obj.targetId {
+		obj.baseUrl = jsonData.Get("frame.url").String()
+	} else if jsonData.Get("frame.parentId").String() == obj.targetId {
+		obj.addIframe(targetId)
+	}
+}
+func (obj *Page) Url() string {
+	return obj.baseUrl
 }
 func (obj *Page) domLoadMain(ctx context.Context, rd cdp.RecvData) {
 	obj.addLoadNotice()
@@ -142,9 +152,7 @@ func (obj *Page) iframeToTargetMain(ctx context.Context, rd cdp.RecvData) {
 		targetId := jsonData.Get("targetInfo.targetId").String()
 		sessionId := jsonData.Get("sessionId").String()
 		if targetId != "" && sessionId != "" {
-			if iframe, err := obj.newPageWithTargetId(targetId); err == nil {
-				obj.addIframe(targetId, iframe)
-			}
+			obj.addIframe(targetId)
 			obj.webSock.Cdp(obj.ctx, sessionId, "Runtime.runIfWaitingForDebugger")
 		}
 	}
@@ -169,12 +177,17 @@ func (obj *Page) framesRequest(ctx context.Context, RequestFunc func(context.Con
 		return true
 	})
 }
-func (obj *Page) addIframe(key string, iframe *Page) {
-	frame, ok := obj.frames.Load(key)
+func (obj *Page) addIframe(targetId string) error {
+	_, ok := obj.frames.Load(targetId)
 	if ok {
-		frame.(*Page).Close()
+		return nil
 	}
-	obj.frames.Store(key, iframe)
+	iframe, err := obj.newPageWithTargetId(targetId)
+	if err != nil {
+		return err
+	}
+	obj.frames.Store(targetId, iframe)
+	return nil
 }
 
 func (obj *Page) addEvent(method string, fun func(ctx context.Context, rd cdp.RecvData)) {
@@ -217,7 +230,6 @@ func (obj *Page) init() error {
 		}
 	}
 	return nil
-	// return obj.AddScript(obj.ctx, `Object.defineProperty(window, "RTCPeerConnection",{"get":undefined});Object.defineProperty(window, "mozRTCPeerConnection",{"get":undefined});Object.defineProperty(window, "webkitRTCPeerConnection",{"get":undefined});`)
 }
 
 func (obj *Page) newPageWithTargetId(targetId string) (*Page, error) {
@@ -527,6 +539,34 @@ func (obj *Page) Html(ctx context.Context) (*bs4.Client, error) {
 	}
 	return mainHtml, nil
 }
+func (obj *Page) GetFrameTree(ctx context.Context) (*bs4.Client, error) {
+	r, err := obj.webSock.PageGetFrameTree(ctx)
+	if err != nil {
+		return nil, err
+	}
+	data, err := gson.Decode(r.Result)
+	if err != nil {
+		return nil, err
+	}
+	log.Print(data)
+	return nil, nil
+
+	// parseDom, err := obj.parseJsonDom(ctx, data.Get("root"))
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// mainHtml := bs4.NewClientWithNode(parseDom)
+	// for _, iframe := range mainHtml.Finds("iframe") {
+	// 	if gospiderFrameId := iframe.Get("gospiderFrameId"); gospiderFrameId != "" {
+	// 		if framePage, ok := obj.GetFrame(gospiderFrameId); ok {
+	// 			if frameHtml, err := framePage.Html(ctx); err == nil {
+	// 				iframe.SetHtml(frameHtml.String())
+	// 			}
+	// 		}
+	// 	}
+	// }
+	// return mainHtml, nil
+}
 
 func (obj *Page) mainHtml(ctx context.Context) (*bs4.Client, error) {
 	r, err := obj.webSock.DOMGetDocuments(ctx)
@@ -537,6 +577,7 @@ func (obj *Page) mainHtml(ctx context.Context) (*bs4.Client, error) {
 	if err != nil {
 		return nil, err
 	}
+	// log.Print(data)
 	parseDom, err := obj.parseJsonDom(ctx, data.Get("root"))
 	if err != nil {
 		return nil, err

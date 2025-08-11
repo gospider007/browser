@@ -159,10 +159,11 @@ type downClient struct {
 var oneDown = &downClient{}
 
 func verifyEvalPath(path string) error {
-	if strings.HasSuffix(path, "chrome.exe") || strings.HasSuffix(path, "Chromium") || strings.HasSuffix(path, "chrome") || strings.HasSuffix(path, "chromium") {
+	path = strings.TrimSuffix(path, ".exe")
+	if strings.HasSuffix(path, "Chrome") || strings.HasSuffix(path, "Chromium") || strings.HasSuffix(path, "chrome") || strings.HasSuffix(path, "chromium") {
 		return nil
 	}
-	if strings.HasSuffix(path, "msedge.exe") || strings.HasSuffix(path, "msedge") {
+	if strings.HasSuffix(path, "msedge") {
 		return nil
 	}
 	return errors.New("请输入正确的浏览器路径,如: c:/chrome.exe")
@@ -377,22 +378,25 @@ var chromeArgs = []string{
 	"--disable-geolocation",                                //禁用地理位置定位功能。这个参数可以防止Chrome获取您的地理位置信息，增强隐私。
 	"--disable-media-stream",                               //禁用媒体流功能。这个参数可以防止Chrome访问您的摄像头和麦克风，增强隐私。
 	"--disable-preconnect",                                 //禁用预连接。预连接是一种优化技术，可以在您点击链接之前预先建立与目标服务器的连接，以加快页面加载速度。禁用预连接可以减少被追踪的可能性。
+
 	"--force-color-profile=srgb",
-	"--disable-dev-shm-usage",                //禁用Chrome在/dev/shm文件系统中分配的共享内存
-	"--disable-background-mode",              // 禁用浏览器后台模式。
-	"--disable-hardware-acceleration",        //禁用硬件加速功能，这可以在某些旧的计算机和旧的显卡上降低Chrome的资源消耗，但可能会影响一些图形性能和视频播放。
-	"--disable-renderer-backgrounding",       //禁用渲染器后台化。,反爬用到
-	"--disable-web-security",                 //关闭同源策略，抖音需要
+	"--disable-dev-shm-usage",         //禁用Chrome在/dev/shm文件系统中分配的共享内存
+	"--disable-background-mode",       // 禁用浏览器后台模式。
+	"--disable-hardware-acceleration", //禁用硬件加速功能，这可以在某些旧的计算机和旧的显卡上降低Chrome的资源消耗，但可能会影响一些图形性能和视频播放。
+
+	"--disable-renderer-backgrounding", //禁用渲染器后台化。,反爬用到
+	// "--disable-web-security",                 //关闭同源策略，抖音需要, 开启会导致 cloudflare 验证不过
 	"--disable-search-engine-choice-screen",  //用于禁用搜索引擎选择屏幕。该选项通常用于自定义 Chrome 浏览器的行为。
 	"--renderer",                             //使进程作为渲染器而不是浏览器运行。
 	"--disable-renderer-accessibility",       //关闭渲染器中的辅助功能。
 	"--disable-renderer-priority-management", //根本不管理渲染器进程优先级。
-	"--allow-running-insecure-content",       //在安全页面上加载不安全内容时禁用警告消息，这可以节省测试时间。
-	"--disable-add-to-shelf",                 //禁用“添加到工具架”功能，该功能对于自动测试是不必要的。
-	"--disable-checker-imaging",              //禁用检查器成像，减少测试期间不必要的图像处理。
-	"--disable-datasaver-prompt",             //禁用与测试方案无关的数据保护程序提示
-	"--disable-desktop-notifications",        //禁用桌面通知，避免在测试期间中断。
-	"--disable-notifications",                //禁用浏览器通知，避免在测试期间中断。
+
+	"--allow-running-insecure-content", //在安全页面上加载不安全内容时禁用警告消息，这可以节省测试时间。
+	"--disable-add-to-shelf",           //禁用“添加到工具架”功能，该功能对于自动测试是不必要的。
+	"--disable-checker-imaging",        //禁用检查器成像，减少测试期间不必要的图像处理。
+	"--disable-datasaver-prompt",       //禁用与测试方案无关的数据保护程序提示
+	"--disable-desktop-notifications",  //禁用桌面通知，避免在测试期间中断。
+	"--disable-notifications",          //禁用浏览器通知，避免在测试期间中断。
 	"--test-type",
 }
 
