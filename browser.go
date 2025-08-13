@@ -666,8 +666,24 @@ func (obj *Client) NewPage(preCtx context.Context, options ...PageOption) (*Page
 }
 
 // 设置浏览器的地理位置
-func (obj *Client) SetGeolocation(preCtx context.Context, latitude float64, longitude float64) error {
+func (obj *Page) SetGeolocation(preCtx context.Context, latitude float64, longitude float64) error {
 	_, err := obj.webSock.EmulationSetGeolocationOverride(preCtx, latitude, longitude)
+	return err
+}
+
+// 设置浏览器的语言
+func (obj *Page) SetLocaleOverride(preCtx context.Context, local string) error {
+	_, err := obj.webSock.EmulationSetLocaleOverride(preCtx, local)
+	if err != nil {
+		return err
+	}
+	_, err = obj.webSock.EmulationSetUserAgentOverride(preCtx, userAgent, local)
+	return err
+}
+
+// 设置浏览器的时区
+func (obj *Page) SetTimezoneOverride(preCtx context.Context, timezoneId string) error {
+	_, err := obj.webSock.EmulationSetTimezoneOverride(preCtx, timezoneId)
 	return err
 }
 func (obj *Client) NewPageWithTargetId(preCtx context.Context, targetId string, options ...PageOption) (*Page, error) {

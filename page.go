@@ -878,7 +878,7 @@ func (obj *Page) SetDevice(ctx context.Context, device cdp.Device) error {
 }
 
 func (obj *Page) SetUserAgent(ctx context.Context, userAgent string) error {
-	_, err := obj.webSock.EmulationSetUserAgentOverride(ctx, userAgent)
+	_, err := obj.webSock.EmulationSetUserAgentOverride(ctx, userAgent, "")
 	return err
 }
 
