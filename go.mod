@@ -1,6 +1,6 @@
 module github.com/gospider007/browser
 
-go 1.24.0
+go 1.25
 
 require (
 	github.com/gospider007/blog v0.0.0-20250302134054-8afc12c2a9a7
