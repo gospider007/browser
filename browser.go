@@ -550,7 +550,7 @@ func (obj *Client) init() (err error) {
 		obj.ctx,
 		obj.globalReqCli,
 		fmt.Sprintf("ws://%s/devtools/browser/%s", obj.addr, browWsRs.Group(1)),
-		cdp.WebSockOption{},
+		requests.RequestOption{},
 	)
 	if err != nil {
 		return err
@@ -648,7 +648,7 @@ func (obj *Client) Close() {
 }
 
 type PageOption struct {
-	Proxy   string
+	Option  requests.RequestOption
 	Stealth bool //是否开启随机指纹
 }
 
@@ -693,12 +693,14 @@ func (obj *Client) NewPageWithTargetId(preCtx context.Context, targetId string, 
 	}
 	isReplaceRequest := obj.isReplaceRequest
 	if !isReplaceRequest {
-		if option.Proxy != "" && option.Proxy != obj.proxy {
-			isReplaceRequest = true
+		if option.Option.Proxy != nil && option.Option.Proxy != obj.proxy {
+			if p, ok := option.Option.Proxy.(string); ok && p != obj.proxy {
+				isReplaceRequest = true
+			}
 		}
 	}
-	if option.Proxy == "" {
-		option.Proxy = obj.proxy
+	if option.Option.Proxy == "" {
+		option.Option.Proxy = obj.proxy
 	}
 	if !option.Stealth {
 		option.Stealth = obj.stealth
@@ -721,6 +723,7 @@ func (obj *Client) NewPageWithTargetId(preCtx context.Context, targetId string, 
 		return nil, err
 	}
 	if isReplaceRequest {
+		log.Print("enabel replace request...")
 		if err := page.Request(preCtx, defaultRequestFunc); err != nil {
 			return nil, err
 		}

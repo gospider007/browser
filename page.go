@@ -202,9 +202,7 @@ func (obj *Page) init() error {
 		obj.ctx,
 		obj.globalReqCli,
 		fmt.Sprintf("ws://%s/devtools/page/%s", obj.addr, obj.targetId),
-		cdp.WebSockOption{
-			Proxy: obj.option.Proxy,
-		},
+		obj.option.Option,
 	); err != nil {
 		return err
 	}
