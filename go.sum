@@ -54,8 +54,8 @@ github.com/gospider007/gson v0.0.0-20250910015455-b90779f323c3 h1:B3/G5E7vONNVw9
 github.com/gospider007/gson v0.0.0-20250910015455-b90779f323c3/go.mod h1:bkWGC9L1iUYJzrru/NmJWCUMM7WqCZ2DC90pLJS4m58=
 github.com/gospider007/gtls v0.0.0-20250910020216-c6f8cdd432fc h1:IKwMPqslvExuSLOcprEtly9H7P/DNChtqb3jLNjOvho=
 github.com/gospider007/gtls v0.0.0-20250910020216-c6f8cdd432fc/go.mod h1:zpht2bPyq++G8NZ3sgFk2t32GkoXt5LP/AmHPDzwfKQ=
-github.com/gospider007/http1 v0.0.0-20250910015455-2a2d4b87b968 h1:dTRVGrBYSTjtxzhhzEVn3JlRLryAVXZOWqghXPWIpEQ=
-github.com/gospider007/http1 v0.0.0-20250910015455-2a2d4b87b968/go.mod h1:CpPUfZruOa9M0r1y6AXgiuhvScYvQ5FlKXZR5LQRQi8=
+github.com/gospider007/http1 v0.0.0-20250911054749-f39451170c35 h1:DxnLBrHV00wdIWmrsCCpk4UJK6BBc5cOjNYjJAYwIzY=
+github.com/gospider007/http1 v0.0.0-20250911054749-f39451170c35/go.mod h1:CpPUfZruOa9M0r1y6AXgiuhvScYvQ5FlKXZR5LQRQi8=
 github.com/gospider007/http2 v0.0.0-20250910015712-672c145f8915 h1:UkvJbDgMdZ2zYiuItFOm7PDhsqdCxMarJdvqM78UO1E=
 github.com/gospider007/http2 v0.0.0-20250910015712-672c145f8915/go.mod h1:28Kii3yjV3J23wrEgBrbJp0BfQogpUkY9ED6lwPy2yQ=
 github.com/gospider007/http3 v0.0.0-20250910032114-7d774ed31942 h1:/yZ8iviaBryfMHPHhZSOG1wc1J4JEvzFm+jN/cCCP/U=
@@ -64,8 +64,8 @@ github.com/gospider007/ja3 v0.0.0-20250908031106-827812269efe h1:PwX43mDuDJLVifm
 github.com/gospider007/ja3 v0.0.0-20250908031106-827812269efe/go.mod h1:gwnE0M9U8A2iWWw8jPy+NOIXk2iOtYv6NgEnKL9hfmA=
 github.com/gospider007/kinds v0.0.0-20250815031133-b2282666f69c h1:WnFZf0v+Du5nH/R3pq5QwkTcfVxLqVMRp2dPaI6w6YY=
 github.com/gospider007/kinds v0.0.0-20250815031133-b2282666f69c/go.mod h1:8eAmhxyW7p81nsYlD5Wj8I0HuZpVGci+Q9wr6vfY8pg=
-github.com/gospider007/netx v0.0.0-20250910032117-7c1a4db1581d h1:s6gd5ma7YdS/Pg7PxNQNX4zGIs3UsW1nPMAw27909TQ=
-github.com/gospider007/netx v0.0.0-20250910032117-7c1a4db1581d/go.mod h1:60UjofTmF7r6jq23tVlvCqLpfNd8Q1BTzoQc0pY535I=
+github.com/gospider007/netx v0.0.0-20250911054754-c7009747c235 h1:G2l9GcmfYkNS4hgHPppPo55OVhQJ9jniRqNQQQ0DEIc=
+github.com/gospider007/netx v0.0.0-20250911054754-c7009747c235/go.mod h1:NTirDfCql2wOEfPQY/9UGXo14IOMT14hq5CFBs+aKpM=
 github.com/gospider007/re v0.0.0-20250815031101-a57caeff73bf h1:+3g9qmg+XLbYcY4vvbsDM7xHkXF+5U8V/haAYDImGTA=
 github.com/gospider007/re v0.0.0-20250815031101-a57caeff73bf/go.mod h1:5fVj9OYkqlOgBdz+kH4jgdiSZ6jdfbmexLIFqtMa9v8=
 github.com/gospider007/requests v0.0.0-20250910032353-844e15014675 h1:0dZf8dFkTSZuG7UddMTE81RGETg3hbIJk9gHb+2gAjE=
@@ -249,8 +249,8 @@ golang.org/x/tools v0.1.12/go.mod h1:hNGJHUnrk76NpqgfD5Aqm5Crs+Hm0VOH/i9J2+nxYbc
 golang.org/x/tools v0.6.0/go.mod h1:Xwgl3UAJ/d3gWutnCtw505GrjyAbvKui8lOU390QaIU=
 golang.org/x/tools v0.13.0/go.mod h1:HvlwmtVNQAhOuCjW7xxvovg8wbNq7LwfXh/k7wXUl58=
 golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d/go.mod h1:aiJjzUbINMkxbQROHiO6hDPo2LHcIPhhQsa9DLh0yGk=
-golang.org/x/tools v0.36.0 h1:kWS0uv/zsvHEle1LbV5LE8QujrxB3wfQyxHfhOk0Qkg=
-golang.org/x/tools v0.36.0/go.mod h1:WBDiHKJK8YgLHlcQPYQzNCkUxUypCaa5ZegCVutKm+s=
+golang.org/x/tools v0.37.0 h1:DVSRzp7FwePZW356yEAChSdNcQo6Nsp+fex1SUW09lE=
+golang.org/x/tools v0.37.0/go.mod h1:MBN5QPQtLMHVdvsbtarmTNukZDdgwdwlO5qGacAzF0w=
 golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
 golang.org/x/xerrors v0.0.0-20191011141410-1b5146add898/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
 google.golang.org/protobuf v1.36.8 h1:xHScyCOEuuwZEc6UtSOvPbAT4zRh0xcNRYekJwfqyMc=
