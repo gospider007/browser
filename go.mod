@@ -12,7 +12,7 @@ require (
 	github.com/gospider007/re v0.0.0-20250815031101-a57caeff73bf
 	github.com/gospider007/requests v0.0.0-20250911055403-c4eda42ad1f8
 	github.com/gospider007/tools v0.0.0-20250910013838-e907a1d00f15
-	golang.org/x/exp v0.0.0-20250819193227-8b4c13bb791b
+	golang.org/x/exp v0.0.0-20250911091902-df9299821621
 	golang.org/x/net v0.44.0
 )
 

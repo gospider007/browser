@@ -509,12 +509,7 @@ func (obj *Client) init() (err error) {
 				select {
 				case <-obj.cmdCli.Ctx().Done():
 					return context.Cause(obj.cmdCli.Ctx())
-				case <-ctx.Context().Done():
-					return nil
 				case <-time.After(time.Second):
-				}
-				if obj.cmdCli.Err() != nil {
-					return obj.cmdCli.Err()
 				}
 				return nil
 			},
