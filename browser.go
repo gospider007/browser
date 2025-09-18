@@ -289,6 +289,7 @@ var chromeArgs = []string{
 	// "--disable-site-isolation-trials", //被识别
 	// "--virtual-time-budget=1000", //缩短setTimeout  setInterval 的时间1000秒:目前不生效，不知道以后会不会生效，等生效了再打开
 	// "--disable-web-security",                 //关闭同源策略，抖音需要, 开启会导致 cloudflare 验证不过
+	// "--disable-notifications", //禁用浏览器通知，避免在测试期间中断。开启会导致验证不过
 
 	//远程调试
 	"--remote-allow-origins=*",
@@ -395,7 +396,6 @@ var chromeArgs = []string{
 	"--disable-checker-imaging",        //禁用检查器成像，减少测试期间不必要的图像处理。
 	"--disable-datasaver-prompt",       //禁用与测试方案无关的数据保护程序提示
 	"--disable-desktop-notifications",  //禁用桌面通知，避免在测试期间中断。
-	"--disable-notifications",          //禁用浏览器通知，避免在测试期间中断。
 	"--test-type",
 }
 

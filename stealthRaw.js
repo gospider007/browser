@@ -850,20 +850,20 @@
     "slim": false,
     "navigator": {
       // "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36",
-      "userAgentData": {
-        "brands": [{
-          "brand": "Chromium",
-          "version": "136"
-        }, {
-          "brand": "Google Chrome",
-          "version": "136"
-        }, {
-          "brand": "Not.A/Brand",
-          "version": "99"
-        }],
-        "mobile": false,
-        "platform": "macOS"
-      },
+      // "userAgentData": {
+      //   "brands": [{
+      //     "brand": "Chromium",
+      //     "version": "136"
+      //   }, {
+      //     "brand": "Google Chrome",
+      //     "version": "136"
+      //   }, {
+      //     "brand": "Not.A/Brand",
+      //     "version": "99"
+      //   }],
+      //   "mobile": false,
+      //   "platform": "macOS"
+      // },
       "language": "en-US",
       // "languages": ["en-US"],
       "platform": "MacIntel",
@@ -956,7 +956,7 @@
     if (window.navigator.webdriver) {
       navigatorProps.webdriver = false;
     }
-    overrideInstancePrototype(window.navigator, navigatorProps);
+    // overrideInstancePrototype(window.navigator, navigatorProps);
     overrideInstancePrototype(window.screen, newScreen);
     overrideWindowDimensionsProps(windowScreenProps);
     overrideDocumentDimensionsProps(documentScreenProps);

@@ -150,6 +150,7 @@ function getInjectableFingerprintFunction() {
     mainFunctionString = mainFunctionString.replaceAll("\n})();", `
         (${mainFunctionString2})();`+"\n})();");
     mainFunctionString = prettierJs(mainFunctionString)
+    mainFunctionString = mainFunctionString.replaceAll(`"appVersion": `, `// "appVersion": `);
     mainFunctionString = mainFunctionString.replaceAll(`"userAgent": `, `// "userAgent": `);
     mainFunctionString = mainFunctionString.replaceAll(`"languages": `, `// "languages": `);
     mainFunctionString = mainFunctionString.replaceAll(`"hardwareConcurrency": `, `// "hardwareConcurrency": `);
