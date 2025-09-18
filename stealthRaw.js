@@ -705,24 +705,24 @@
   const fp = {
     "screen": {
       "availTop": 25,
-      "availLeft": 0,
+      "availLeft": 1440,
       "pageXOffset": 0,
       "pageYOffset": 0,
-      "screenX": 1146,
+      "screenX": 1440,
       "hasHDR": false,
-      "width": 3440,
+      "width": 2560,
       "height": 1440,
-      "availWidth": 3440,
-      "availHeight": 1359,
+      "availWidth": 2560,
+      "availHeight": 1415,
       "clientWidth": 0,
-      "clientHeight": 18,
+      "clientHeight": 19,
       "innerWidth": 0,
       "innerHeight": 0,
-      "outerWidth": 1147,
-      "outerHeight": 1359,
+      "outerWidth": 1280,
+      "outerHeight": 1415,
       "colorDepth": 24,
       "pixelDepth": 24,
-      "devicePixelRatio": 1
+      "devicePixelRatio": 2
     },
     "audioCodecs": {
       "ogg": "probably",
@@ -817,12 +817,12 @@
     },
     "battery": {
       "charging": true,
-      "chargingTime": 1920,
+      "chargingTime": null,
       "dischargingTime": null,
-      "level": 0.92
+      "level": 0.78
     },
     "videoCard": {
-      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Unspecified Version)",
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M1, Unspecified Version)",
       "vendor": "Google Inc. (Apple)"
     },
     "multimediaDevices": {
@@ -849,26 +849,26 @@
     "mockWebRTC": true,
     "slim": false,
     "navigator": {
-      // "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36",
-      // "userAgentData": {
-      //   "brands": [{
-      //     "brand": "Chromium",
-      //     "version": "136"
-      //   }, {
-      //     "brand": "Google Chrome",
-      //     "version": "136"
-      //   }, {
-      //     "brand": "Not.A/Brand",
-      //     "version": "99"
-      //   }],
-      //   "mobile": false,
-      //   "platform": "macOS"
-      // },
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
+      "userAgentData": {
+        "brands": [{
+          "brand": "Google Chrome",
+          "version": "137"
+        }, {
+          "brand": "Chromium",
+          "version": "137"
+        }, {
+          "brand": "Not/A)Brand",
+          "version": "24"
+        }],
+        "mobile": false,
+        "platform": "macOS"
+      },
       "language": "en-US",
-      // "languages": ["en-US"],
+      "languages": ["en-US"],
       "platform": "MacIntel",
       "deviceMemory": 8,
-      // "hardwareConcurrency": 8,
+      "hardwareConcurrency": 4,
       "maxTouchPoints": 0,
       "product": "Gecko",
       "productSub": "20030107",
@@ -877,7 +877,7 @@
       "doNotTrack": null,
       "appCodeName": "Mozilla",
       "appName": "Netscape",
-      "appVersion": "5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36",
+      "appVersion": "5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
       "oscpu": null,
       "extraProperties": {
         "vendorFlavors": ["chrome"],
@@ -887,8 +887,8 @@
       },
       "webdriver": false
     },
-    // "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36",
-    "historyLength": 2
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
+    "historyLength": 3
   };
   (function inject() {
     const {
@@ -951,12 +951,12 @@
     overrideIntlAPI(navigatorProps.language);
     overrideStatic();
     if (userAgentData) {
-      overrideUserAgentData(userAgentData);
+  // overrideUserAgentData(userAgentData);
     }
     if (window.navigator.webdriver) {
       navigatorProps.webdriver = false;
     }
-    // overrideInstancePrototype(window.navigator, navigatorProps);
+// overrideInstancePrototype(window.navigator, navigatorProps);
     overrideInstancePrototype(window.screen, newScreen);
     overrideWindowDimensionsProps(windowScreenProps);
     overrideDocumentDimensionsProps(documentScreenProps);
