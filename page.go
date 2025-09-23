@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math"
 	uurl "net/url"
 	"strconv"
 	"strings"
@@ -385,11 +386,7 @@ func (obj *Page) waitMain(ctx context.Context, msTime time.Duration, notices <-c
 	if ctx == nil {
 		ctx = obj.ctx
 	}
-	basTime := time.Millisecond * 200
-	msN := int(msTime/basTime) + 1
-	msT := time.NewTimer(basTime)
-	defer msT.Stop()
-	var zeroNum int
+	var ok bool
 	for {
 		select {
 		case <-ctx.Done():
@@ -398,21 +395,20 @@ func (obj *Page) waitMain(ctx context.Context, msTime time.Duration, notices <-c
 			return context.Cause(obj.ctx)
 		case <-notices:
 			if okFunc() {
-				zeroNum++
+				ok = true
 			} else {
-				zeroNum = 0
+				ok = false
 			}
-		case <-msT.C:
-			if okFunc() {
-				zeroNum++
-			} else {
-				zeroNum = 0
+		case <-time.After(msTime):
+			if !okFunc() {
+				ok = false
+				continue
 			}
+			if ok {
+				return nil
+			}
+			ok = true
 		}
-		if zeroNum >= msN {
-			return nil
-		}
-		msT.Reset(basTime)
 	}
 }
 
@@ -710,82 +706,100 @@ func (obj *Page) QuerySelectorAll(ctx context.Context, selector string) ([]*Dom,
 	return doms, err
 }
 
-// 移动操作
-func (obj *Page) baseMove(ctx context.Context, x, y float64, kind int, steps ...int) error {
-	var step int
-	if len(steps) > 0 {
+func (obj *Page) Move(ctx context.Context, x, y float64, steps ...int) error {
+	return obj.MoveTo(ctx, cdp.Point{X: obj.mouseX + x, Y: obj.mouseY + y}, steps...)
+}
+func randomPointsWithStartAndMinDist(width, height float64, n int) []cdp.Point {
+	midHight := height / 2
+	midWidth := width / 2
+	points := make([]cdp.Point, 0, n*2)
+	for range n {
+		point1 := cdp.Point{
+			X: tools.RanFloat64(0, int64(midWidth)),
+			Y: tools.RanFloat64(int64(midHight), int64(height)),
+		}
+		point2 := cdp.Point{
+			X: tools.RanFloat64(int64(midWidth), int64(width)),
+			Y: tools.RanFloat64(0, int64(midHight)),
+		}
+		points = append(points, point1, point2)
+	}
+	return points
+}
+func (obj *Page) RandomMove(ctx context.Context) error {
+	layout, err := obj.webSock.PageGetLayoutMetrics(ctx)
+	if err != nil {
+		return err
+	}
+	jsonData, err := gson.Decode(layout.Result)
+	if err != nil {
+		return err
+	}
+	clientWidth := jsonData.Get("visualViewport.clientWidth").Float()
+	clientHeight := jsonData.Get("visualViewport.clientHeight").Float()
+	if clientWidth == 0 || clientHeight == 0 {
+		return errors.New("not found width or height")
+	}
+	for _, point := range randomPointsWithStartAndMinDist(clientWidth, clientHeight, 10) {
+		err = obj.MoveTo(ctx, point)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+func (obj *Page) MoveTo(ctx context.Context, point cdp.Point, steps ...int) error {
+	step := int(math.Max(point.X, point.Y)/10) + 1
+	if len(steps) > 0 && steps[0] > 0 {
 		step = steps[0]
-	}
-	if step == 0 {
-		step = int(x+y)/100 + 1
-	}
-	if step < 1 {
-		step = 1
 	}
 	for _, poi := range tools.GetTrack(
 		[2]float64{obj.mouseX, obj.mouseY},
-		[2]float64{obj.mouseX + x, obj.mouseY + y},
-		float64(step),
+		[2]float64{point.X, point.Y},
+		step,
 	) {
-		switch kind {
-		case 0:
-			if err := obj.move(ctx, cdp.Point{
-				X: poi[0],
-				Y: poi[1],
-			}); err != nil {
-				return err
-			}
-		case 1:
-			if err := obj.touchMove(ctx, cdp.Point{
-				X: poi[0],
-				Y: poi[1],
-			}); err != nil {
-				return err
-			}
-		default:
-			return errors.New("not found kind")
+		_, err := obj.webSock.InputDispatchMouseEvent(ctx,
+			cdp.DispatchMouseEventOption{
+				Type: "mouseMoved",
+				X:    poi[0],
+				Y:    poi[1],
+			})
+		if err != nil {
+			return err
 		}
+		obj.mouseX = poi[0]
+		obj.mouseY = poi[1]
 	}
-	obj.mouseX = obj.mouseX + x
-	obj.mouseY = obj.mouseY + y
 	return nil
 }
-
-func (obj *Page) Move(ctx context.Context, x, y float64, steps ...int) error {
-	return obj.baseMove(ctx, x, y, 0, steps...)
-}
-
-func (obj *Page) move(ctx context.Context, point cdp.Point) error {
-	_, err := obj.webSock.InputDispatchMouseEvent(ctx,
-		cdp.DispatchMouseEventOption{
-			Type: "mouseMoved",
-			X:    point.X,
-			Y:    point.Y,
-		})
-	if err != nil {
-		return err
+func (obj *Page) TouchMoveTo(ctx context.Context, point cdp.Point, steps ...int) error {
+	step := int(math.Max(point.X, point.Y)/10) + 1
+	if len(steps) > 0 && steps[0] > 0 {
+		step = steps[0]
 	}
-	obj.mouseX = point.X
-	obj.mouseY = point.Y
+	for _, poi := range tools.GetTrack(
+		[2]float64{obj.mouseX, obj.mouseY},
+		[2]float64{point.X, point.Y},
+		step,
+	) {
+		_, err := obj.webSock.InputDispatchTouchEvent(ctx, "touchMove", []cdp.Point{
+			{
+				X: poi[0],
+				Y: poi[1],
+			},
+		})
+		if err != nil {
+			return err
+		}
+		obj.mouseX = poi[0]
+		obj.mouseY = poi[1]
+	}
 	return nil
 }
 func (obj *Page) TouchMove(ctx context.Context, x, y float64, steps ...int) error {
-	return obj.baseMove(ctx, x, y, 1, steps...)
+	return obj.TouchMoveTo(ctx, cdp.Point{X: obj.mouseX + x, Y: obj.mouseY + y}, steps...)
 }
-func (obj *Page) touchMove(ctx context.Context, point cdp.Point) error { //不需要delta
-	_, err := obj.webSock.InputDispatchTouchEvent(ctx, "touchMove", []cdp.Point{
-		{
-			X: point.X,
-			Y: point.Y,
-		},
-	})
-	if err != nil {
-		return err
-	}
-	obj.mouseX = point.X
-	obj.mouseY = point.Y
-	return nil
-}
+
 func (obj *Page) Wheel(ctx context.Context, x, y float64) error {
 	_, err := obj.webSock.InputDispatchMouseEvent(ctx,
 		cdp.DispatchMouseEventOption{

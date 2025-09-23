@@ -132,22 +132,24 @@ type Client struct {
 	cnl              context.CancelCauseFunc
 	webSock          *cdp.WebSock
 	stealth          bool //是否开启随机指纹
-	browserContextId string
+	browserContext   *BrowserContext
 }
 type ClientOption struct {
-	Host       string
-	Port       int
-	ChromePath string   //chrome path
-	UserDir    string   //user dir
-	Args       []string //start args
-	Headless   bool     //is headless
-	UserAgent  string
-	Proxy      string                                    //support http,https,socks5,ex: http://127.0.0.1:7005
-	GetProxy   func(ctx *requests.Response) (any, error) //pr
-	Width      int64                                     //browser width,1200
-	Height     int64                                     //browser height,605
-	Stealth    bool                                      //is stealth
-	Ja3Spec    any                                       //ja3
+	Host           string
+	Port           int
+	ChromePath     string   //chrome path
+	UserDir        string   //user dir
+	Args           []string //start args
+	Headless       bool     //is headless
+	UserAgent      string
+	Proxy          string                                    //support http,https,socks5,ex: http://127.0.0.1:7005
+	GetProxy       func(ctx *requests.Response) (any, error) //pr
+	Width          int64                                     //browser width,1200
+	Height         int64                                     //browser height,605
+	Stealth        bool                                      //is stealth
+	Ja3Spec        any                                       //ja3
+	MaxRetries     int
+	ResultCallBack func(ctx *requests.Response) error
 }
 
 type downClient struct {
@@ -287,7 +289,7 @@ func (obj *Client) runChrome(option *ClientOption) error {
 
 var chromeArgs = []string{
 	// "--disable-site-isolation-trials", //被识别
-	// "--virtual-time-budget=1000", //缩短setTimeout  setInterval 的时间1000秒:目前不生效，不知道以后会不会生效，等生效了再打开
+	"--virtual-time-budget=1", //缩短setTimeout  setInterval 的时间1000秒:目前不生效，不知道以后会不会生效，等生效了再打开
 	// "--disable-web-security",                 //关闭同源策略，抖音需要, 开启会导致 cloudflare 验证不过
 	// "--disable-notifications", //禁用浏览器通知，避免在测试期间中断。开启会导致验证不过
 
@@ -317,8 +319,9 @@ var chromeArgs = []string{
 	"--no-pings",                      //禁用 ping。
 	"--no-zygote",                     //禁用 zygote 进程。
 
-	"--mute-audio",                                //禁用音频。
-	"--no-first-run",                              //不显示欢迎页面。
+	"--mute-audio",   //禁用音频。
+	"--no-first-run", //不显示欢迎页面。
+	"--no-startup-window",
 	"--no-default-browser-check",                  //不检查是否为默认浏览器。
 	"--disable-cloud-import",                      //禁用云导入。
 	"--disable-gesture-typing",                    //禁用手势输入。
@@ -450,11 +453,15 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 	if preCtx == nil {
 		preCtx = context.TODO()
 	}
+	if option.MaxRetries == 0 {
+		option.MaxRetries = 2
+	}
 	globalReqCli, err := requests.NewClient(preCtx, requests.ClientOption{
-		MaxRetries:  2,
-		Proxy:       option.Proxy,
-		GetProxy:    option.GetProxy,
-		MaxRedirect: -1,
+		ResultCallBack: option.ResultCallBack,
+		MaxRetries:     option.MaxRetries,
+		Proxy:          option.Proxy,
+		GetProxy:       option.GetProxy,
+		MaxRedirect:    -1,
 	})
 	if err != nil {
 		return nil, err
@@ -486,10 +493,90 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 	} else {
 		client.addr = net.JoinHostPort(option.Host, strconv.Itoa(option.Port))
 	}
+	if option.GetProxy != nil {
+		client.isReplaceRequest = true
+	}
 	go tools.Signal(preCtx, client.Close)
 	return client, client.init()
 }
+
+type BrowserContextOption struct {
+	Proxy          string
+	Stealth        bool //是否开启随机指纹
+	MaxRetries     int
+	GetProxy       func(ctx *requests.Response) (any, error)
+	ResultCallBack func(ctx *requests.Response) error
+}
+
+func (obj *Client) newBrowserContext() (string, error) {
+	contextData, err := obj.webSock.TargetCreateBrowserContext(obj.ctx)
+	if err != nil {
+		return "", err
+	}
+	contextResult, err := gson.Decode(contextData.Result)
+	if err != nil {
+		return "", err
+	}
+	browserContextId := contextResult.Get("browserContextId").String()
+	if browserContextId == "" {
+		return "", errors.New("not found browserContextId")
+	}
+	return browserContextId, nil
+}
+func (obj *Client) NewBrowserContext(preCtx context.Context, options ...BrowserContextOption) (*BrowserContext, error) {
+	var option BrowserContextOption
+	if len(options) > 0 {
+		option = options[0]
+	}
+	if preCtx == nil {
+		preCtx = obj.ctx
+	}
+	if option.GetProxy == nil {
+		option.GetProxy = obj.globalReqCli.ClientOption.GetProxy
+	}
+	if option.MaxRetries == 0 {
+		option.MaxRetries = obj.globalReqCli.ClientOption.MaxRetries
+	}
+	if option.ResultCallBack == nil {
+		option.ResultCallBack = obj.globalReqCli.ClientOption.ResultCallBack
+	}
+
+	if option.Proxy == "" {
+		option.Proxy = obj.proxy
+	}
+	if !option.Stealth {
+		option.Stealth = obj.stealth
+	}
+	browserContext := &BrowserContext{
+		addr:             obj.addr,
+		isReplaceRequest: obj.isReplaceRequest,
+		option:           &option,
+		webSock:          obj.webSock,
+	}
+	var err error
+	browserContext.ctx, browserContext.cnl = context.WithCancelCause(preCtx)
+	browserContext.globalReqCli, err = requests.NewClient(browserContext.ctx, requests.ClientOption{
+		MaxRetries:  2,
+		Proxy:       option.Proxy,
+		GetProxy:    option.GetProxy,
+		MaxRedirect: -1,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if option.GetProxy != nil {
+		browserContext.isReplaceRequest = true
+	}
+	browserContext.browserContextId, err = obj.newBrowserContext()
+	if err != nil {
+		return nil, err
+	}
+	return browserContext, err
+}
 func (obj *Client) RequestClient() *requests.Client {
+	if obj.browserContext != nil {
+		return obj.browserContext.RequestClient()
+	}
 	return obj.globalReqCli
 }
 
@@ -547,68 +634,10 @@ func (obj *Client) init() (err error) {
 		fmt.Sprintf("ws://%s/devtools/browser/%s", obj.addr, browWsRs.Group(1)),
 		requests.RequestOption{},
 	)
-	if err != nil {
-		return err
-	}
-	contextData, err := obj.webSock.TargetCreateBrowserContext(obj.ctx)
-	if err != nil {
-		return err
-	}
-	contextResult, err := gson.Decode(contextData.Result)
-	if err != nil {
-		return err
-	}
-	obj.browserContextId = contextResult.Get("browserContextId").String()
-	if obj.browserContextId == "" {
-		return errors.New("not found browserContextId")
-	}
 	return err
 }
 
 // 浏览器初始化
-func (obj *Client) Targets() ([]string, error) {
-	resp, err := obj.globalReqCli.Request(obj.ctx, "get",
-		fmt.Sprintf("http://%s/json", obj.addr),
-		requests.RequestOption{
-			Timeout: time.Second * 3,
-			ErrCallBack: func(ctx *requests.Response) error {
-				select {
-				case <-obj.cmdCli.Ctx().Done():
-					return context.Cause(obj.cmdCli.Ctx())
-				case <-ctx.Context().Done():
-					return nil
-				case <-time.After(time.Second):
-				}
-				if obj.cmdCli.Err() != nil {
-					return obj.cmdCli.Err()
-				}
-				return nil
-			},
-			ResultCallBack: func(ctx *requests.Response) error {
-				if ctx.StatusCode() == 200 {
-					return nil
-				}
-				time.Sleep(time.Second)
-				return errors.New("code error")
-			},
-			MaxRetries: 10,
-			DisProxy:   true,
-		})
-	if err != nil {
-		return nil, err
-	}
-	jsonData, err := resp.Json()
-	if err != nil {
-		return nil, err
-	}
-	targetId := []string{}
-	for _, page := range jsonData.Array() {
-		if page.Get("type").String() == "page" {
-			targetId = append(targetId, page.Get("id").String())
-		}
-	}
-	return targetId, nil
-}
 
 // 浏览器是否结束的 chan
 func (obj *Client) Done() <-chan struct{} {
@@ -631,8 +660,10 @@ func (obj *Client) Close() {
 	if obj.globalReqCli != nil {
 		obj.globalReqCli.Close()
 	}
+	if obj.browserContext != nil {
+		obj.browserContext.Close()
+	}
 	if obj.webSock != nil {
-		obj.webSock.TargetDisposeBrowserContext(obj.browserContextId)
 		obj.webSock.BrowserClose()
 		obj.webSock.CloseWithError(errors.New("webSock browser closed"))
 	}
@@ -649,15 +680,14 @@ type PageOption struct {
 
 // 新建标签页
 func (obj *Client) NewPage(preCtx context.Context, options ...PageOption) (*Page, error) {
-	rs, err := obj.webSock.TargetCreateTarget(preCtx, "")
-	if err != nil {
-		return nil, err
+	var err error
+	if obj.browserContext == nil {
+		obj.browserContext, err = obj.NewBrowserContext(obj.ctx)
+		if err != nil {
+			return nil, err
+		}
 	}
-	targetId, ok := rs.Result["targetId"].(string)
-	if !ok {
-		return nil, errors.New("not found targetId")
-	}
-	return obj.NewPageWithTargetId(preCtx, targetId, options...)
+	return obj.browserContext.NewPage(preCtx, options...)
 }
 
 // 设置浏览器的地理位置
@@ -681,50 +711,7 @@ func (obj *Page) SetTimezoneOverride(preCtx context.Context, timezoneId string) 
 	_, err := obj.webSock.EmulationSetTimezoneOverride(preCtx, timezoneId)
 	return err
 }
-func (obj *Client) NewPageWithTargetId(preCtx context.Context, targetId string, options ...PageOption) (*Page, error) {
-	var option PageOption
-	if len(options) > 0 {
-		option = options[0]
-	}
-	isReplaceRequest := obj.isReplaceRequest
-	if !isReplaceRequest {
-		if option.Option.Proxy != nil && option.Option.Proxy != obj.proxy {
-			if p, ok := option.Option.Proxy.(string); ok && p != obj.proxy {
-				isReplaceRequest = true
-			}
-		}
-	}
-	if option.Option.Proxy == "" {
-		option.Option.Proxy = obj.proxy
-	}
-	if !option.Stealth {
-		option.Stealth = obj.stealth
-	}
-	ctx, cnl := context.WithCancel(obj.ctx)
-	page := &Page{
-		option:           option,
-		targetId:         targetId,
-		targetType:       "page",
-		addr:             obj.addr,
-		ctx:              ctx,
-		cnl:              cnl,
-		globalReqCli:     obj.globalReqCli,
-		isReplaceRequest: isReplaceRequest,
-		loadNotices:      make(chan struct{}, 1),
-		stopNotices:      make(chan struct{}, 1),
-		networkNotices:   make(chan struct{}, 1),
-	}
-	if err := page.init(); err != nil {
-		return nil, err
-	}
-	if isReplaceRequest {
-		log.Print("enabel replace request...")
-		if err := page.Request(preCtx, defaultRequestFunc); err != nil {
-			return nil, err
-		}
-	}
-	return page, nil
-}
+
 func (obj *Client) BrowserSetPermission(ctx context.Context, permission string, setting string, origins ...string) error {
 	return obj.webSock.BrowserSetPermission(ctx, permission, setting, origins...)
 }

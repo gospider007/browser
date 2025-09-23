@@ -151,7 +151,16 @@ function getInjectableFingerprintFunction() {
         (${mainFunctionString2})();`+"\n})();");
     mainFunctionString = prettierJs(mainFunctionString)
     mainFunctionString = mainFunctionString.replaceAll(`    overrideUserAgentData(userAgentData)`, `// overrideUserAgentData(userAgentData)`);
-    mainFunctionString = mainFunctionString.replaceAll(`    overrideInstancePrototype(window.navigator,`, `// overrideInstancePrototype(window.navigator,`);
+    mainFunctionString = mainFunctionString.replaceAll(`    overrideInstancePrototype(window.navigator, navigatorProps);`, `    overrideInstancePrototype(window.navigator, {
+      "platform": "MacIntel",
+      "hardwareConcurrency": 12,
+      "maxTouchPoints": 0,
+      "product": "Gecko",
+      "productSub": "20030107",
+      "vendor": "Google Inc.",
+      "appCodeName": "Mozilla",
+      "appName": "Netscape",
+    });`);
     return mainFunctionString
 }
 

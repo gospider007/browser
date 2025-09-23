@@ -705,24 +705,24 @@
   const fp = {
     "screen": {
       "availTop": 25,
-      "availLeft": 1440,
+      "availLeft": 1470,
       "pageXOffset": 0,
       "pageYOffset": 0,
-      "screenX": 1440,
+      "screenX": 1470,
       "hasHDR": false,
-      "width": 2560,
-      "height": 1440,
-      "availWidth": 2560,
-      "availHeight": 1415,
+      "width": 1920,
+      "height": 1080,
+      "availWidth": 1920,
+      "availHeight": 1055,
       "clientWidth": 0,
-      "clientHeight": 19,
+      "clientHeight": 18,
       "innerWidth": 0,
       "innerHeight": 0,
-      "outerWidth": 1280,
-      "outerHeight": 1415,
+      "outerWidth": 1920,
+      "outerHeight": 1055,
       "colorDepth": 24,
       "pixelDepth": 24,
-      "devicePixelRatio": 2
+      "devicePixelRatio": 1
     },
     "audioCodecs": {
       "ogg": "probably",
@@ -817,12 +817,12 @@
     },
     "battery": {
       "charging": true,
-      "chargingTime": null,
+      "chargingTime": 0,
       "dischargingTime": null,
-      "level": 0.78
+      "level": 1
     },
     "videoCard": {
-      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M1, Unspecified Version)",
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M2 Pro, Unspecified Version)",
       "vendor": "Google Inc. (Apple)"
     },
     "multimediaDevices": {
@@ -868,13 +868,13 @@
       "languages": ["en-US"],
       "platform": "MacIntel",
       "deviceMemory": 8,
-      "hardwareConcurrency": 4,
+      "hardwareConcurrency": 8,
       "maxTouchPoints": 0,
       "product": "Gecko",
       "productSub": "20030107",
       "vendor": "Google Inc.",
       "vendorSub": null,
-      "doNotTrack": null,
+      "doNotTrack": "1",
       "appCodeName": "Mozilla",
       "appName": "Netscape",
       "appVersion": "5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
@@ -956,7 +956,16 @@
     if (window.navigator.webdriver) {
       navigatorProps.webdriver = false;
     }
-// overrideInstancePrototype(window.navigator, navigatorProps);
+    overrideInstancePrototype(window.navigator, {
+      "platform": "MacIntel",
+      "hardwareConcurrency": 12,
+      "maxTouchPoints": 0,
+      "product": "Gecko",
+      "productSub": "20030107",
+      "vendor": "Google Inc.",
+      "appCodeName": "Mozilla",
+      "appName": "Netscape",
+    });
     overrideInstancePrototype(window.screen, newScreen);
     overrideWindowDimensionsProps(windowScreenProps);
     overrideDocumentDimensionsProps(documentScreenProps);
