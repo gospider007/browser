@@ -5,7 +5,7 @@ go 1.25.0
 require (
 	github.com/gospider007/blog v0.0.0-20250815030743-f2af6b9013ab
 	github.com/gospider007/bs4 v0.0.0-20250815030800-a352d3ad57ee
-	github.com/gospider007/cdp v0.0.0-20250929093717-58d44e6f4987
+	github.com/gospider007/cdp v0.0.0-20250929093823-ee5f62c24303
 	github.com/gospider007/cmd v0.0.0-20250923093255-49907456bbb5
 	github.com/gospider007/conf v0.0.0-20250815031235-1df45ae2e117
 	github.com/gospider007/gson v0.0.0-20250923093120-5ae8a0e86b11
