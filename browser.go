@@ -112,7 +112,7 @@ const userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/5
 const playwright_cdn_mirror = "playwright.azureedge.net"
 
 // from https://playwright.azureedge.net/builds/chromium/1150/chromium-mac-arm64.zip
-// from https://playwright.azureedge.net/builds/chromium/1150/chromium-mac.zip
+// from https://playwright.azureedge.net/builds/chromium/1183/chromium-win64.zip
 
 // var mac13_arm64 = fmt.Sprintf("https://%s/builds/chromium/%s/chromium-mac-arm64.zip", playwright_cdn_mirror, revision)
 // var debian12_arm64 = fmt.Sprintf("https://%s/builds/chromium/%s/chromium-linux-arm64.zip", playwright_cdn_mirror, revision)

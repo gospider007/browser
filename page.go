@@ -811,15 +811,11 @@ func (obj *Page) Wheel(ctx context.Context, x, y float64) error {
 }
 
 func (obj *Page) Down(ctx context.Context, point cdp.Point) error {
-	x := point.X - obj.mouseX
-	y := point.Y - obj.mouseY
-	if x != 0 && y != 0 {
-		err := obj.Move(ctx, x, y)
-		if err != nil {
-			return err
-		}
+	err := obj.MoveTo(ctx, point)
+	if err != nil {
+		return err
 	}
-	_, err := obj.webSock.InputDispatchMouseEvent(ctx,
+	_, err = obj.webSock.InputDispatchMouseEvent(ctx,
 		cdp.DispatchMouseEventOption{
 			Type:       "mousePressed",
 			Button:     "left",
@@ -830,12 +826,14 @@ func (obj *Page) Down(ctx context.Context, point cdp.Point) error {
 	if err != nil {
 		return err
 	}
-	obj.mouseX = point.X
-	obj.mouseY = point.Y
 	return err
 }
 func (obj *Page) TouchDown(ctx context.Context, point cdp.Point) error {
-	_, err := obj.webSock.InputDispatchTouchEvent(ctx, "touchStart",
+	err := obj.TouchMoveTo(ctx, point)
+	if err != nil {
+		return err
+	}
+	_, err = obj.webSock.InputDispatchTouchEvent(ctx, "touchStart",
 		[]cdp.Point{
 			{
 				X: point.X,
@@ -845,8 +843,6 @@ func (obj *Page) TouchDown(ctx context.Context, point cdp.Point) error {
 	if err != nil {
 		return err
 	}
-	obj.mouseX = point.X
-	obj.mouseY = point.Y
 	return nil
 }
 func (obj *Page) Up(ctx context.Context) error {
