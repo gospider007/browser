@@ -300,7 +300,8 @@ var chromeArgs = []string{
 	"--excludeSwitches=enable-automation",           //禁用自动化
 	"--disable-blink-features=AutomationControlled", //禁用 Blink 引擎的自动化控制。
 	// 稳定性选项
-	"--no-sandbox",      //禁用 Chrome 的沙盒模式。
+	"--no-sandbox", //禁用 Chrome 的沙盒模式。
+	//=======================
 	"--set-uid-sandbox", //命令行参数用于设置 Chrome 进程运行时使用的 UID，从而提高 Chrome 浏览器的安全性
 	"--set-gid-sandbox", //命令行参数用于设置 Chrome 进程运行时使用的 GID，从而提高 Chrome 浏览器的安全性
 	"--enable-features=NetworkService,NetworkServiceInProcess",

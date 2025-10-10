@@ -705,24 +705,24 @@
   const fp = {
     "screen": {
       "availTop": 25,
-      "availLeft": 1470,
+      "availLeft": 0,
       "pageXOffset": 0,
       "pageYOffset": 0,
-      "screenX": 1470,
-      "hasHDR": false,
-      "width": 1920,
-      "height": 1080,
-      "availWidth": 1920,
-      "availHeight": 1055,
+      "screenX": 0,
+      "hasHDR": true,
+      "width": 1440,
+      "height": 900,
+      "availWidth": 1440,
+      "availHeight": 815,
       "clientWidth": 0,
-      "clientHeight": 18,
+      "clientHeight": 19,
       "innerWidth": 0,
       "innerHeight": 0,
-      "outerWidth": 1920,
-      "outerHeight": 1055,
-      "colorDepth": 24,
-      "pixelDepth": 24,
-      "devicePixelRatio": 1
+      "outerWidth": 1440,
+      "outerHeight": 814,
+      "colorDepth": 30,
+      "pixelDepth": 30,
+      "devicePixelRatio": 2
     },
     "audioCodecs": {
       "ogg": "probably",
@@ -817,12 +817,12 @@
     },
     "battery": {
       "charging": true,
-      "chargingTime": 0,
+      "chargingTime": 16560,
       "dischargingTime": null,
-      "level": 1
+      "level": 0.32
     },
     "videoCard": {
-      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M2 Pro, Unspecified Version)",
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M2, Unspecified Version)",
       "vendor": "Google Inc. (Apple)"
     },
     "multimediaDevices": {
@@ -845,21 +845,21 @@
         "groupId": ""
       }]
     },
-    "fonts": ["Arial Unicode MS", "Gill Sans", "Helvetica Neue", "Menlo"],
+    "fonts": ["Arial Unicode MS", "Gill Sans"],
     "mockWebRTC": true,
     "slim": false,
     "navigator": {
-      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36",
       "userAgentData": {
         "brands": [{
           "brand": "Google Chrome",
-          "version": "137"
+          "version": "135"
+        }, {
+          "brand": "Not-A.Brand",
+          "version": "8"
         }, {
           "brand": "Chromium",
-          "version": "137"
-        }, {
-          "brand": "Not/A)Brand",
-          "version": "24"
+          "version": "135"
         }],
         "mobile": false,
         "platform": "macOS"
@@ -877,7 +877,7 @@
       "doNotTrack": "1",
       "appCodeName": "Mozilla",
       "appName": "Netscape",
-      "appVersion": "5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
+      "appVersion": "5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36",
       "oscpu": null,
       "extraProperties": {
         "vendorFlavors": ["chrome"],
@@ -887,8 +887,8 @@
       },
       "webdriver": false
     },
-    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
-    "historyLength": 3
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36",
+    "historyLength": 8
   };
   (function inject() {
     const {
