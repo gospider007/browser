@@ -33,7 +33,7 @@ require (
 	github.com/google/gopacket v1.1.19 // indirect
 	github.com/google/pprof v0.0.0-20251007162407-5df77e3f7d1d // indirect
 	github.com/gospider007/bar v0.0.0-20250815030902-4f5b5d6312cf // indirect
-	github.com/gospider007/gtls v0.0.0-20251015151517-7d9f3855f5f4 // indirect
+	github.com/gospider007/gtls v0.0.0-20251015154822-5fb43b5af685 // indirect
 	github.com/gospider007/http1 v0.0.0-20251011074703-a8d2e5a53aa0 // indirect
 	github.com/gospider007/http2 v0.0.0-20251015151551-cf004878b757 // indirect
 	github.com/gospider007/http3 v0.0.0-20251015142250-876e4baf5c98 // indirect
