@@ -100,8 +100,8 @@ func PrintLibs() {
 }
 
 // https://github.com/microsoft/playwright/blob/main/packages/playwright-core/browsers.json
-const revision = "1183"
-const userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+const revision = "1200"
+const userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36"
 
 // var playwright_cdn_mirrors = []string{
 // 	"playwright.azureedge.net",
@@ -133,6 +133,7 @@ type Client struct {
 	webSock          *cdp.WebSock
 	stealth          bool //是否开启随机指纹
 	browserContext   *BrowserContext
+	requestFunc      func(context.Context, *cdp.Route)
 }
 type ClientOption struct {
 	Host           string
@@ -160,14 +161,47 @@ var oneDown = &downClient{}
 
 func verifyEvalPath(path string) error {
 	path = strings.TrimSuffix(path, ".exe")
-	if strings.HasSuffix(path, "Chrome") || strings.HasSuffix(path, "Chromium") || strings.HasSuffix(path, "chrome") || strings.HasSuffix(path, "chromium") {
+	if strings.Contains(path, "Chrome") || strings.Contains(path, "Chromium") || strings.Contains(path, "chrome") || strings.Contains(path, "chromium") {
 		return nil
 	}
-	if strings.HasSuffix(path, "msedge") {
+	if strings.Contains(path, "msedge") {
 		return nil
 	}
 	return errors.New("请输入正确的浏览器路径,如: c:/chrome.exe")
 }
+func findChromeAppWithMac(dir string) (string, error) {
+	dirs, err := os.ReadDir(dir)
+	if err != nil {
+		return "", err
+	}
+	switch len(dirs) {
+	case 0:
+		return "", errors.New("空目录")
+	case 1:
+		path := tools.PathJoin(dir, dirs[0].Name())
+		if dirs[0].IsDir() {
+			return findChromeAppWithMac(path)
+		}
+		if strings.Contains(dirs[0].Name(), "Chrome") || strings.Contains(dirs[0].Name(), "Chromium") {
+			return path, nil
+		}
+		return "", errors.New("not found chrome")
+	default:
+		for _, dr := range dirs {
+			if dr.IsDir() {
+				path := tools.PathJoin(dir, dr.Name())
+				if strings.HasSuffix(dr.Name(), ".app") {
+					return findChromeAppWithMac(path)
+				}
+				if dr.Name() == "MacOS" {
+					return findChromeAppWithMac(path)
+				}
+			}
+		}
+		return "", errors.New("找不到文件")
+	}
+}
+
 func (obj *downClient) getChromePath(preCtx context.Context) (string, error) {
 	obj.Lock()
 	defer obj.Unlock()
@@ -184,7 +218,7 @@ func (obj *downClient) getChromePath(preCtx context.Context) (string, error) {
 		chromeDownUrl = win64
 	case "darwin":
 		chromeDir = tools.PathJoin(chromeDir, revision)
-		chromePath = tools.PathJoin(chromeDir, "chrome-mac", "Chromium.app", "Contents", "MacOS", "Chromium")
+		chromePath, _ = findChromeAppWithMac(chromeDir)
 		if runtime.GOARCH == "arm64" {
 			chromeDownUrl = mac13
 		} else {
@@ -197,9 +231,16 @@ func (obj *downClient) getChromePath(preCtx context.Context) (string, error) {
 	default:
 		return "", errors.New("dont know goos")
 	}
-	if !tools.PathExist(chromePath) {
+	if chromePath == "" || !tools.PathExist(chromePath) {
 		if err = downChrome(preCtx, chromeDir, chromeDownUrl); err != nil {
 			return "", err
+		}
+		if chromePath == "" {
+			chromePath, err = findChromeAppWithMac(chromeDir)
+			if err != nil {
+				return "", err
+			}
+			log.Print(chromePath)
 		}
 		if !tools.PathExist(chromePath) {
 			return "", errors.New("not found chrome")
@@ -288,24 +329,35 @@ func (obj *Client) runChrome(option *ClientOption) error {
 }
 
 var chromeArgs = []string{
-	// "--disable-site-isolation-trials", //被识别
-	"--virtual-time-budget=1", //缩短setTimeout  setInterval 的时间1000秒:目前不生效，不知道以后会不会生效，等生效了再打开
-	// "--disable-web-security",                 //关闭同源策略，抖音需要, 开启会导致 cloudflare 验证不过
-	// "--disable-notifications", //禁用浏览器通知，避免在测试期间中断。开启会导致验证不过
+	// "--fingerprint=124",
+
+	// "--disable-3d-apis",
+	// "--disable-webgl",
+	// "--disable-gpu",        //禁用硬件加速功能，这可以降低一些GPU相关任务的CPU占用，但可能降低图形性能和视频播放能力。
+	// "--use-gl=swiftshader", //可以在不支持硬件加速的系统或设备上提供基本的图形渲染功能。
+	//==================
+	"--webrtc-ip-handling-policy=disable_non_proxied_udp",
+	"--force-webrtc-ip-handling-policy",
+
+	"--disable-hidpi-scaling",
+	"--disable-perfetto",
+	"--use-mock-keychain",             //使用模拟钥匙串。
+	"--disable-hardware-acceleration", //禁用硬件加速功能，这可以在某些旧的计算机和旧的显卡上降低Chrome的资源消耗，但可能会影响一些图形性能和视频播放。
+	"--disable-site-isolation-trials", //被识别
+	"--virtual-time-budget=1",         //缩短setTimeout  setInterval 的时间1000秒:目前不生效，不知道以后会不会生效，等生效了再打开
+	"--disable-web-security",          //关闭同源策略，抖音需要, 开启会导致 cloudflare 验证不过
 
 	//远程调试
 	"--remote-allow-origins=*",
-	// 自动化选项禁用
 	"--useAutomationExtension=false",                //禁用自动化扩展。
 	"--excludeSwitches=enable-automation",           //禁用自动化
 	"--disable-blink-features=AutomationControlled", //禁用 Blink 引擎的自动化控制。
-	// 稳定性选项
-	"--no-sandbox", //禁用 Chrome 的沙盒模式。
-	//=======================
-	"--set-uid-sandbox", //命令行参数用于设置 Chrome 进程运行时使用的 UID，从而提高 Chrome 浏览器的安全性
-	"--set-gid-sandbox", //命令行参数用于设置 Chrome 进程运行时使用的 GID，从而提高 Chrome 浏览器的安全性
+	"--no-sandbox",                                  //禁用 Chrome 的沙盒模式。
+	"--set-uid-sandbox",                             //命令行参数用于设置 Chrome 进程运行时使用的 UID，从而提高 Chrome 浏览器的安全性
+	"--set-gid-sandbox",                             //命令行参数用于设置 Chrome 进程运行时使用的 GID，从而提高 Chrome 浏览器的安全性
+
 	"--enable-features=NetworkService,NetworkServiceInProcess",
-	"--disable-features=WebRtcHideLocalIpsWithMdns,EnablePasswordsAccountStorage,FlashDeprecationWarning,UserAgentClientHint,AutoUpdate,site-per-process,Profiles,EasyBakeWebBundler,MultipleCompositingThreads,AudioServiceOutOfProcess,TranslateUI,BlinkGenPropertyTrees,BackgroundSync,ClientHints,NetworkQualityEstimator,PasswordGeneration,PrefetchPrivacyChanges,TabHoverCards,ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,TabFreezing,TabDiscarding,HttpsUpgrades", // 禁用一些 Chrome 功能。
+	"--disable-features=VizDisplayCompositor,WebRtcHideLocalIpsWithMdns,EnablePasswordsAccountStorage,FlashDeprecationWarning,UserAgentClientHint,AutoUpdate,site-per-process,Profiles,EasyBakeWebBundler,MultipleCompositingThreads,AudioServiceOutOfProcess,TranslateUI,BlinkGenPropertyTrees,BackgroundSync,ClientHints,NetworkQualityEstimator,PasswordGeneration,PrefetchPrivacyChanges,TabHoverCards,ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,TabFreezing,TabDiscarding,HttpsUpgrades", // 禁用一些 Chrome 功能。
 	"--blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4,imagesEnabled=true", //Blink 设置。
 	"--ignore-ssl-errors=true", //忽略 SSL 错误。
 	"--disable-setuid-sandbox", //重要headless
@@ -316,7 +368,6 @@ var chromeArgs = []string{
 
 	"--disable-background-networking", // 禁用Chrome的后台网络请求，可以降低Chrome对内存的占用。
 	"--browser-test",                  //启用浏览器测试模式，这可以对Chrome进行优化以实现更低的内存占用率。
-	"--disable-gpu",                   //禁用硬件加速功能，这可以降低一些GPU相关任务的CPU占用，但可能降低图形性能和视频播放能力。
 	"--no-pings",                      //禁用 ping。
 	"--no-zygote",                     //禁用 zygote 进程。
 
@@ -347,7 +398,6 @@ var chromeArgs = []string{
 	"--aggressive-cache-discard",               //启用缓存丢弃。
 	"--disable-ipc-flooding-protection",        //禁用 IPC 洪水保护。
 	"--disable-default-apps",                   //禁用默认应用
-	"--enable-webgl",                           //启用 WebGL。
 	"--disable-breakpad",                       //禁用 崩溃报告
 	"--disable-component-update",               //禁用组件更新。
 	"--disable-domain-reliability",             //禁用域可靠性。
@@ -356,18 +406,17 @@ var chromeArgs = []string{
 	"--disable-hang-monitor",                   //禁用挂起监视器
 	"--disable-popup-blocking",                 //禁用弹出窗口阻止。
 
-	"--disable-crash-reporter",                                        //禁用崩溃报告器。
-	"--disable-background-timer-throttling",                           //禁用后台计时器限制。
-	"--disable-backgrounding-occluded-windows",                        //禁用后台窗口。
-	"--disable-infobars",                                              //禁用信息栏。
-	"--hide-scrollbars",                                               //隐藏滚动条。
-	"--disable-prompt-on-repost",                                      //禁用重新提交提示。
-	"--metrics-recording-only",                                        //仅记录指标。
-	"--safebrowsing-disable-auto-update",                              //禁用安全浏览自动更新。
-	"--use-mock-keychain",                                             //使用模拟钥匙串。
-	"--force-webrtc-ip-handling-policy=default_public_interface_only", //强制 WebRTC IP 处理策略。
-	"--enable-webrtc-stun-origin=false",                               //用于禁用WebRTC的STUN源，而
-	"--enforce-webrtc-ip-permission-check=false",                      //用于禁用WebRTC的IP权限检查。
+	"--disable-crash-reporter",                                  //禁用崩溃报告器。
+	"--disable-background-timer-throttling",                     //禁用后台计时器限制。
+	"--disable-backgrounding-occluded-windows",                  //禁用后台窗口。
+	"--disable-infobars",                                        //禁用信息栏。
+	"--hide-scrollbars",                                         //隐藏滚动条。
+	"--disable-prompt-on-repost",                                //禁用重新提交提示。
+	"--metrics-recording-only",                                  //仅记录指标。
+	"--safebrowsing-disable-auto-update",                        //禁用安全浏览自动更新。
+	"--force-webrtc-ip-handling-policy=disable_non_proxied_udp", //强制 WebRTC IP 处理策略。
+	"--enable-webrtc-stun-origin=false",                         //用于禁用WebRTC的STUN源，而
+	"--enforce-webrtc-ip-permission-check=false",                //用于禁用WebRTC的IP权限检查。
 
 	"--disable-session-crashed-bubble",                     //禁用会话崩溃气泡。
 	"--font-render-hinting=none",                           //禁用字体渲染提示
@@ -377,7 +426,6 @@ var chromeArgs = []string{
 	"--disable-translate",                                  //禁用翻译。
 	"--password-store=basic",                               //使用基本密码存储。
 	"--disable-image-animation-resync",                     //禁用图像动画重新
-	"--use-gl=swiftshader",                                 //可以在不支持硬件加速的系统或设备上提供基本的图形渲染功能。
 	"--window-position=0,0",                                //窗口起始位置
 	"--disable-remote-fonts",                               //禁用远程字体加载。这个参数可以防止Chrome从远程服务器加载字体，从而减少与服务器的连接，增强隐私。
 	"--disable-geolocation",                                //禁用地理位置定位功能。这个参数可以防止Chrome获取您的地理位置信息，增强隐私。
@@ -385,9 +433,8 @@ var chromeArgs = []string{
 	"--disable-preconnect",                                 //禁用预连接。预连接是一种优化技术，可以在您点击链接之前预先建立与目标服务器的连接，以加快页面加载速度。禁用预连接可以减少被追踪的可能性。
 
 	"--force-color-profile=srgb",
-	"--disable-dev-shm-usage",         //禁用Chrome在/dev/shm文件系统中分配的共享内存
-	"--disable-background-mode",       // 禁用浏览器后台模式。
-	"--disable-hardware-acceleration", //禁用硬件加速功能，这可以在某些旧的计算机和旧的显卡上降低Chrome的资源消耗，但可能会影响一些图形性能和视频播放。
+	"--disable-dev-shm-usage",   //禁用Chrome在/dev/shm文件系统中分配的共享内存
+	"--disable-background-mode", // 禁用浏览器后台模式。
 
 	"--disable-renderer-backgrounding",       //禁用渲染器后台化。,反爬用到
 	"--disable-search-engine-choice-screen",  //用于禁用搜索引擎选择屏幕。该选项通常用于自定义 Chrome 浏览器的行为。
@@ -471,10 +518,10 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 		option.Headless = true
 	}
 	if option.Width == 0 {
-		option.Width = 1200
+		option.Width = 1300
 	}
 	if option.Height == 0 {
-		option.Height = 605
+		option.Height = 800
 	}
 	if option.UserAgent == "" {
 		option.UserAgent = userAgent
@@ -565,7 +612,7 @@ func (obj *Client) NewBrowserContext(preCtx context.Context, options ...BrowserC
 	if err != nil {
 		return nil, err
 	}
-	if option.GetProxy != nil {
+	if option.GetProxy != nil || option.Proxy != "" {
 		browserContext.isReplaceRequest = true
 	}
 	browserContext.browserContextId, err = obj.newBrowserContext()
@@ -700,10 +747,12 @@ func (obj *Page) SetGeolocation(preCtx context.Context, latitude float64, longit
 // 设置浏览器的语言
 func (obj *Page) SetLocaleOverride(preCtx context.Context, local string) error {
 	_, err := obj.webSock.EmulationSetLocaleOverride(preCtx, local)
-	if err != nil {
-		return err
-	}
-	_, err = obj.webSock.EmulationSetUserAgentOverride(preCtx, userAgent, local)
+	return err
+}
+
+// 设置浏览器的语言
+func (obj *Page) SetUserAgentOverride(preCtx context.Context, language string) error {
+	_, err := obj.webSock.EmulationSetUserAgentOverride(preCtx, userAgent, language)
 	return err
 }
 
@@ -718,4 +767,8 @@ func (obj *Client) BrowserSetPermission(ctx context.Context, permission string, 
 }
 func (obj *Client) BrowserGrantPermissions(ctx context.Context, permissions []string, origins ...string) error {
 	return obj.webSock.BrowserGrantPermissions(ctx, permissions, origins...)
+}
+
+func (obj *Client) Request(ctx context.Context, RequestFunc func(context.Context, *cdp.Route)) {
+	obj.requestFunc = RequestFunc
 }

@@ -3,7 +3,6 @@ package browser
 import (
 	"context"
 	"errors"
-	"log"
 
 	"github.com/gospider007/cdp"
 	"github.com/gospider007/requests"
@@ -71,7 +70,7 @@ func (obj *BrowserContext) NewPageWithTargetId(preCtx context.Context, targetId 
 		return nil, err
 	}
 	if isReplaceRequest {
-		log.Print("enabel replace request...")
+		// log.Print("enabel replace request...")
 		if err := page.Request(preCtx, defaultRequestFunc); err != nil {
 			return nil, err
 		}

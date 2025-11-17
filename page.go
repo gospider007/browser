@@ -5,7 +5,6 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
-	"log"
 	"math"
 	uurl "net/url"
 	"strconv"
@@ -538,24 +537,23 @@ func (obj *Page) GetFrameTree(ctx context.Context) (*bs4.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Print(data)
-	return nil, nil
-
-	// parseDom, err := obj.parseJsonDom(ctx, data.Get("root"))
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// mainHtml := bs4.NewClientWithNode(parseDom)
-	// for _, iframe := range mainHtml.Finds("iframe") {
-	// 	if gospiderFrameId := iframe.Get("gospiderFrameId"); gospiderFrameId != "" {
-	// 		if framePage, ok := obj.GetFrame(gospiderFrameId); ok {
-	// 			if frameHtml, err := framePage.Html(ctx); err == nil {
-	// 				iframe.SetHtml(frameHtml.String())
-	// 			}
-	// 		}
-	// 	}
-	// }
-	// return mainHtml, nil
+	// log.Print(data)
+	// return nil, nil
+	parseDom, err := obj.parseJsonDom(ctx, data.Get("root"))
+	if err != nil {
+		return nil, err
+	}
+	mainHtml := bs4.NewClientWithNode(parseDom)
+	for _, iframe := range mainHtml.Finds("iframe") {
+		if gospiderFrameId := iframe.Get("gospiderFrameId"); gospiderFrameId != "" {
+			if framePage, ok := obj.GetFrame(gospiderFrameId); ok {
+				if frameHtml, err := framePage.Html(ctx); err == nil {
+					iframe.SetHtml(frameHtml.String())
+				}
+			}
+		}
+	}
+	return mainHtml, nil
 }
 
 func (obj *Page) mainHtml(ctx context.Context) (*bs4.Client, error) {
