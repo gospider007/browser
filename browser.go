@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"os"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -101,7 +102,6 @@ func PrintLibs() {
 
 // https://github.com/microsoft/playwright/blob/main/packages/playwright-core/browsers.json
 const revision = "1200"
-const userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36"
 
 // var playwright_cdn_mirrors = []string{
 // 	"playwright.azureedge.net",
@@ -169,37 +169,39 @@ func verifyEvalPath(path string) error {
 	}
 	return errors.New("请输入正确的浏览器路径,如: c:/chrome.exe")
 }
-func findChromeAppWithMac(dir string) (string, error) {
-	dirs, err := os.ReadDir(dir)
+func findChromeApp(dirPath string) (string, error) {
+	dirs, err := os.ReadDir(dirPath)
 	if err != nil {
 		return "", err
 	}
-	switch len(dirs) {
-	case 0:
+	if len(dirs) == 0 {
 		return "", errors.New("空目录")
-	case 1:
-		path := tools.PathJoin(dir, dirs[0].Name())
+	}
+	if len(dirs) == 1 {
+		path := tools.PathJoin(dirPath, dirs[0].Name())
 		if dirs[0].IsDir() {
-			return findChromeAppWithMac(path)
-		}
-		if strings.Contains(dirs[0].Name(), "Chrome") || strings.Contains(dirs[0].Name(), "Chromium") {
+			return findChromeApp(path)
+		} else {
 			return path, nil
 		}
-		return "", errors.New("not found chrome")
-	default:
-		for _, dr := range dirs {
-			if dr.IsDir() {
-				path := tools.PathJoin(dir, dr.Name())
-				if strings.HasSuffix(dr.Name(), ".app") {
-					return findChromeAppWithMac(path)
-				}
-				if dr.Name() == "MacOS" {
-					return findChromeAppWithMac(path)
-				}
+	}
+	sort.SliceStable(dirs, func(x, y int) bool {
+		return len(dirs[x].Name()) < len(dirs[y].Name())
+	})
+	for _, dir := range dirs {
+		path := tools.PathJoin(dirPath, dir.Name())
+		name := strings.ToLower(dir.Name())
+		if dir.IsDir() {
+			if strings.HasSuffix(dir.Name(), ".app") || dir.Name() == "MacOS" {
+				return findChromeApp(path)
+			}
+		} else {
+			if strings.Contains(name, "chrome") || strings.Contains(name, "chromium") {
+				return path, nil
 			}
 		}
-		return "", errors.New("找不到文件")
 	}
+	return "", errors.New("找不到文件")
 }
 
 func (obj *downClient) getChromePath(preCtx context.Context) (string, error) {
@@ -209,24 +211,19 @@ func (obj *downClient) getChromePath(preCtx context.Context) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	var chromePath string
 	var chromeDownUrl string
+	chromeDir = tools.PathJoin(chromeDir, revision)
+	chromePath, _ := findChromeApp(chromeDir)
 	switch runtime.GOOS {
 	case "windows":
-		chromeDir = tools.PathJoin(chromeDir, revision)
-		chromePath = tools.PathJoin(chromeDir, "chrome-win", "chrome.exe")
 		chromeDownUrl = win64
 	case "darwin":
-		chromeDir = tools.PathJoin(chromeDir, revision)
-		chromePath, _ = findChromeAppWithMac(chromeDir)
 		if runtime.GOARCH == "arm64" {
 			chromeDownUrl = mac13
 		} else {
 			chromeDownUrl = mac13_intel
 		}
 	case "linux":
-		chromeDir = tools.PathJoin(chromeDir, revision)
-		chromePath = tools.PathJoin(chromeDir, "chrome-linux", "chrome")
 		chromeDownUrl = debian12_x64
 	default:
 		return "", errors.New("dont know goos")
@@ -236,7 +233,7 @@ func (obj *downClient) getChromePath(preCtx context.Context) (string, error) {
 			return "", err
 		}
 		if chromePath == "" {
-			chromePath, err = findChromeAppWithMac(chromeDir)
+			chromePath, err = findChromeApp(chromeDir)
 			if err != nil {
 				return "", err
 			}
@@ -263,6 +260,17 @@ func (obj *Client) runChrome(option *ClientOption) error {
 		option.ChromePath, err = oneDown.getChromePath(obj.ctx)
 		if err != nil {
 			return err
+		}
+	} else {
+		fileInfo, err := os.Stat(option.ChromePath)
+		if err != nil {
+			return err
+		}
+		if fileInfo.IsDir() {
+			option.ChromePath, err = findChromeApp(option.ChromePath)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	if err = verifyEvalPath(option.ChromePath); err != nil {
@@ -330,31 +338,31 @@ func (obj *Client) runChrome(option *ClientOption) error {
 
 var chromeArgs = []string{
 	// "--fingerprint=124",
+	"--use-mock-keychain", //使用模拟钥匙串。
+	// "--disable-web-security",          //关闭同源策略，抖音需要, 开启会导致 cloudflare 验证不过
+	// "--disable-site-isolation-trials", // 开启会导致 cloudflare 验证不过
 
-	// "--disable-3d-apis",
-	// "--disable-webgl",
-	// "--disable-gpu",        //禁用硬件加速功能，这可以降低一些GPU相关任务的CPU占用，但可能降低图形性能和视频播放能力。
-	// "--use-gl=swiftshader", //可以在不支持硬件加速的系统或设备上提供基本的图形渲染功能。
+	"--disable-3d-apis",
+	"--disable-webgl",
+	"--disable-gpu",        //禁用硬件加速功能，这可以降低一些GPU相关任务的CPU占用，但可能降低图形性能和视频播放能力。
+	"--use-gl=swiftshader", //可以在不支持硬件加速的系统或设备上提供基本的图形渲染功能。
 	//==================
-	"--webrtc-ip-handling-policy=disable_non_proxied_udp",
-	"--force-webrtc-ip-handling-policy",
 
 	"--disable-hidpi-scaling",
 	"--disable-perfetto",
-	"--use-mock-keychain",             //使用模拟钥匙串。
 	"--disable-hardware-acceleration", //禁用硬件加速功能，这可以在某些旧的计算机和旧的显卡上降低Chrome的资源消耗，但可能会影响一些图形性能和视频播放。
-	"--disable-site-isolation-trials", //被识别
 	"--virtual-time-budget=1",         //缩短setTimeout  setInterval 的时间1000秒:目前不生效，不知道以后会不会生效，等生效了再打开
-	"--disable-web-security",          //关闭同源策略，抖音需要, 开启会导致 cloudflare 验证不过
 
 	//远程调试
+	"--webrtc-ip-handling-policy=disable_non_proxied_udp",
+	"--force-webrtc-ip-handling-policy",
 	"--remote-allow-origins=*",
 	"--useAutomationExtension=false",                //禁用自动化扩展。
 	"--excludeSwitches=enable-automation",           //禁用自动化
 	"--disable-blink-features=AutomationControlled", //禁用 Blink 引擎的自动化控制。
-	"--no-sandbox",                                  //禁用 Chrome 的沙盒模式。
-	"--set-uid-sandbox",                             //命令行参数用于设置 Chrome 进程运行时使用的 UID，从而提高 Chrome 浏览器的安全性
-	"--set-gid-sandbox",                             //命令行参数用于设置 Chrome 进程运行时使用的 GID，从而提高 Chrome 浏览器的安全性
+	"--no-sandbox",      //禁用 Chrome 的沙盒模式。
+	"--set-uid-sandbox", //命令行参数用于设置 Chrome 进程运行时使用的 UID，从而提高 Chrome 浏览器的安全性
+	"--set-gid-sandbox", //命令行参数用于设置 Chrome 进程运行时使用的 GID，从而提高 Chrome 浏览器的安全性
 
 	"--enable-features=NetworkService,NetworkServiceInProcess",
 	"--disable-features=VizDisplayCompositor,WebRtcHideLocalIpsWithMdns,EnablePasswordsAccountStorage,FlashDeprecationWarning,UserAgentClientHint,AutoUpdate,site-per-process,Profiles,EasyBakeWebBundler,MultipleCompositingThreads,AudioServiceOutOfProcess,TranslateUI,BlinkGenPropertyTrees,BackgroundSync,ClientHints,NetworkQualityEstimator,PasswordGeneration,PrefetchPrivacyChanges,TabHoverCards,ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,TabFreezing,TabDiscarding,HttpsUpgrades", // 禁用一些 Chrome 功能。
@@ -524,7 +532,7 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 		option.Height = 800
 	}
 	if option.UserAgent == "" {
-		option.UserAgent = userAgent
+		option.UserAgent = tools.UserAgent
 	}
 	client = &Client{
 		userAgent:    option.UserAgent,
@@ -752,7 +760,7 @@ func (obj *Page) SetLocaleOverride(preCtx context.Context, local string) error {
 
 // 设置浏览器的语言
 func (obj *Page) SetUserAgentOverride(preCtx context.Context, language string) error {
-	_, err := obj.webSock.EmulationSetUserAgentOverride(preCtx, userAgent, language)
+	_, err := obj.webSock.EmulationSetUserAgentOverride(preCtx, tools.UserAgent, language)
 	return err
 }
 

@@ -95,15 +95,6 @@ function inject2() {
         return res;
     };
 
-
-    var randomCanvasNoise = function (seed) {
-        var noise = [];
-        for (var i = 0; i < 10; i++) {
-            noise.push(Math.floor(seededRandom(seed++, 255, 0)));
-        }
-        return noise;
-    };
-
     var randomWebglNoise = function (seed) {
         return [seededRandom(seed, 1, -1), seededRandom(seed + 1, 1, -1)];
     };
@@ -130,9 +121,8 @@ function inject2() {
     /**
      * 在2d画布绘制噪音
      */
-    var drawNoise = function (rawFunc, noise, ctx, sx, sy, sw, sh, settings) {
+    var drawNoise = function (rawFunc, rawSeed, ctx, sx, sy, sw, sh, settings) {
         var imageData = rawFunc.call(ctx, sx, sy, sw, sh, settings);
-        var noiseIndex = 0;
         var isChanged = false;
         var Arr = Uint8ClampedArray;
         var center = new Arr(4);
@@ -141,11 +131,10 @@ function inject2() {
         var left = new Arr(4);
         var right = new Arr(4);
         var pixelData = imageData.data;
+        var noiseIndex = 0;
+
         outer: for (var row = 1; row < sh - 2; row += 2) {
             for (var col = 1; col < sw - 2; col += 2) {
-                if (noise.length === noiseIndex) {
-                    break outer;
-                }
                 var index = (row * sw + col) * 4;
                 pixelCopy(pixelData, center, index);
                 pixelCopy(pixelData, up, ((row - 1) * sw + col) * 4);
@@ -160,7 +149,22 @@ function inject2() {
                 pixelCopy(pixelData, right, (row * sw + (col + 1)) * 4);
                 if (isPixelEqual(center, right))
                     continue;
-                pixelData[index + 3] = (noise[noiseIndex++] % 256);
+                noiseIndex++;
+                // if (noiseIndex > 260) {
+                //     break outer;
+                // }
+                let seed = (rawSeed + noiseIndex) % 256
+
+                let n = Math.floor(seededRandom(seed + noiseIndex, 255, 0)) % 256;
+                let r = Math.sin(seed + noiseIndex) * 10000 - Math.floor(Math.sin(seed + noiseIndex) * 10000);
+                const noiseStrength = 1 + (seed % 3);              // 1～3 强度
+
+                pixelData[index + 0] = (pixelData[index + 0] + n * r) & 255;
+                pixelData[index + 1] = (pixelData[index + 1] ^ n) & 255;
+                pixelData[index + 2] = (pixelData[index + 2] + (n >> 1)) & 255;
+                pixelData[index + 3] = (pixelData[index + 3] + n * noiseStrength) & 255;
+                // pixelData[index + 3] = (Math.floor(pixelData[index + 3] + n * noiseStrength)) % 256;
+                // pixelData[index + 3] = (Math.floor(seededRandom(seed + noiseIndex, 255, 0))) % 256;
                 isChanged = true;
             }
         }
@@ -216,10 +220,9 @@ function inject2() {
                 return cache.Reflect.apply(target, thisArg, args);
             }
         });
-        var noise = randomCanvasNoise(seed);
         overridePropertyWithProxy(CanvasRenderingContext2D.prototype, 'getImageData', {
             apply: function (target, thisArg, args) {
-                return drawNoise(target, noise, thisArg, ...args);
+                return drawNoise(target, seed, thisArg, ...args);
             }
         })
     }
@@ -246,26 +249,24 @@ function inject2() {
         overridePropertyWithProxy(WebGL2RenderingContext.prototype, 'getSupportedExtensions', handler);
     }
     function changeDataURL() {
-        var noiseCanvas = randomCanvasNoise(seed);
         var noiseWebgl = randomWebglNoise(seed);
         overridePropertyWithProxy(HTMLCanvasElement.prototype, 'toDataURL', {
             apply: function (target, thisArg, args) {
                 /* 2d */
-                if (noiseCanvas) {
-                    const ctx = thisArg.getContext('2d');
-                    if (ctx) {
-                        ctx.getImageData(0, 0, thisArg.width, thisArg.height)
-                        return cache.Reflect.apply(target, thisArg, args);
-                    }
+
+                const ctx = thisArg.getContext('2d');
+                if (ctx) {
+                    ctx.getImageData(0, 0, thisArg.width, thisArg.height)
+                    return cache.Reflect.apply(target, thisArg, args);
                 }
+
                 /* webgl */
-                if (noiseWebgl) {
-                    const gl = thisArg.getContext('webgl') ?? thisArg.getContext('webgl2')
-                    if (gl) {
-                        drawNoiseToWebgl(gl, noiseWebgl)
-                        return cache.Reflect.apply(target, thisArg, args);
-                    }
+                const gl = thisArg.getContext('webgl') ?? thisArg.getContext('webgl2')
+                if (gl) {
+                    drawNoiseToWebgl(gl, noiseWebgl)
+                    return cache.Reflect.apply(target, thisArg, args);
                 }
+
                 return cache.Reflect.apply(target, thisArg, args);
             }
         });
@@ -275,17 +276,40 @@ function inject2() {
      * 音频指纹
      */
     function changeAudio() {
-        var noise = seededRandom(seed, 1, 0);
-        overridePropertyWithProxy(OfflineAudioContext.prototype, 'createDynamicsCompressor', {
+        const mem = new WeakSet()
+        overridePropertyWithProxy(AudioBuffer.prototype, 'getChannelData', {
             apply: function (target, thisArg, args) {
-                const compressor = cache.Reflect.apply(target, thisArg, args);
-                const gain = thisArg.createGain()
-                gain.gain.value = noise * 0.001
-                compressor.connect(gain)
-                gain.connect(thisArg.destination)
-                return compressor
+                const data = target.apply(thisArg, args)
+                if (mem.has(data)) return data;
+
+                const step = data.length > 2000 ? 100 : 20;
+                for (let i = 0; i < data.length; i += step) {
+                    const v = data[i]
+                    if (v !== 0 && Math.abs(v) > 1e-7) {
+                        data[i] += seededRandom(seed + i) * 1e-7;
+                    }
+                }
+                mem.add(data)
+                return data;
             }
         });
+        var copyHand = {
+            apply: function (target, thisArg, args) {
+                const channel = args[1]
+                if (channel != null) {
+                    thisArg.getChannelData(channel)
+                }
+                return target.apply(thisArg, args)
+            }
+        };
+        overridePropertyWithProxy(AudioBuffer.prototype, 'copyFromChannel', copyHand)
+        overridePropertyWithProxy(AudioBuffer.prototype, 'copyToChannel', copyHand)
+        overrideGetterWithProxy(DynamicsCompressorNode.prototype, 'reduction', {
+            apply(target, thisArg, args) {
+                const res = cache.Reflect.apply(target, thisArg, args);
+                return (typeof res === 'number' && res !== 0) ? res + dcNoise : res;
+            }
+        })
     }
     /**
        * Font

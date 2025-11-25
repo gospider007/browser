@@ -202,7 +202,7 @@
     // We wrap each trap in the handler in a try/catch and modify the error stack if they throw
     const traps = Object.getOwnPropertyNames(handler);
     traps.forEach((trap) => {
-      newHandler[trap] = function() {
+      newHandler[trap] = function () {
         try {
           // Forward the call to the defined proxy handler
           return handler[trap].apply(this, arguments || []); //eslint-disable-line
@@ -335,7 +335,7 @@
       };
       const canPlayType = {
         // eslint-disable-next-line
-        apply: function(target, ctx, args) {
+        apply: function (target, ctx, args) {
           if (!args || !args.length) {
             return target.apply(ctx, args);
           }
@@ -359,7 +359,7 @@
       const getBattery = {
         ...prototypeProxyHandler,
         // eslint-disable-next-line
-        apply: async function() {
+        apply: async function () {
           return batteryInfo;
         },
       };
@@ -454,17 +454,17 @@
   function blockWebRTC() {
     const handler = {
       get: () => {
-        return new Proxy(() => {}, handler);
+        return new Proxy(() => { }, handler);
       },
       apply: () => {
-        return new Proxy(() => {}, handler);
+        return new Proxy(() => { }, handler);
       },
       construct: () => {
-        return new Proxy(() => {}, handler);
+        return new Proxy(() => { }, handler);
       },
     };
     const ConstrProxy = new Proxy(Object, handler);
-    const proxy = new Proxy(() => {}, handler);
+    const proxy = new Proxy(() => { }, handler);
     replace(navigator.mediaDevices, 'getUserMedia', proxy);
     replace(navigator, 'webkitGetUserMedia', proxy);
     replace(navigator, 'mozGetUserMedia', proxy);
@@ -485,7 +485,7 @@
       // Override basic properties
       const getHighEntropyValues = {
         // eslint-disable-next-line
-        apply: async function(target, ctx, args) {
+        apply: async function (target, ctx, args) {
           // Just to throw original validation error
           // Remove traces of our Proxy
           const stripErrorStack = (stack) => stack
@@ -590,7 +590,7 @@
             get() {
               return proxy;
             },
-            set(newValue) {},
+            set(newValue) { },
             enumerable: true,
             configurable: false,
           });
@@ -817,7 +817,7 @@
     },
     "battery": {
       "charging": true,
-      "chargingTime": 900,
+      "chargingTime": 0,
       "dischargingTime": null,
       "level": 1
     },
@@ -888,7 +888,7 @@
       "webdriver": false
     },
     "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
-    "historyLength": 5
+    "historyLength": 2
   };
   (function inject() {
     const {
@@ -951,24 +951,37 @@
     overrideIntlAPI(navigatorProps.language);
     overrideStatic();
     if (userAgentData) {
-  // overrideUserAgentData(userAgentData);
+      // overrideUserAgentData(userAgentData);
     }
     if (window.navigator.webdriver) {
       navigatorProps.webdriver = false;
     }
-// overrideInstancePrototype(window.navigator, navigatorProps);
+    overrideInstancePrototype(window.navigator, {
+      "platform": "MacIntel",
+      "deviceMemory": 8,
+      "hardwareConcurrency": 4,
+      "maxTouchPoints": 0,
+      "product": "Gecko",
+      "productSub": "20030107",
+      "vendor": "Google Inc.",
+      "vendorSub": null,
+      "doNotTrack": null,
+      "appCodeName": "Mozilla",
+      "appName": "Netscape",
+      "oscpu": null,
+    });
     overrideInstancePrototype(window.screen, newScreen);
     overrideWindowDimensionsProps(windowScreenProps);
     overrideDocumentDimensionsProps(documentScreenProps);
     overrideInstancePrototype(window.history, {
       length: historyLength,
     });
-// overrideWebGl(videoCard);
+    // overrideWebGl(videoCard);
     overrideCodecs(audioCodecs, videoCodecs);
     overrideBattery(battery);
   })();
   (function inject2() {
-    var __spreadArray = (this && this.__spreadArray) || function(to, from, pack) {
+    var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
       if (pack || arguments.length === 2)
         for (var i = 0, l = from.length, ar; i < l; i++) {
           if (ar || !(i in from)) {
@@ -979,7 +992,7 @@
       return to.concat(ar || Array.prototype.slice.call(from));
     };
 
-    var seededRandom = function(seed, max, min) {
+    var seededRandom = function (seed, max, min) {
       if (max === void 0) {
         max = 1;
       }
@@ -997,15 +1010,15 @@
       return min + rnd * (max - min);
     };
 
-    var seededEl = function(arr, seed) {
+    var seededEl = function (arr, seed) {
       return arr[seed % arr.length];
     };
 
-    var shuffleArray = function(array, seed) {
+    var shuffleArray = function (array, seed) {
       var _array = __spreadArray([], array, true);
       var m = _array.length,
         t, i;
-      var random = function() {
+      var random = function () {
         var x = Math.sin(seed++) * 10000;
         return x - Math.floor(x);
       };
@@ -1019,11 +1032,11 @@
     };
 
 
-    var genRandomSeed = function() {
+    var genRandomSeed = function () {
       return Math.floor(seededRandom(Math.random() * 1e6, Number.MAX_SAFE_INTEGER, 1));
     };
 
-    var hashNumberFromString = function(input) {
+    var hashNumberFromString = function (input) {
       var hash = 0;
       for (var i = 0; i < input.length; i++) {
         var char = input.charCodeAt(i);
@@ -1033,14 +1046,14 @@
       return Math.abs(hash % Number.MAX_SAFE_INTEGER);
     };
 
-    var arrayFilter = function(arr) {
-      return arr.filter(function(item) {
+    var arrayFilter = function (arr) {
+      return arr.filter(function (item) {
         return item !== undefined && item !== false;
       });
     };
 
 
-    var getNextPowerOfTen = function(num) {
+    var getNextPowerOfTen = function (num) {
       if (num === 0)
         return 0;
       else if (num === 1)
@@ -1053,7 +1066,7 @@
     /**
      * 对象提取值
      */
-    var pick = function(obj, keys) {
+    var pick = function (obj, keys) {
       var res = {};
       for (var _i = 0, keys_1 = keys; _i < keys_1.length; _i++) {
         var key = keys_1[_i];
@@ -1062,22 +1075,13 @@
       return res;
     };
 
-
-    var randomCanvasNoise = function(seed) {
-      var noise = [];
-      for (var i = 0; i < 10; i++) {
-        noise.push(Math.floor(seededRandom(seed++, 255, 0)));
-      }
-      return noise;
-    };
-
-    var randomWebglNoise = function(seed) {
+    var randomWebglNoise = function (seed) {
       return [seededRandom(seed, 1, -1), seededRandom(seed + 1, 1, -1)];
     };
     /**
      * 获取随机字体噪音
      */
-    var randomFontNoise = function(seed, mark) {
+    var randomFontNoise = function (seed, mark) {
       var random = seededRandom((seed + hashNumberFromString(mark)) % Number.MAX_SAFE_INTEGER, 3, 0);
       if ((random * 10) % 1 < 0.9)
         return 0;
@@ -1085,10 +1089,10 @@
     };
 
 
-    var isPixelEqual = function(p1, p2) {
+    var isPixelEqual = function (p1, p2) {
       return p1[0] === p2[0] && p1[1] === p2[1] && p1[2] === p2[2] && p1[3] === p2[3];
     };
-    var pixelCopy = function(src, dst, index) {
+    var pixelCopy = function (src, dst, index) {
       dst[0] = src[index];
       dst[1] = src[index + 1];
       dst[2] = src[index + 2];
@@ -1097,9 +1101,8 @@
     /**
      * 在2d画布绘制噪音
      */
-    var drawNoise = function(rawFunc, noise, ctx, sx, sy, sw, sh, settings) {
+    var drawNoise = function (rawFunc, rawSeed, ctx, sx, sy, sw, sh, settings) {
       var imageData = rawFunc.call(ctx, sx, sy, sw, sh, settings);
-      var noiseIndex = 0;
       var isChanged = false;
       var Arr = Uint8ClampedArray;
       var center = new Arr(4);
@@ -1108,11 +1111,10 @@
       var left = new Arr(4);
       var right = new Arr(4);
       var pixelData = imageData.data;
+      var noiseIndex = 0;
+
       outer: for (var row = 1; row < sh - 2; row += 2) {
         for (var col = 1; col < sw - 2; col += 2) {
-          if (noise.length === noiseIndex) {
-            break outer;
-          }
           var index = (row * sw + col) * 4;
           pixelCopy(pixelData, center, index);
           pixelCopy(pixelData, up, ((row - 1) * sw + col) * 4);
@@ -1127,7 +1129,22 @@
           pixelCopy(pixelData, right, (row * sw + (col + 1)) * 4);
           if (isPixelEqual(center, right))
             continue;
-          pixelData[index + 3] = (noise[noiseIndex++] % 256);
+          noiseIndex++;
+          // if (noiseIndex > 260) {
+          //     break outer;
+          // }
+          let seed = (rawSeed + noiseIndex) % 256
+
+          let n = Math.floor(seededRandom(seed + noiseIndex, 255, 0)) % 256;
+          let r = Math.sin(seed + noiseIndex) * 10000 - Math.floor(Math.sin(seed + noiseIndex) * 10000);
+          const noiseStrength = 1 + (seed % 3); // 1～3 强度
+
+          pixelData[index + 0] = (pixelData[index + 0] + n * r) & 255;
+          pixelData[index + 1] = (pixelData[index + 1] ^ n) & 255;
+          pixelData[index + 2] = (pixelData[index + 2] + (n >> 1)) & 255;
+          pixelData[index + 3] = (pixelData[index + 3] + n * noiseStrength) & 255;
+          // pixelData[index + 3] = (Math.floor(pixelData[index + 3] + n * noiseStrength)) % 256;
+          // pixelData[index + 3] = (Math.floor(seededRandom(seed + noiseIndex, 255, 0))) % 256;
           isChanged = true;
         }
       }
@@ -1140,10 +1157,10 @@
      * 在webgl上下文绘制噪音点
      * @param noisePosition 区间[-1, 1]
      */
-    var drawNoiseToWebgl = function(gl, noisePosition) {
+    var drawNoiseToWebgl = function (gl, noisePosition) {
       var vertexShaderSource = "attribute vec4 noise;void main() {gl_Position = noise;gl_PointSize = 0.001;}";
       var fragmentShaderSource = "void main() {gl_FragColor = vec4(0.0, 0.0, 0.0, 0.01);}";
-      var createShader = function(gl, type, source) {
+      var createShader = function (gl, type, source) {
         var shader = gl.createShader(type);
         if (!shader)
           return;
@@ -1174,7 +1191,7 @@
 
     function changeCanvas() {
       overridePropertyWithProxy(HTMLCanvasElement.prototype, 'getContext', {
-        apply: function(target, thisArg, args) {
+        apply: function (target, thisArg, args) {
           if (args[0] === '2d') {
             const option = args[1] ?? {};
             option.willReadFrequently = true;
@@ -1183,10 +1200,9 @@
           return cache.Reflect.apply(target, thisArg, args);
         }
       });
-      var noise = randomCanvasNoise(seed);
       overridePropertyWithProxy(CanvasRenderingContext2D.prototype, 'getImageData', {
-        apply: function(target, thisArg, args) {
-          return drawNoise(target, noise, thisArg, ...args);
+        apply: function (target, thisArg, args) {
+          return drawNoise(target, seed, thisArg, ...args);
         }
       })
     }
@@ -1194,7 +1210,7 @@
     function changeWebgl() {
       var noise = randomWebglNoise(seed);
       var handler = {
-        apply: function(target, thisArg, args) {
+        apply: function (target, thisArg, args) {
           drawNoiseToWebgl(thisArg, noise);
           return cache.Reflect.apply(target, thisArg, args);
         }
@@ -1204,7 +1220,7 @@
 
       var noise2 = seededRandom(seed, 1, 0);
       var handler = {
-        apply: function(target, thisArg, args) {
+        apply: function (target, thisArg, args) {
           const res = target.apply(thisArg, args);
           res?.push?.('EXT_' + noise2);
           return res;
@@ -1215,26 +1231,24 @@
     }
 
     function changeDataURL() {
-      var noiseCanvas = randomCanvasNoise(seed);
       var noiseWebgl = randomWebglNoise(seed);
       overridePropertyWithProxy(HTMLCanvasElement.prototype, 'toDataURL', {
-        apply: function(target, thisArg, args) {
+        apply: function (target, thisArg, args) {
           /* 2d */
-          if (noiseCanvas) {
-            const ctx = thisArg.getContext('2d');
-            if (ctx) {
-              ctx.getImageData(0, 0, thisArg.width, thisArg.height)
-              return cache.Reflect.apply(target, thisArg, args);
-            }
+
+          const ctx = thisArg.getContext('2d');
+          if (ctx) {
+            ctx.getImageData(0, 0, thisArg.width, thisArg.height)
+            return cache.Reflect.apply(target, thisArg, args);
           }
+
           /* webgl */
-          if (noiseWebgl) {
-            const gl = thisArg.getContext('webgl') ?? thisArg.getContext('webgl2')
-            if (gl) {
-              drawNoiseToWebgl(gl, noiseWebgl)
-              return cache.Reflect.apply(target, thisArg, args);
-            }
+          const gl = thisArg.getContext('webgl') ?? thisArg.getContext('webgl2')
+          if (gl) {
+            drawNoiseToWebgl(gl, noiseWebgl)
+            return cache.Reflect.apply(target, thisArg, args);
           }
+
           return cache.Reflect.apply(target, thisArg, args);
         }
       });
@@ -1244,17 +1258,40 @@
      * 音频指纹
      */
     function changeAudio() {
-      var noise = seededRandom(seed, 1, 0);
-      overridePropertyWithProxy(OfflineAudioContext.prototype, 'createDynamicsCompressor', {
-        apply: function(target, thisArg, args) {
-          const compressor = cache.Reflect.apply(target, thisArg, args);
-          const gain = thisArg.createGain()
-          gain.gain.value = noise * 0.001
-          compressor.connect(gain)
-          gain.connect(thisArg.destination)
-          return compressor
+      const mem = new WeakSet()
+      overridePropertyWithProxy(AudioBuffer.prototype, 'getChannelData', {
+        apply: function (target, thisArg, args) {
+          const data = target.apply(thisArg, args)
+          if (mem.has(data)) return data;
+
+          const step = data.length > 2000 ? 100 : 20;
+          for (let i = 0; i < data.length; i += step) {
+            const v = data[i]
+            if (v !== 0 && Math.abs(v) > 1e-7) {
+              data[i] += seededRandom(seed + i) * 1e-7;
+            }
+          }
+          mem.add(data)
+          return data;
         }
       });
+      var copyHand = {
+        apply: function (target, thisArg, args) {
+          const channel = args[1]
+          if (channel != null) {
+            thisArg.getChannelData(channel)
+          }
+          return target.apply(thisArg, args)
+        }
+      };
+      overridePropertyWithProxy(AudioBuffer.prototype, 'copyFromChannel', copyHand)
+      overridePropertyWithProxy(AudioBuffer.prototype, 'copyToChannel', copyHand)
+      overrideGetterWithProxy(DynamicsCompressorNode.prototype, 'reduction', {
+        apply(target, thisArg, args) {
+          const res = cache.Reflect.apply(target, thisArg, args);
+          return (typeof res === 'number' && res !== 0) ? res + dcNoise : res;
+        }
+      })
     }
     /**
      * Font
@@ -1280,7 +1317,7 @@
 
 
       overridePropertyWithProxy(window, 'FontFace', {
-        construct: function(target, args, newTarget) {
+        construct: function (target, args, newTarget) {
           const source = args[1]
           if (typeof source === 'string' && source.startsWith('local(')) {
             const name = source.substring(source.indexOf('(') + 1, source.indexOf(')'));
@@ -1379,7 +1416,7 @@
                   _clearValue[key] = Math.abs(value)
                 }
                 args[0].colorAttachments[0].clearValue = _clearValue;
-              } catch (e) {}
+              } catch (e) { }
             }
             return target.apply(self, args);
           }
@@ -1406,7 +1443,7 @@
                   _data[index] += noise * value;
                 }
                 // args[2] = _data;
-              } catch (e) {}
+              } catch (e) { }
             }
             return target.apply(self, args);
           }
@@ -1419,7 +1456,7 @@
     function changeDomRect() {
       var mine = new WeakSet();
       var handler = {
-        construct: function(target, args, newTarget) {
+        construct: function (target, args, newTarget) {
           var res = Reflect.construct(target, args, newTarget);
           mine.add(res)
           return res;
@@ -1446,7 +1483,7 @@
 
       var getHandler = (toResult) => {
         return {
-          apply: function(target, thisArg, args) {
+          apply: function (target, thisArg, args) {
             return toResult(thisArg);
           },
           get(target, prop, receiver) {
@@ -1469,7 +1506,7 @@
       }))
 
       overridePropertyWithProxy(DOMRectReadOnly.prototype, 'toJSON', {
-        apply: function(target, thisArg, args) {
+        apply: function (target, thisArg, args) {
           return pick(thisArg, ['x', 'y', 'width', 'height', 'bottom', 'left', 'right', 'top']);
         }
       });
