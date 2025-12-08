@@ -411,9 +411,9 @@ func (obj *Page) waitMain(ctx context.Context, msTime time.Duration, notices <-c
 	}
 }
 
-func (obj *Page) GoTo(preCtx context.Context, url string) error {
+func (obj *Page) GoTo(preCtx context.Context, url string, options ...cdp.PageNavigateOption) error {
 	obj.baseUrl = url
-	_, err := obj.webSock.PageNavigate(preCtx, url)
+	_, err := obj.webSock.PageNavigate(preCtx, url, options...)
 	return err
 }
 
