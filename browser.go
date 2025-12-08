@@ -763,6 +763,13 @@ func (obj *Page) SetUserAgentOverride(preCtx context.Context, userAgent string, 
 		userAgent = tools.UserAgent
 	}
 	_, err := obj.webSock.EmulationSetUserAgentOverride(preCtx, userAgent, language)
+	if err != nil {
+		return err
+	}
+	_, err = obj.webSock.NetworkSetUserAgentOverride(preCtx, userAgent, language)
+	if err != nil {
+		return err
+	}
 	return err
 }
 
