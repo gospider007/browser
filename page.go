@@ -874,18 +874,13 @@ func (obj *Page) TouchClick(ctx context.Context, point cdp.Point) error {
 
 // 设置移动设备的属性
 func (obj *Page) SetDevice(ctx context.Context, device cdp.Device) error {
-	if err := obj.SetUserAgent(ctx, device.UserAgent); err != nil {
+	if err := obj.SetUserAgentOverride(ctx, device.UserAgent, ""); err != nil {
 		return err
 	}
 	if err := obj.SetTouch(ctx, device.HasTouch); err != nil {
 		return err
 	}
 	return obj.SetDeviceMetrics(ctx, device)
-}
-
-func (obj *Page) SetUserAgent(ctx context.Context, userAgent string) error {
-	_, err := obj.webSock.EmulationSetUserAgentOverride(ctx, userAgent, "")
-	return err
 }
 
 // 设置设备指标

@@ -758,8 +758,11 @@ func (obj *Page) SetLocaleOverride(preCtx context.Context, local string) error {
 }
 
 // 设置浏览器的语言
-func (obj *Page) SetUserAgentOverride(preCtx context.Context, language string) error {
-	_, err := obj.webSock.EmulationSetUserAgentOverride(preCtx, tools.UserAgent, language)
+func (obj *Page) SetUserAgentOverride(preCtx context.Context, userAgent string, language string) error {
+	if userAgent == "" {
+		userAgent = tools.UserAgent
+	}
+	_, err := obj.webSock.EmulationSetUserAgentOverride(preCtx, userAgent, language)
 	return err
 }
 
