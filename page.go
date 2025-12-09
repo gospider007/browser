@@ -1010,3 +1010,8 @@ func (obj *Page) SetDOMStorageItem(ctx context.Context, key, val string, isLocal
 	_, err = obj.webSock.SetDOMStorageItem(ctx, securityOrigin, key, val, isLocalStorage)
 	return err
 }
+
+func (obj *Page) SetExtraHTTPHeaders(ctx context.Context, headers map[string]string) error {
+	_, err := obj.webSock.NetworkSetExtraHTTPHeaders(ctx, headers)
+	return err
+}
