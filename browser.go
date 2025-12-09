@@ -500,7 +500,7 @@ func downChrome(preCtx context.Context, chromeDir, chromeDownUrl string) error {
 }
 
 // 新建浏览器
-func NewClient(preCtx context.Context, options ...ClientOption) (client *Client, err error) {
+func NewClient(preCtx context.Context, options ...ClientOption) (*Client, error) {
 	var option ClientOption
 	if len(options) > 0 {
 		option = options[0]
@@ -533,7 +533,7 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 	if option.UserAgent == "" {
 		option.UserAgent = tools.UserAgent
 	}
-	client = &Client{
+	client := &Client{
 		userAgent:    option.UserAgent,
 		proxy:        option.Proxy,
 		globalReqCli: globalReqCli,
@@ -542,7 +542,8 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 	client.ctx, client.cnl = context.WithCancelCause(preCtx)
 	if option.Host == "" || option.Port == 0 {
 		if err = client.runChrome(&option); err != nil {
-			return
+			client.Close()
+			return nil, err
 		}
 		client.addr = net.JoinHostPort(option.Host, strconv.Itoa(option.Port))
 	} else {
@@ -552,7 +553,11 @@ func NewClient(preCtx context.Context, options ...ClientOption) (client *Client,
 		client.isReplaceRequest = true
 	}
 	go tools.Signal(preCtx, client.Close)
-	return client, client.init()
+	if err = client.init(); err != nil {
+		client.Close()
+		return nil, err
+	}
+	return client, nil
 }
 
 type BrowserContextOption struct {
