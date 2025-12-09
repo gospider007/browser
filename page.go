@@ -798,10 +798,13 @@ func (obj *Page) TouchMove(ctx context.Context, x, y float64, steps ...int) erro
 	return obj.TouchMoveTo(ctx, cdp.Point{X: obj.mouseX + x, Y: obj.mouseY + y}, steps...)
 }
 
-func (obj *Page) Wheel(ctx context.Context, x, y float64) error {
+func (obj *Page) Wheel(ctx context.Context, x, y,deltaX,deltaY float64) error {
 	_, err := obj.webSock.InputDispatchMouseEvent(ctx,
 		cdp.DispatchMouseEventOption{
 			Type:   "mouseWheel",
+
+			 X          float64 `json:"x"`
+    Y          float64 `json:"y"`
 			DeltaX: x,
 			DeltaY: y,
 		})
