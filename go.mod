@@ -5,12 +5,12 @@ go 1.25.0
 require (
 	github.com/gospider007/blog v0.0.0-20250815030743-f2af6b9013ab
 	github.com/gospider007/bs4 v0.0.0-20251117061355-2c9c42c909c9
-	github.com/gospider007/cdp v0.0.0-20251210145248-ae4e0912b379
+	github.com/gospider007/cdp v0.0.0-20251210145326-e9ffe3d67963
 	github.com/gospider007/cmd v0.0.0-20251209060202-e1f5bb936dae
 	github.com/gospider007/conf v0.0.0-20250815031235-1df45ae2e117
 	github.com/gospider007/gson v0.0.0-20251209060118-1e943dfdc4ff
 	github.com/gospider007/re v0.0.0-20250815031101-a57caeff73bf
-	github.com/gospider007/requests v0.0.0-20251210145200-6e17f342e026
+	github.com/gospider007/requests v0.0.0-20251210145326-f2a4d6a97d13
 	github.com/gospider007/tools v0.0.0-20251209055936-a37812a2b732
 	golang.org/x/exp v0.0.0-20251209150349-8475f28825e9
 	golang.org/x/net v0.48.0
@@ -39,7 +39,7 @@ require (
 	github.com/gospider007/http3 v0.0.0-20251210145258-b09aaf3704c1 // indirect
 	github.com/gospider007/ja3 v0.0.0-20251210003307-e9b147716b45 // indirect
 	github.com/gospider007/kinds v0.0.0-20250815031133-b2282666f69c // indirect
-	github.com/gospider007/netx v0.0.0-20251210145239-e6e090ccbce2 // indirect
+	github.com/gospider007/netx v0.0.0-20251210145323-b978e3f0b531 // indirect
 	github.com/gospider007/websocket v0.0.0-20251209060218-5905aeb62d8f // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.18.2 // indirect
