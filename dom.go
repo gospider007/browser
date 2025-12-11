@@ -34,18 +34,45 @@ func (obj NodeType) HtmlNodeType() html.NodeType {
 	switch obj {
 	case NodeTypeElement:
 		return html.ElementNode
+	case NodeTypeAttribute:
+		// Go 的 html 包没有 AttributeNode，属性存储在 Attr 字段里
+		return html.RawNode
+
 	case NodeTypeText:
 		return html.TextNode
+
+	case NodeTypeCDATA:
+		// Go 的 html 包没有 CDATA NodeType，CDATA 会被解析为 TextNode
+		return html.TextNode
+
+	case NodeTypeEntityReference, NodeTypeEntity:
+		// Go 的 html 不支持独立实体节点
+		return html.RawNode
+
+	case NodeTypeProcessingInstruction:
+		// Go html 不支持 PI（如 <?xml...?>）
+		return html.RawNode
+
 	case NodeTypeComment:
 		return html.CommentNode
+
 	case NodeTypeDocument:
 		return html.DocumentNode
+
 	case NodeTypeDocumentType:
 		return html.DoctypeNode
+
+	case NodeTypeDocumentFragment:
+		return html.RawNode
+
+	case NodeTypeNotation:
+		// Go 不支持 Notation
+		return html.RawNode
 	default:
 		return html.RawNode
 	}
 }
+
 func (obj *Page) parseJsonDom(ctx context.Context, data *gson.Client) (*html.Node, error) {
 	attrs := []html.Attribute{}
 	attributes := data.Get("attributes").Array()
