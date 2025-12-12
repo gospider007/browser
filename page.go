@@ -911,10 +911,8 @@ func (obj *Page) SetCookies(ctx context.Context, cookies ...cdp.Cookie) error {
 				return err
 			}
 			cookies[i].Url = fmt.Sprintf("%s://%s", uu.Scheme, uu.Host) + "/"
-			if cookies[i].Domain == "" {
-				cookies[i].Domain = uu.Hostname()
-			}
-		} else if cookies[i].Domain == "" {
+		}
+		if cookies[i].Domain == "" {
 			us, err := uurl.Parse(cookies[i].Url)
 			if err != nil {
 				return err
