@@ -131,11 +131,12 @@ func (obj *Page) routeMain(ctx context.Context, rd cdp.RecvData) {
 				obj.requestFunc(ctx, route)
 			}
 			if !route.Used() {
-				if obj.isReplaceRequest {
-					route.RequestContinue(ctx)
-				} else {
-					route.Continue(ctx)
-				}
+				route.Fail(ctx)
+				// if obj.isReplaceRequest {
+				// 	route.RequestContinue(ctx)
+				// } else {
+				// 	route.Continue(ctx)
+				// }
 			}
 		} else {
 			route.Continue(ctx)
