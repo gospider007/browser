@@ -229,13 +229,18 @@ func (obj *Page) init() error {
 
 func (obj *Page) newPageWithTargetId(targetId string) (*Page, error) {
 	ctx, cnl := context.WithCancel(obj.ctx)
+	globalReqCli, err := obj.globalReqCli.Clone(ctx)
+	if err != nil {
+		cnl()
+		return nil, err
+	}
 	page := &Page{
 		option:           obj.option,
 		addr:             obj.addr,
 		targetId:         targetId,
 		ctx:              ctx,
 		cnl:              cnl,
-		globalReqCli:     obj.globalReqCli,
+		globalReqCli:     globalReqCli,
 		isReplaceRequest: obj.isReplaceRequest,
 		baseUrl:          obj.baseUrl,
 		loadNotices:      make(chan struct{}, 1),
@@ -483,8 +488,8 @@ func (obj *Page) close() error {
 	return err
 }
 
-func (obj *Page) Done() <-chan struct{} {
-	return obj.webSock.Done()
+func (obj *Page) Context() context.Context {
+	return obj.webSock.Context()
 }
 func (obj *Page) Request(ctx context.Context, RequestFunc func(context.Context, *cdp.Route)) error {
 	if RequestFunc != nil {

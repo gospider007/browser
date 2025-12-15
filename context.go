@@ -3,6 +3,7 @@ package browser
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/gospider007/cdp"
 	"github.com/gospider007/requests"
@@ -19,6 +20,20 @@ type BrowserContext struct {
 	addr             string
 }
 
+func (obj *BrowserContext) init(contextId string) (err error) {
+	defer func() {
+		if err != nil {
+			obj.Close()
+		}
+	}()
+	obj.webSock, err = cdp.NewWebSock(
+		obj.ctx,
+		obj.globalReqCli,
+		fmt.Sprintf("ws://%s/devtools/browser/%s", obj.addr, contextId),
+		requests.RequestOption{},
+	)
+	return err
+}
 func (obj *BrowserContext) NewPage(preCtx context.Context, options ...PageOption) (*Page, error) {
 	if preCtx == nil {
 		preCtx = obj.ctx
@@ -53,6 +68,11 @@ func (obj *BrowserContext) NewPageWithTargetId(preCtx context.Context, targetId 
 		option.Stealth = obj.option.Stealth
 	}
 	ctx, cnl := context.WithCancel(obj.ctx)
+	globalReqCli, err := obj.globalReqCli.Clone(ctx)
+	if err != nil {
+		cnl()
+		return nil, err
+	}
 	page := &Page{
 		option:           option,
 		targetId:         targetId,
@@ -60,7 +80,7 @@ func (obj *BrowserContext) NewPageWithTargetId(preCtx context.Context, targetId 
 		addr:             obj.addr,
 		ctx:              ctx,
 		cnl:              cnl,
-		globalReqCli:     obj.globalReqCli,
+		globalReqCli:     globalReqCli,
 		isReplaceRequest: isReplaceRequest,
 		loadNotices:      make(chan struct{}, 1),
 		stopNotices:      make(chan struct{}, 1),
@@ -86,9 +106,7 @@ func (obj *BrowserContext) Error() (err error) {
 func (obj *BrowserContext) Context() context.Context {
 	return obj.webSock.Context()
 }
-func (obj *BrowserContext) Done() <-chan struct{} {
-	return obj.webSock.Done()
-}
+
 func (obj *BrowserContext) Close() error {
 	if obj.webSock != nil {
 		obj.webSock.TargetDisposeBrowserContext(obj.browserContextId)

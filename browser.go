@@ -55,6 +55,7 @@ var libsChrome = []string{
 }
 
 // apt install -y libasound2 libatk-bridge2.0-0 libatk1.0-0 libatspi2.0-0 libcairo2 libcups2 libdbus-1-3 libdrm2 libgbm1 libglib2.0-0 libnspr4 libnss3 libpango-1.0-0 libx11-6 libxcb1 libxcomposite1 libxdamage1 libxext6 libxfixes3 libxkbcommon0 libxrandr2
+
 // yum install -y libasound.so.2 libatk-bridge-2.0.so.0 libatk-1.0.so.0 libatspi.so.0 libcairo.so.2 libcups.so.2 libdbus-1.so.3 libdrm.so.2 libgbm.so.1 libgio-2.0.so.0 libnspr4.so libnss3.so libpango-1.0.so.0 libX11.so.6 libxcb.so.1 libXcomposite.so.1 libXdamage.so.1 libXext.so.6 libXfixes.so.3 libxkbcommon.so.0 libXrandr.so.2
 
 // https://github.com/microsoft/playwright/blob/main/packages/playwright-core/src/server/registry/nativeDeps.ts
@@ -134,6 +135,7 @@ type Client struct {
 	stealth          bool //是否开启随机指纹
 	browserContext   *BrowserContext
 	requestFunc      func(context.Context, *cdp.Route)
+	browserContextId string
 }
 type ClientOption struct {
 	Host           string
@@ -611,7 +613,6 @@ func (obj *Client) NewBrowserContext(preCtx context.Context, options ...BrowserC
 		addr:             obj.addr,
 		isReplaceRequest: obj.isReplaceRequest,
 		option:           &option,
-		webSock:          obj.webSock,
 	}
 	var err error
 	browserContext.ctx, browserContext.cnl = context.WithCancelCause(preCtx)
@@ -631,8 +632,9 @@ func (obj *Client) NewBrowserContext(preCtx context.Context, options ...BrowserC
 	if err != nil {
 		return nil, err
 	}
-	return browserContext, err
+	return browserContext, browserContext.init(obj.browserContextId)
 }
+
 func (obj *Client) RequestClient() *requests.Client {
 	if obj.browserContext != nil {
 		return obj.browserContext.RequestClient()
@@ -688,10 +690,11 @@ func (obj *Client) init() (err error) {
 	if browWsRs == nil {
 		return errors.New("not fouond browser id")
 	}
+	obj.browserContextId = browWsRs.Group(1)
 	obj.webSock, err = cdp.NewWebSock(
 		obj.ctx,
 		obj.globalReqCli,
-		fmt.Sprintf("ws://%s/devtools/browser/%s", obj.addr, browWsRs.Group(1)),
+		fmt.Sprintf("ws://%s/devtools/browser/%s", obj.addr, obj.browserContextId),
 		requests.RequestOption{},
 	)
 	return err
@@ -700,9 +703,7 @@ func (obj *Client) init() (err error) {
 // 浏览器初始化
 
 // 浏览器是否结束的 chan
-func (obj *Client) Done() <-chan struct{} {
-	return obj.webSock.Done()
-}
+
 func (obj *Client) Context() context.Context {
 	return obj.webSock.Context()
 }
