@@ -5,7 +5,7 @@ go 1.25.0
 require (
 	github.com/gospider007/blog v0.0.0-20250815030743-f2af6b9013ab
 	github.com/gospider007/bs4 v0.0.0-20251212071442-cda0a39e7829
-	github.com/gospider007/cdp v0.0.0-20251223031355-ae9c370cdf70
+	github.com/gospider007/cdp v0.0.0-20251230082054-0d2c63419dec
 	github.com/gospider007/cmd v0.0.0-20251223031120-7b0cddb3f63c
 	github.com/gospider007/conf v0.0.0-20250815031235-1df45ae2e117
 	github.com/gospider007/gson v0.0.0-20251223030944-2672b6228d68
@@ -33,7 +33,7 @@ require (
 	github.com/google/pprof v0.0.0-20251213031049-b05bdaca462f // indirect
 	github.com/gospider007/bar v0.0.0-20250815030902-4f5b5d6312cf // indirect
 	github.com/gospider007/gtls v0.0.0-20251223031109-2bf2f614bad4 // indirect
-	github.com/gospider007/http1 v0.0.0-20251212071445-045cb580235e // indirect
+	github.com/gospider007/http1 v0.0.0-20251230082047-45e747b086b5 // indirect
 	github.com/gospider007/http2 v0.0.0-20251223031110-720acc7bf923 // indirect
 	github.com/gospider007/http3 v0.0.0-20251223030948-dfedcc1864d9 // indirect
 	github.com/gospider007/ja3 v0.0.0-20251223030950-b21c86f47a7a // indirect
