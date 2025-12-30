@@ -6,21 +6,73 @@ import (
 	"fmt"
 
 	"github.com/gospider007/cdp"
+	"github.com/gospider007/gson"
 	"github.com/gospider007/requests"
+	"github.com/gospider007/tools"
 )
 
 type BrowserContext struct {
-	isReplaceRequest bool
 	browserContextId string
 	globalReqCli     *requests.Client
+	stealth          bool
 	webSock          *cdp.WebSock
-	option           *BrowserContextOption
+	option           ClientOption
 	ctx              context.Context
 	cnl              context.CancelCauseFunc
 	addr             string
 }
 
-func (obj *BrowserContext) init(contextId string) (err error) {
+type BrowserContextOption struct {
+	Proxy          any
+	Stealth        bool //是否开启随机指纹
+	MaxRetries     int
+	GetProxy       func(ctx *requests.Response) (any, error)
+	ResultCallBack func(ctx *requests.Response) error
+}
+
+func (obj *Client) newBrowserContext(ctx context.Context) (string, error) {
+	contextData, err := obj.webSock.TargetCreateBrowserContext(ctx)
+	if err != nil {
+		return "", err
+	}
+	contextResult, err := gson.Decode(contextData.Result)
+	if err != nil {
+		return "", err
+	}
+	browserContextId := contextResult.Get("browserContextId").String()
+	if browserContextId == "" {
+		return "", errors.New("not found browserContextId")
+	}
+	return browserContextId, nil
+}
+func (obj *Client) NewBrowserContext(preCtx context.Context, options ...requests.ClientOption) (*BrowserContext, error) {
+	var option requests.ClientOption
+	if len(options) > 0 {
+		option = options[0]
+	}
+	if preCtx == nil {
+		preCtx = obj.ctx
+	}
+	browserContext := &BrowserContext{
+		addr:   obj.addr,
+		option: obj.option,
+	}
+	var err error
+	browserContext.ctx, browserContext.cnl = context.WithCancelCause(obj.ctx)
+	browserContext.globalReqCli, err = obj.globalReqCli.Clone(browserContext.ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err = tools.Merge(browserContext.globalReqCli.ClientOption, option); err != nil {
+		return nil, err
+	}
+	browserContext.browserContextId, err = obj.newBrowserContext(preCtx)
+	if err != nil {
+		return nil, err
+	}
+	return browserContext, browserContext.init(obj.browserContextId)
+}
+func (obj *BrowserContext) init(browserContextId string) (err error) {
 	defer func() {
 		if err != nil {
 			obj.Close()
@@ -29,8 +81,7 @@ func (obj *BrowserContext) init(contextId string) (err error) {
 	obj.webSock, err = cdp.NewWebSock(
 		obj.ctx,
 		obj.globalReqCli,
-		fmt.Sprintf("ws://%s/devtools/browser/%s", obj.addr, contextId),
-		requests.RequestOption{},
+		fmt.Sprintf("ws://%s/devtools/browser/%s", obj.addr, browserContextId),
 	)
 	return err
 }
@@ -46,57 +97,48 @@ func (obj *BrowserContext) NewPage(preCtx context.Context, options ...PageOption
 	if !ok {
 		return nil, errors.New("not found targetId")
 	}
-	return obj.NewPageWithTargetId(preCtx, targetId, options...)
-}
-func (obj *BrowserContext) NewPageWithTargetId(preCtx context.Context, targetId string, options ...PageOption) (*Page, error) {
 	var option PageOption
 	if len(options) > 0 {
 		option = options[0]
 	}
-	isReplaceRequest := obj.isReplaceRequest
-	if !isReplaceRequest {
-		if option.Option.Proxy != nil && option.Option.Proxy != obj.option.Proxy {
-			if p, ok := option.Option.Proxy.(string); ok && p != obj.option.Proxy {
-				isReplaceRequest = true
-			}
-		}
-	}
-	if option.Option.Proxy == "" {
-		option.Option.Proxy = obj.option.Proxy
-	}
 	if !option.Stealth {
 		option.Stealth = obj.option.Stealth
 	}
-	ctx, cnl := context.WithCancel(obj.ctx)
-	globalReqCli, err := obj.globalReqCli.Clone(ctx)
+	return newPageWithTargetId(obj, nil, preCtx, targetId, option)
+}
+func newPageWithTargetId(browserContext *BrowserContext, pageCtx context.Context, preCtx context.Context, targetId string, option PageOption) (*Page, error) {
+	if pageCtx == nil {
+		pageCtx = browserContext.ctx
+	}
+	ctx, cnl := context.WithCancel(pageCtx)
+	globalReqCli, err := browserContext.globalReqCli.Clone(ctx)
+	if err != nil {
+		cnl()
+		return nil, err
+	}
+	err = tools.Merge(globalReqCli.ClientOption, option.Option)
 	if err != nil {
 		cnl()
 		return nil, err
 	}
 	page := &Page{
-		option:           option,
-		targetId:         targetId,
-		targetType:       "page",
-		addr:             obj.addr,
-		ctx:              ctx,
-		cnl:              cnl,
-		globalReqCli:     globalReqCli,
-		isReplaceRequest: isReplaceRequest,
-		loadNotices:      make(chan struct{}, 1),
-		stopNotices:      make(chan struct{}, 1),
-		networkNotices:   make(chan struct{}, 1),
+		option:         option,
+		targetId:       targetId,
+		targetType:     "page",
+		browserContext: browserContext,
+		ctx:            ctx,
+		cnl:            cnl,
+		globalReqCli:   globalReqCli,
+		loadNotices:    make(chan struct{}, 1),
+		stopNotices:    make(chan struct{}, 1),
+		networkNotices: make(chan struct{}, 1),
 	}
-	if err := page.init(); err != nil {
+	if err := page.init(preCtx); err != nil {
 		return nil, err
-	}
-	if isReplaceRequest {
-		// log.Print("enabel replace request...")
-		if err := page.Request(preCtx, defaultRequestFunc); err != nil {
-			return nil, err
-		}
 	}
 	return page, nil
 }
+
 func (obj *BrowserContext) Addr() string {
 	return obj.addr
 }

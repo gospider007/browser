@@ -521,6 +521,19 @@ function inject2() {
             }
         });
     }
+    function changeOpen() {
+        overridePropertyWithProxy(window, 'open', {
+            apply(target, thisArg, args) {
+                const url = args[0];
+                if (typeof url === 'string') {
+                    location.assign(url);
+                    return window;
+                }
+                // 极端兜底（url 不是 string）
+                return Reflect.apply(target, thisArg, args);
+            }
+        });
+    }
     var seed = (new Date()).valueOf();
     changeCanvas()
     changeWebgl()
@@ -529,6 +542,7 @@ function inject2() {
     changeFont()
     changeWebgpu()
     changeDomRect()
+    changeOpen()
 }
 /**
  * 递归删除对象或数组中：

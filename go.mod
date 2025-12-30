@@ -12,7 +12,6 @@ require (
 	github.com/gospider007/re v0.0.0-20251212071142-f56bce921150
 	github.com/gospider007/requests v0.0.0-20251223031310-6c5a3269501a
 	github.com/gospider007/tools v0.0.0-20251212071315-d05548ab517e
-	golang.org/x/exp v0.0.0-20251219203646-944ab1f22d93
 	golang.org/x/net v0.48.0
 )
 
@@ -67,6 +66,7 @@ require (
 	go.uber.org/zap v1.27.1 // indirect
 	go.uber.org/zap/exp v0.3.0 // indirect
 	golang.org/x/crypto v0.46.0 // indirect
+	golang.org/x/exp v0.0.0-20251219203646-944ab1f22d93 // indirect
 	golang.org/x/image v0.34.0 // indirect
 	golang.org/x/mod v0.31.0 // indirect
 	golang.org/x/sync v0.19.0 // indirect

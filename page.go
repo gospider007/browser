@@ -21,16 +21,15 @@ import (
 )
 
 type Page struct {
-	option           PageOption
-	addr             string
-	targetId         string
-	targetType       string
-	mouseX           float64
-	mouseY           float64
-	ctx              context.Context
-	cnl              context.CancelFunc
-	globalReqCli     *requests.Client
-	isReplaceRequest bool
+	browserContext *BrowserContext
+	option         PageOption
+	targetId       string
+	targetType     string
+	mouseX         float64
+	mouseY         float64
+	ctx            context.Context
+	cnl            context.CancelFunc
+	globalReqCli   *requests.Client
 
 	baseUrl string
 	webSock *cdp.WebSock
@@ -41,12 +40,11 @@ type Page struct {
 	stopNotices        chan struct{}
 	networkNotices     chan struct{}
 	networkNoticesSize atomic.Int64
-	requestFunc        func(context.Context, *cdp.Route)
 	frames             sync.Map
 	storageEnable      bool
 }
 
-func defaultRequestFunc(ctx context.Context, r *cdp.Route) { r.RequestContinue(ctx) }
+func defaultRequestFunc(ctx context.Context, r *cdp.Route) { r.Continue(ctx) }
 func (obj *Page) delStopNotice() {
 	obj.pageStop = false
 	obj.delLoadNotice()
@@ -127,8 +125,8 @@ func (obj *Page) routeMain(ctx context.Context, rd cdp.RecvData) {
 				route.FulFill(ctx, cdp.FulData{
 					StatusCode: 404,
 				})
-			} else if obj.requestFunc != nil {
-				obj.requestFunc(ctx, route)
+			} else {
+				obj.option.requestFunc(ctx, route)
 			}
 			if !route.Used() {
 				route.Fail(ctx)
@@ -157,6 +155,17 @@ func (obj *Page) iframeToTargetMain(ctx context.Context, rd cdp.RecvData) {
 		}
 	}
 }
+func (obj *Page) targetToTargetMain(ctx context.Context, rd cdp.RecvData) {
+	jsonData, err := gson.Decode(rd.Params)
+	if err != nil {
+		return
+	}
+	targetId := jsonData.Get("targetInfo.targetId").String()
+	targetType := jsonData.Get("targetInfo.type").String()
+	if targetId != "" && targetId != obj.targetId && targetType == "page" {
+		obj.addIframe(targetId)
+	}
+}
 
 func (obj *Page) GetFrame(frameId string) (*Page, bool) {
 	frame, ok := obj.frames.Load(frameId)
@@ -182,7 +191,7 @@ func (obj *Page) addIframe(targetId string) error {
 	if ok {
 		return nil
 	}
-	iframe, err := obj.newPageWithTargetId(targetId)
+	iframe, err := newPageWithTargetId(obj.browserContext, obj.ctx, obj.ctx, targetId, obj.option)
 	if err != nil {
 		return err
 	}
@@ -197,13 +206,12 @@ func (obj *Page) addEvent(method string, fun func(ctx context.Context, rd cdp.Re
 //go:embed stealthRaw.js
 var stealthRaw string
 
-func (obj *Page) init() error {
+func (obj *Page) init(ctx context.Context) error {
 	var err error
 	if obj.webSock, err = cdp.NewWebSock(
 		obj.ctx,
 		obj.globalReqCli,
-		fmt.Sprintf("ws://%s/devtools/page/%s", obj.addr, obj.targetId),
-		obj.option.Option,
+		fmt.Sprintf("ws://%s/devtools/page/%s", obj.browserContext.Addr(), obj.targetId),
 	); err != nil {
 		return err
 	}
@@ -213,54 +221,33 @@ func (obj *Page) init() error {
 	obj.addEvent("Page.frameNavigated", obj.frameNavigated)
 	obj.addEvent("Fetch.requestPaused", obj.routeMain)
 	obj.addEvent("Target.attachedToTarget", obj.iframeToTargetMain)
-	if _, err = obj.webSock.PageEnable(obj.ctx); err != nil {
+	obj.addEvent("Target.targetInfoChanged", obj.targetToTargetMain)
+	if _, err = obj.webSock.TargetSetDiscoverTargets(ctx, true, cdp.TargetFilter{Type: "page", Exclude: false}); err != nil {
 		return err
 	}
-	if _, err = obj.webSock.TargetSetAutoAttach(obj.ctx); err != nil {
+	if _, err = obj.webSock.PageEnable(ctx); err != nil {
+		return err
+	}
+	if _, err = obj.webSock.FetchRequestEnable(ctx); err != nil {
+		return err
+	}
+	if obj.option.requestFunc != nil {
+		err = obj.Request(ctx, obj.option.requestFunc)
+	} else {
+		err = obj.Request(ctx, defaultRequestFunc)
+	}
+	if err != nil {
+		return err
+	}
+	if _, err = obj.webSock.TargetSetAutoAttach(ctx); err != nil {
 		return err
 	}
 	if obj.option.Stealth {
-		if err = obj.AddScript(obj.ctx, stealthRaw); err != nil {
+		if err = obj.AddScript(ctx, stealthRaw); err != nil {
 			return err
 		}
 	}
 	return nil
-}
-
-func (obj *Page) newPageWithTargetId(targetId string) (*Page, error) {
-	ctx, cnl := context.WithCancel(obj.ctx)
-	globalReqCli, err := obj.globalReqCli.Clone(ctx)
-	if err != nil {
-		cnl()
-		return nil, err
-	}
-	page := &Page{
-		option:           obj.option,
-		addr:             obj.addr,
-		targetId:         targetId,
-		ctx:              ctx,
-		cnl:              cnl,
-		globalReqCli:     globalReqCli,
-		isReplaceRequest: obj.isReplaceRequest,
-		baseUrl:          obj.baseUrl,
-		loadNotices:      make(chan struct{}, 1),
-		stopNotices:      make(chan struct{}, 1),
-		networkNotices:   make(chan struct{}, 1),
-		requestFunc:      obj.requestFunc,
-	}
-	if err := page.init(); err != nil {
-		return nil, err
-	}
-	if obj.requestFunc != nil {
-		if err := page.Request(obj.ctx, obj.requestFunc); err != nil {
-			return nil, err
-		}
-	} else if obj.isReplaceRequest {
-		if err := page.Request(obj.ctx, defaultRequestFunc); err != nil {
-			return nil, err
-		}
-	}
-	return page, nil
 }
 
 type FpOption struct {
@@ -355,12 +342,6 @@ func (obj *Page) WaitNetwork(ctx context.Context, msTimes ...time.Duration) erro
 	if len(msTimes) > 0 {
 		msTime = msTimes[0]
 	}
-	if obj.requestFunc == nil {
-		obj.isReplaceRequest = true
-		if err := obj.Request(ctx, nil); err != nil {
-			return err
-		}
-	}
 	return obj.waitMain(ctx, msTime, obj.networkNotices, func() bool { return obj.pageStop && obj.networkNoticesSize.Load() <= 0 })
 }
 func (obj *Page) WaitNetworkWithTimeout(preCtx context.Context, timeout time.Duration, msTimes ...time.Duration) error {
@@ -375,12 +356,6 @@ func (obj *Page) WaitNetworkWithTimeout(preCtx context.Context, timeout time.Dur
 	}
 	ctx, cnl = context.WithTimeout(preCtx, timeout)
 	defer cnl()
-	if obj.requestFunc == nil {
-		obj.isReplaceRequest = true
-		if err := obj.Request(ctx, nil); err != nil {
-			return err
-		}
-	}
 	return obj.waitMain(ctx, msTime, obj.networkNotices, func() bool { return obj.pageStop && obj.networkNoticesSize.Load() <= 0 })
 }
 
@@ -472,7 +447,7 @@ func (obj *Page) Cdp(ctx context.Context, method string, params ...map[string]an
 	return obj.webSock.Cdp(ctx, "", method, params...)
 }
 func (obj *Page) close() error {
-	_, err := obj.globalReqCli.Request(context.TODO(), "get", fmt.Sprintf("http://%s/json/close/%s", obj.addr, obj.targetId), requests.RequestOption{
+	_, err := obj.globalReqCli.Request(context.TODO(), "get", fmt.Sprintf("http://%s/json/close/%s", obj.browserContext.Addr(), obj.targetId), requests.RequestOption{
 		DisProxy:   true,
 		MaxRetries: 10,
 		ResultCallBack: func(ctx *requests.Response) error {
@@ -491,22 +466,13 @@ func (obj *Page) close() error {
 func (obj *Page) Context() context.Context {
 	return obj.webSock.Context()
 }
-func (obj *Page) Request(ctx context.Context, RequestFunc func(context.Context, *cdp.Route)) error {
-	if RequestFunc != nil {
-		obj.requestFunc = RequestFunc
-	} else if obj.isReplaceRequest {
-		obj.requestFunc = defaultRequestFunc
-	} else {
-		obj.requestFunc = nil
+func (obj *Page) Request(ctx context.Context, requestFunc func(context.Context, *cdp.Route)) error {
+	if requestFunc == nil {
+		return errors.New("requestFunc is nil")
 	}
-	var err error
-	if obj.requestFunc != nil {
-		_, err = obj.webSock.FetchRequestEnable(ctx)
-	} else {
-		_, err = obj.webSock.FetchDisable(ctx)
-	}
-	obj.framesRequest(ctx, RequestFunc)
-	return err
+	obj.option.requestFunc = requestFunc
+	obj.framesRequest(ctx, requestFunc)
+	return nil
 }
 
 func (obj *Page) Html(ctx context.Context) (*bs4.Client, error) {
@@ -1017,5 +983,39 @@ func (obj *Page) SetDOMStorageItem(ctx context.Context, key, val string, isLocal
 
 func (obj *Page) SetExtraHTTPHeaders(ctx context.Context, headers map[string]string) error {
 	_, err := obj.webSock.NetworkSetExtraHTTPHeaders(ctx, headers)
+	return err
+}
+
+// 设置浏览器的地理位置
+func (obj *Page) SetGeolocation(preCtx context.Context, latitude float64, longitude float64) error {
+	_, err := obj.webSock.EmulationSetGeolocationOverride(preCtx, latitude, longitude)
+	return err
+}
+
+// 设置浏览器的语言
+func (obj *Page) SetLocaleOverride(preCtx context.Context, local string) error {
+	_, err := obj.webSock.EmulationSetLocaleOverride(preCtx, local)
+	return err
+}
+
+// 设置浏览器的语言
+func (obj *Page) SetUserAgentOverride(preCtx context.Context, userAgent string, language string) error {
+	if userAgent == "" {
+		userAgent = tools.UserAgent
+	}
+	_, err := obj.webSock.EmulationSetUserAgentOverride(preCtx, userAgent, language)
+	if err != nil {
+		return err
+	}
+	_, err = obj.webSock.NetworkSetUserAgentOverride(preCtx, userAgent, language)
+	if err != nil {
+		return err
+	}
+	return err
+}
+
+// 设置浏览器的时区
+func (obj *Page) SetTimezoneOverride(preCtx context.Context, timezoneId string) error {
+	_, err := obj.webSock.EmulationSetTimezoneOverride(preCtx, timezoneId)
 	return err
 }
