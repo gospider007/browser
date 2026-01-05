@@ -16,18 +16,10 @@ type BrowserContext struct {
 	globalReqCli     *requests.Client
 	stealth          bool
 	webSock          *cdp.WebSock
-	option           ClientOption
+	option           *ClientOption
 	ctx              context.Context
 	cnl              context.CancelCauseFunc
 	addr             string
-}
-
-type BrowserContextOption struct {
-	Proxy          any
-	Stealth        bool //是否开启随机指纹
-	MaxRetries     int
-	GetProxy       func(ctx *requests.Response) (any, error)
-	ResultCallBack func(ctx *requests.Response) error
 }
 
 func (obj *Client) newBrowserContext(ctx context.Context) (string, error) {
@@ -104,9 +96,9 @@ func (obj *BrowserContext) NewPage(preCtx context.Context, options ...PageOption
 	if !option.Stealth {
 		option.Stealth = obj.option.Stealth
 	}
-	return newPageWithTargetId(obj, nil, preCtx, targetId, option)
+	return newPageWithTargetId(obj, nil, preCtx, targetId, &option)
 }
-func newPageWithTargetId(browserContext *BrowserContext, pageCtx context.Context, preCtx context.Context, targetId string, option PageOption) (*Page, error) {
+func newPageWithTargetId(browserContext *BrowserContext, pageCtx context.Context, preCtx context.Context, targetId string, option *PageOption) (*Page, error) {
 	if pageCtx == nil {
 		pageCtx = browserContext.ctx
 	}

@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"log"
 	"math"
 	uurl "net/url"
 	"strconv"
@@ -22,7 +23,7 @@ import (
 
 type Page struct {
 	browserContext *BrowserContext
-	option         PageOption
+	option         *PageOption
 	targetId       string
 	targetType     string
 	mouseX         float64
@@ -44,7 +45,10 @@ type Page struct {
 	storageEnable      bool
 }
 
-func defaultRequestFunc(ctx context.Context, r *cdp.Route) { r.Continue(ctx) }
+func defaultRequestFunc(ctx context.Context, r *cdp.Route) {
+	log.Print("怎么走的是默认的？")
+	r.Continue(ctx)
+}
 func (obj *Page) delStopNotice() {
 	obj.pageStop = false
 	obj.delLoadNotice()
@@ -102,7 +106,7 @@ func (obj *Page) frameNavigated(ctx context.Context, rd cdp.RecvData) {
 	if targetId == obj.targetId {
 		obj.baseUrl = jsonData.Get("frame.url").String()
 	} else if jsonData.Get("frame.parentId").String() == obj.targetId {
-		obj.addIframe(targetId)
+		obj.addIframe("frameNavigated", targetId)
 	}
 }
 func (obj *Page) Url() string {
@@ -120,24 +124,20 @@ func (obj *Page) routeMain(ctx context.Context, rd cdp.RecvData) {
 	routeData := cdp.RouteData{}
 	if _, err := gson.Decode(rd.Params, &routeData); err == nil {
 		route := cdp.NewRoute(obj.webSock, routeData)
-		if !route.IsResponse() {
-			if strings.HasSuffix(route.Url(), "/favicon.ico") {
-				route.FulFill(ctx, cdp.FulData{
-					StatusCode: 404,
-				})
-			} else {
-				obj.option.requestFunc(ctx, route)
-			}
-			if !route.Used() {
-				route.Fail(ctx)
-				// if obj.isReplaceRequest {
-				// 	route.RequestContinue(ctx)
-				// } else {
-				// 	route.Continue(ctx)
-				// }
-			}
+		if strings.HasSuffix(route.Url(), "/favicon.ico") {
+			route.FulFill(ctx, cdp.FulData{
+				StatusCode: 404,
+			})
 		} else {
-			route.Continue(ctx)
+			obj.option.requestFunc(ctx, route)
+		}
+		if !route.Used() {
+			route.Fail(ctx)
+			// if obj.isReplaceRequest {
+			// 	route.RequestContinue(ctx)
+			// } else {
+			// 	route.Continue(ctx)
+			// }
 		}
 	}
 }
@@ -150,7 +150,7 @@ func (obj *Page) iframeToTargetMain(ctx context.Context, rd cdp.RecvData) {
 		targetId := jsonData.Get("targetInfo.targetId").String()
 		sessionId := jsonData.Get("sessionId").String()
 		if targetId != "" && sessionId != "" {
-			obj.addIframe(targetId)
+			obj.addIframe("iframeToTargetMain", targetId)
 			obj.webSock.Cdp(obj.ctx, sessionId, "Runtime.runIfWaitingForDebugger")
 		}
 	}
@@ -161,9 +161,13 @@ func (obj *Page) targetToTargetMain(ctx context.Context, rd cdp.RecvData) {
 		return
 	}
 	targetId := jsonData.Get("targetInfo.targetId").String()
+	browserContextId := jsonData.Get("targetInfo.browserContextId").String()
 	targetType := jsonData.Get("targetInfo.type").String()
-	if targetId != "" && targetId != obj.targetId && targetType == "page" {
-		obj.addIframe(targetId)
+	// if obj.browserContext.browserContextId == browserContextId {
+	// 	log.Print(jsonData, obj.browserContext.browserContextId, "  ===. ", browserContextId, "  ==. ", obj.targetId)
+	// }
+	if targetId != "" && browserContextId != "" && targetId != obj.targetId && targetType == "page" {
+		obj.addIframe("targetToTargetMain", targetId)
 	}
 }
 
@@ -180,17 +184,12 @@ func (obj *Page) clearFrames() {
 		return true
 	})
 }
-func (obj *Page) framesRequest(ctx context.Context, RequestFunc func(context.Context, *cdp.Route)) {
-	obj.frames.Range(func(key, value any) bool {
-		value.(*Page).Request(ctx, RequestFunc)
-		return true
-	})
-}
-func (obj *Page) addIframe(targetId string) error {
+func (obj *Page) addIframe(msg string, targetId string) error {
 	_, ok := obj.frames.Load(targetId)
 	if ok {
 		return nil
 	}
+	// log.Print(msg, " ===. ", targetId)
 	iframe, err := newPageWithTargetId(obj.browserContext, obj.ctx, obj.ctx, targetId, obj.option)
 	if err != nil {
 		return err
@@ -221,22 +220,14 @@ func (obj *Page) init(ctx context.Context) error {
 	obj.addEvent("Page.frameNavigated", obj.frameNavigated)
 	obj.addEvent("Fetch.requestPaused", obj.routeMain)
 	obj.addEvent("Target.attachedToTarget", obj.iframeToTargetMain)
-	obj.addEvent("Target.targetInfoChanged", obj.targetToTargetMain)
-	if _, err = obj.webSock.TargetSetDiscoverTargets(ctx, true, cdp.TargetFilter{Type: "page", Exclude: false}); err != nil {
-		return err
-	}
+	// obj.addEvent("Target.targetInfoChanged", obj.targetToTargetMain)
+	// if _, err = obj.webSock.TargetSetDiscoverTargets(ctx, true); err != nil {
+	// 	return err
+	// }
 	if _, err = obj.webSock.PageEnable(ctx); err != nil {
 		return err
 	}
 	if _, err = obj.webSock.FetchRequestEnable(ctx); err != nil {
-		return err
-	}
-	if obj.option.requestFunc != nil {
-		err = obj.Request(ctx, obj.option.requestFunc)
-	} else {
-		err = obj.Request(ctx, defaultRequestFunc)
-	}
-	if err != nil {
 		return err
 	}
 	if _, err = obj.webSock.TargetSetAutoAttach(ctx); err != nil {
@@ -440,6 +431,9 @@ func (obj *Page) Close() (err error) {
 	obj.webSock.TargetCloseTarget(obj.targetId)
 	err = obj.close()
 	obj.webSock.CloseWithError(errors.New("page closed"))
+	if obj.globalReqCli != nil {
+		obj.globalReqCli.Close()
+	}
 	obj.cnl()
 	return
 }
@@ -467,11 +461,7 @@ func (obj *Page) Context() context.Context {
 	return obj.webSock.Context()
 }
 func (obj *Page) Request(ctx context.Context, requestFunc func(context.Context, *cdp.Route)) error {
-	if requestFunc == nil {
-		return errors.New("requestFunc is nil")
-	}
 	obj.option.requestFunc = requestFunc
-	obj.framesRequest(ctx, requestFunc)
 	return nil
 }
 
@@ -723,23 +713,34 @@ func (obj *Page) MoveTo(ctx context.Context, point cdp.Point, steps ...int) erro
 	if len(steps) > 0 && steps[0] > 0 {
 		step = steps[0]
 	}
+	if step == 1 {
+		return obj.moveTo(ctx, point)
+	}
 	for _, poi := range tools.GetTrack(
 		[2]float64{obj.mouseX, obj.mouseY},
 		[2]float64{point.X, point.Y},
 		step,
 	) {
-		_, err := obj.webSock.InputDispatchMouseEvent(ctx,
-			cdp.DispatchMouseEventOption{
-				Type: "mouseMoved",
-				X:    poi[0],
-				Y:    poi[1],
-			})
+		err := obj.moveTo(ctx, cdp.Point{X: poi[0], Y: poi[1]})
 		if err != nil {
 			return err
 		}
-		obj.mouseX = poi[0]
-		obj.mouseY = poi[1]
 	}
+	return nil
+}
+func (obj *Page) moveTo(ctx context.Context, point cdp.Point) error {
+	_, err := obj.webSock.InputDispatchMouseEvent(ctx,
+		cdp.DispatchMouseEventOption{
+			Type:   "mouseMoved",
+			Button: "left",
+			X:      point.X,
+			Y:      point.Y,
+		})
+	if err != nil {
+		return err
+	}
+	obj.mouseX = point.X
+	obj.mouseY = point.Y
 	return nil
 }
 func (obj *Page) TouchMoveTo(ctx context.Context, point cdp.Point, steps ...int) error {

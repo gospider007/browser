@@ -207,40 +207,40 @@ func (obj *downClient) getChromePath(preCtx context.Context) (string, error) {
 	}
 	return chromePath, nil
 }
-func (obj *Client) runChrome(option *ClientOption) error {
+func (obj *Client) runChrome() error {
 	var err error
-	if option.Host == "" {
-		option.Host = "127.0.0.1"
+	if obj.option.Host == "" {
+		obj.option.Host = "127.0.0.1"
 	}
-	if option.Port == 0 {
-		option.Port, err = tools.FreePort()
+	if obj.option.Port == 0 {
+		obj.option.Port, err = tools.FreePort()
 		if err != nil {
 			return err
 		}
 	}
-	if option.ChromePath == "" {
-		option.ChromePath, err = oneDown.getChromePath(obj.ctx)
+	if obj.option.ChromePath == "" {
+		obj.option.ChromePath, err = oneDown.getChromePath(obj.ctx)
 		if err != nil {
 			return err
 		}
 	} else {
-		fileInfo, err := os.Stat(option.ChromePath)
+		fileInfo, err := os.Stat(obj.option.ChromePath)
 		if err != nil {
 			return err
 		}
 		if fileInfo.IsDir() {
-			option.ChromePath, err = findChromeApp(option.ChromePath)
+			obj.option.ChromePath, err = findChromeApp(obj.option.ChromePath)
 			if err != nil {
 				return err
 			}
 		}
 	}
-	if err = verifyEvalPath(option.ChromePath); err != nil {
+	if err = verifyEvalPath(obj.option.ChromePath); err != nil {
 		return err
 	}
 	var isDelDir bool
-	if option.UserDir == "" {
-		option.UserDir, err = conf.GetTempChromeDirPath()
+	if obj.option.UserDir == "" {
+		obj.option.UserDir, err = conf.GetTempChromeDirPath()
 		if err != nil {
 			return err
 		}
@@ -248,18 +248,18 @@ func (obj *Client) runChrome(option *ClientOption) error {
 	}
 	args := []string{}
 	args = append(args, chromeArgs...)
-	if option.UserAgent != "" {
-		args = append(args, fmt.Sprintf("--user-agent=%s", option.UserAgent))
+	if obj.option.UserAgent != "" {
+		args = append(args, fmt.Sprintf("--user-agent=%s", obj.option.UserAgent))
 	}
-	if option.Headless {
+	if obj.option.Headless {
 		args = append(args, "--headless=new")
 	}
-	args = append(args, fmt.Sprintf(`--user-data-dir=%s`, option.UserDir))
-	args = append(args, fmt.Sprintf("--remote-debugging-port=%d", option.Port))
-	args = append(args, fmt.Sprintf("--window-size=%d,%d", option.Width, option.Height))
+	args = append(args, fmt.Sprintf(`--user-data-dir=%s`, obj.option.UserDir))
+	args = append(args, fmt.Sprintf("--remote-debugging-port=%d", obj.option.Port))
+	args = append(args, fmt.Sprintf("--window-size=%d,%d", obj.option.Width, obj.option.Height))
 	args = append(args, fmt.Sprintf("--parent-pid=%d", os.Getpid()))
 	args = append(args, fmt.Sprintf("--custom-parent-pid=%d", os.Getpid()))
-	for _, arg := range option.Args {
+	for _, arg := range obj.option.Args {
 		if !slices.Contains(args, arg) {
 			args = append(args, arg)
 		}
@@ -268,7 +268,7 @@ func (obj *Client) runChrome(option *ClientOption) error {
 	if isDelDir {
 		closeCallBack = func() {
 			for i := 0; i < 10; i++ {
-				if os.RemoveAll(option.UserDir) == nil {
+				if os.RemoveAll(obj.option.UserDir) == nil {
 					return
 				}
 				time.Sleep(time.Millisecond * 300)
@@ -276,7 +276,7 @@ func (obj *Client) runChrome(option *ClientOption) error {
 		}
 	}
 	obj.cmdCli, err = cmd.NewClient(obj.ctx, cmd.ClientOption{
-		Name:          option.ChromePath,
+		Name:          obj.option.ChromePath,
 		Args:          args,
 		CloseCallBack: closeCallBack,
 	})

@@ -24,7 +24,7 @@ type Client struct {
 	ctx              context.Context
 	cnl              context.CancelCauseFunc
 	webSock          *cdp.WebSock
-	option           ClientOption
+	option           *ClientOption
 	browserContext   *BrowserContext
 	browserContextId string
 }
@@ -85,13 +85,13 @@ func NewClient(preCtx context.Context, options ...ClientOption) (*Client, error)
 		option.UserAgent = tools.UserAgent
 	}
 	client := &Client{
-		option:       option,
+		option:       &option,
 		globalReqCli: globalReqCli,
 		ctx:          ctx,
 		cnl:          cnl,
 	}
 	if option.Host == "" || option.Port == 0 {
-		if err = client.runChrome(&option); err != nil {
+		if err = client.runChrome(); err != nil {
 			client.Close()
 			return nil, err
 		}

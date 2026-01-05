@@ -616,7 +616,7 @@ function getInjectableFingerprintFunction() {
     const generator = new fingerprint_generator_1.FingerprintGenerator();
     var fingerprintWithHeaders = generator.getFingerprint({
         browsers: [
-            { name: "chrome", minVersion: 139, maxVersion: 139, httpVersion: "2" },
+            { name: "chrome", minVersion: 143, maxVersion: 143, httpVersion: "2" },
         ],
         devices: ["desktop"],
         operatingSystems: ["macos"],

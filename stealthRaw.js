@@ -202,7 +202,7 @@
     // We wrap each trap in the handler in a try/catch and modify the error stack if they throw
     const traps = Object.getOwnPropertyNames(handler);
     traps.forEach((trap) => {
-      newHandler[trap] = function () {
+      newHandler[trap] = function() {
         try {
           // Forward the call to the defined proxy handler
           return handler[trap].apply(this, arguments || []); //eslint-disable-line
@@ -335,7 +335,7 @@
       };
       const canPlayType = {
         // eslint-disable-next-line
-        apply: function (target, ctx, args) {
+        apply: function(target, ctx, args) {
           if (!args || !args.length) {
             return target.apply(ctx, args);
           }
@@ -359,7 +359,7 @@
       const getBattery = {
         ...prototypeProxyHandler,
         // eslint-disable-next-line
-        apply: async function () {
+        apply: async function() {
           return batteryInfo;
         },
       };
@@ -454,17 +454,17 @@
   function blockWebRTC() {
     const handler = {
       get: () => {
-        return new Proxy(() => { }, handler);
+        return new Proxy(() => {}, handler);
       },
       apply: () => {
-        return new Proxy(() => { }, handler);
+        return new Proxy(() => {}, handler);
       },
       construct: () => {
-        return new Proxy(() => { }, handler);
+        return new Proxy(() => {}, handler);
       },
     };
     const ConstrProxy = new Proxy(Object, handler);
-    const proxy = new Proxy(() => { }, handler);
+    const proxy = new Proxy(() => {}, handler);
     replace(navigator.mediaDevices, 'getUserMedia', proxy);
     replace(navigator, 'webkitGetUserMedia', proxy);
     replace(navigator, 'mozGetUserMedia', proxy);
@@ -485,7 +485,7 @@
       // Override basic properties
       const getHighEntropyValues = {
         // eslint-disable-next-line
-        apply: async function (target, ctx, args) {
+        apply: async function(target, ctx, args) {
           // Just to throw original validation error
           // Remove traces of our Proxy
           const stripErrorStack = (stack) => stack
@@ -590,7 +590,7 @@
             get() {
               return proxy;
             },
-            set(newValue) { },
+            set(newValue) {},
             enumerable: true,
             configurable: false,
           });
@@ -704,25 +704,25 @@
   ;
   const fp = {
     "screen": {
-      "availTop": 25,
+      "availTop": 0,
       "availLeft": 0,
       "pageXOffset": 0,
       "pageYOffset": 0,
-      "screenX": 32,
+      "screenX": 1,
       "hasHDR": false,
-      "width": 1680,
-      "height": 1050,
-      "availWidth": 1680,
-      "availHeight": 1025,
+      "width": 1920,
+      "height": 1080,
+      "availWidth": 1920,
+      "availHeight": 1080,
       "clientWidth": 0,
-      "clientHeight": 19,
+      "clientHeight": 18,
       "innerWidth": 0,
       "innerHeight": 0,
-      "outerWidth": 1626,
-      "outerHeight": 968,
+      "outerWidth": 1728,
+      "outerHeight": 962,
       "colorDepth": 24,
       "pixelDepth": 24,
-      "devicePixelRatio": 2
+      "devicePixelRatio": 1
     },
     "audioCodecs": {
       "ogg": "probably",
@@ -816,14 +816,14 @@
       "mimeTypes": ["Portable Document Format~~application/pdf~~pdf", "Portable Document Format~~text/pdf~~pdf"]
     },
     "battery": {
-      "charging": true,
-      "chargingTime": 0,
+      "charging": false,
+      "chargingTime": null,
       "dischargingTime": null,
       "level": 1
     },
     "videoCard": {
-      "renderer": "ANGLE (Intel, ANGLE Metal Renderer: Intel(R) Iris(TM) Plus Graphics 655, Unspecified Version)",
-      "vendor": "Google Inc. (Intel)"
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4 Max, Unspecified Version)",
+      "vendor": "Google Inc. (Apple)"
     },
     "multimediaDevices": {
       "speakers": [{
@@ -849,26 +849,35 @@
     "mockWebRTC": false,
     "slim": false,
     "navigator": {
-      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
       "userAgentData": {
         "brands": [{
-          "brand": "Not;A=Brand",
-          "version": "99"
-        }, {
-          "brand": "Google Chrome",
-          "version": "139"
-        }, {
           "brand": "Chromium",
-          "version": "139"
+          "version": "143"
+        }, {
+          "brand": "Not A(Brand",
+          "version": "24"
         }],
         "mobile": false,
-        "platform": "macOS"
+        "platform": "macOS",
+        "architecture": "arm",
+        "bitness": "64",
+        "model": "",
+        "platformVersion": "26.2.0",
+        "uaFullVersion": "143.0.7499.170",
+        "fullVersionList": [{
+          "brand": "Chromium",
+          "version": "143.0.7499.170"
+        }, {
+          "brand": "Not A(Brand",
+          "version": "24.0.0.0"
+        }]
       },
       "language": "en-US",
       "languages": ["en-US", "en"],
       "platform": "MacIntel",
       "deviceMemory": 8,
-      "hardwareConcurrency": 10,
+      "hardwareConcurrency": 8,
       "maxTouchPoints": 0,
       "product": "Gecko",
       "productSub": "20030107",
@@ -877,7 +886,7 @@
       "doNotTrack": null,
       "appCodeName": "Mozilla",
       "appName": "Netscape",
-      "appVersion": "5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+      "appVersion": "5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
       "oscpu": null,
       "extraProperties": {
         "vendorFlavors": ["chrome"],
@@ -887,8 +896,8 @@
       },
       "webdriver": false
     },
-    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
-    "historyLength": 2
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "historyLength": 5
   };
   (function inject() {
     const {
@@ -951,7 +960,7 @@
     overrideIntlAPI(navigatorProps.language);
     overrideStatic();
     if (userAgentData) {
-      // overrideUserAgentData(userAgentData);
+  // overrideUserAgentData(userAgentData);
     }
     if (window.navigator.webdriver) {
       navigatorProps.webdriver = false;
@@ -976,12 +985,12 @@
     overrideInstancePrototype(window.history, {
       length: historyLength,
     });
-    // overrideWebGl(videoCard);
+// overrideWebGl(videoCard);
     overrideCodecs(audioCodecs, videoCodecs);
     overrideBattery(battery);
   })();
   (function inject2() {
-    var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
+    var __spreadArray = (this && this.__spreadArray) || function(to, from, pack) {
       if (pack || arguments.length === 2)
         for (var i = 0, l = from.length, ar; i < l; i++) {
           if (ar || !(i in from)) {
@@ -992,7 +1001,7 @@
       return to.concat(ar || Array.prototype.slice.call(from));
     };
 
-    var seededRandom = function (seed, max, min) {
+    var seededRandom = function(seed, max, min) {
       if (max === void 0) {
         max = 1;
       }
@@ -1010,15 +1019,15 @@
       return min + rnd * (max - min);
     };
 
-    var seededEl = function (arr, seed) {
+    var seededEl = function(arr, seed) {
       return arr[seed % arr.length];
     };
 
-    var shuffleArray = function (array, seed) {
+    var shuffleArray = function(array, seed) {
       var _array = __spreadArray([], array, true);
       var m = _array.length,
         t, i;
-      var random = function () {
+      var random = function() {
         var x = Math.sin(seed++) * 10000;
         return x - Math.floor(x);
       };
@@ -1032,11 +1041,11 @@
     };
 
 
-    var genRandomSeed = function () {
+    var genRandomSeed = function() {
       return Math.floor(seededRandom(Math.random() * 1e6, Number.MAX_SAFE_INTEGER, 1));
     };
 
-    var hashNumberFromString = function (input) {
+    var hashNumberFromString = function(input) {
       var hash = 0;
       for (var i = 0; i < input.length; i++) {
         var char = input.charCodeAt(i);
@@ -1046,14 +1055,14 @@
       return Math.abs(hash % Number.MAX_SAFE_INTEGER);
     };
 
-    var arrayFilter = function (arr) {
-      return arr.filter(function (item) {
+    var arrayFilter = function(arr) {
+      return arr.filter(function(item) {
         return item !== undefined && item !== false;
       });
     };
 
 
-    var getNextPowerOfTen = function (num) {
+    var getNextPowerOfTen = function(num) {
       if (num === 0)
         return 0;
       else if (num === 1)
@@ -1066,7 +1075,7 @@
     /**
      * 对象提取值
      */
-    var pick = function (obj, keys) {
+    var pick = function(obj, keys) {
       var res = {};
       for (var _i = 0, keys_1 = keys; _i < keys_1.length; _i++) {
         var key = keys_1[_i];
@@ -1075,13 +1084,13 @@
       return res;
     };
 
-    var randomWebglNoise = function (seed) {
+    var randomWebglNoise = function(seed) {
       return [seededRandom(seed, 1, -1), seededRandom(seed + 1, 1, -1)];
     };
     /**
      * 获取随机字体噪音
      */
-    var randomFontNoise = function (seed, mark) {
+    var randomFontNoise = function(seed, mark) {
       var random = seededRandom((seed + hashNumberFromString(mark)) % Number.MAX_SAFE_INTEGER, 3, 0);
       if ((random * 10) % 1 < 0.9)
         return 0;
@@ -1089,10 +1098,10 @@
     };
 
 
-    var isPixelEqual = function (p1, p2) {
+    var isPixelEqual = function(p1, p2) {
       return p1[0] === p2[0] && p1[1] === p2[1] && p1[2] === p2[2] && p1[3] === p2[3];
     };
-    var pixelCopy = function (src, dst, index) {
+    var pixelCopy = function(src, dst, index) {
       dst[0] = src[index];
       dst[1] = src[index + 1];
       dst[2] = src[index + 2];
@@ -1101,7 +1110,7 @@
     /**
      * 在2d画布绘制噪音
      */
-    var drawNoise = function (rawFunc, rawSeed, ctx, sx, sy, sw, sh, settings) {
+    var drawNoise = function(rawFunc, rawSeed, ctx, sx, sy, sw, sh, settings) {
       var imageData = rawFunc.call(ctx, sx, sy, sw, sh, settings);
       var isChanged = false;
       var Arr = Uint8ClampedArray;
@@ -1157,10 +1166,10 @@
      * 在webgl上下文绘制噪音点
      * @param noisePosition 区间[-1, 1]
      */
-    var drawNoiseToWebgl = function (gl, noisePosition) {
+    var drawNoiseToWebgl = function(gl, noisePosition) {
       var vertexShaderSource = "attribute vec4 noise;void main() {gl_Position = noise;gl_PointSize = 0.001;}";
       var fragmentShaderSource = "void main() {gl_FragColor = vec4(0.0, 0.0, 0.0, 0.01);}";
-      var createShader = function (gl, type, source) {
+      var createShader = function(gl, type, source) {
         var shader = gl.createShader(type);
         if (!shader)
           return;
@@ -1191,7 +1200,7 @@
 
     function changeCanvas() {
       overridePropertyWithProxy(HTMLCanvasElement.prototype, 'getContext', {
-        apply: function (target, thisArg, args) {
+        apply: function(target, thisArg, args) {
           if (args[0] === '2d') {
             const option = args[1] ?? {};
             option.willReadFrequently = true;
@@ -1201,7 +1210,7 @@
         }
       });
       overridePropertyWithProxy(CanvasRenderingContext2D.prototype, 'getImageData', {
-        apply: function (target, thisArg, args) {
+        apply: function(target, thisArg, args) {
           return drawNoise(target, seed, thisArg, ...args);
         }
       })
@@ -1210,7 +1219,7 @@
     function changeWebgl() {
       var noise = randomWebglNoise(seed);
       var handler = {
-        apply: function (target, thisArg, args) {
+        apply: function(target, thisArg, args) {
           drawNoiseToWebgl(thisArg, noise);
           return cache.Reflect.apply(target, thisArg, args);
         }
@@ -1220,7 +1229,7 @@
 
       var noise2 = seededRandom(seed, 1, 0);
       var handler = {
-        apply: function (target, thisArg, args) {
+        apply: function(target, thisArg, args) {
           const res = target.apply(thisArg, args);
           res?.push?.('EXT_' + noise2);
           return res;
@@ -1233,7 +1242,7 @@
     function changeDataURL() {
       var noiseWebgl = randomWebglNoise(seed);
       overridePropertyWithProxy(HTMLCanvasElement.prototype, 'toDataURL', {
-        apply: function (target, thisArg, args) {
+        apply: function(target, thisArg, args) {
           /* 2d */
 
           const ctx = thisArg.getContext('2d');
@@ -1260,7 +1269,7 @@
     function changeAudio() {
       const mem = new WeakSet()
       overridePropertyWithProxy(AudioBuffer.prototype, 'getChannelData', {
-        apply: function (target, thisArg, args) {
+        apply: function(target, thisArg, args) {
           const data = target.apply(thisArg, args)
           if (mem.has(data)) return data;
 
@@ -1276,7 +1285,7 @@
         }
       });
       var copyHand = {
-        apply: function (target, thisArg, args) {
+        apply: function(target, thisArg, args) {
           const channel = args[1]
           if (channel != null) {
             thisArg.getChannelData(channel)
@@ -1317,7 +1326,7 @@
 
 
       overridePropertyWithProxy(window, 'FontFace', {
-        construct: function (target, args, newTarget) {
+        construct: function(target, args, newTarget) {
           const source = args[1]
           if (typeof source === 'string' && source.startsWith('local(')) {
             const name = source.substring(source.indexOf('(') + 1, source.indexOf(')'));
@@ -1416,7 +1425,7 @@
                   _clearValue[key] = Math.abs(value)
                 }
                 args[0].colorAttachments[0].clearValue = _clearValue;
-              } catch (e) { }
+              } catch (e) {}
             }
             return target.apply(self, args);
           }
@@ -1443,7 +1452,7 @@
                   _data[index] += noise * value;
                 }
                 // args[2] = _data;
-              } catch (e) { }
+              } catch (e) {}
             }
             return target.apply(self, args);
           }
@@ -1456,7 +1465,7 @@
     function changeDomRect() {
       var mine = new WeakSet();
       var handler = {
-        construct: function (target, args, newTarget) {
+        construct: function(target, args, newTarget) {
           var res = Reflect.construct(target, args, newTarget);
           mine.add(res)
           return res;
@@ -1483,7 +1492,7 @@
 
       var getHandler = (toResult) => {
         return {
-          apply: function (target, thisArg, args) {
+          apply: function(target, thisArg, args) {
             return toResult(thisArg);
           },
           get(target, prop, receiver) {
@@ -1506,8 +1515,22 @@
       }))
 
       overridePropertyWithProxy(DOMRectReadOnly.prototype, 'toJSON', {
-        apply: function (target, thisArg, args) {
+        apply: function(target, thisArg, args) {
           return pick(thisArg, ['x', 'y', 'width', 'height', 'bottom', 'left', 'right', 'top']);
+        }
+      });
+    }
+
+    function changeOpen() {
+      overridePropertyWithProxy(window, 'open', {
+        apply(target, thisArg, args) {
+          const url = args[0];
+          if (typeof url === 'string') {
+            location.assign(url);
+            return window;
+          }
+          // 极端兜底（url 不是 string）
+          return Reflect.apply(target, thisArg, args);
         }
       });
     }
@@ -1519,34 +1542,6 @@
     changeFont()
     changeWebgpu()
     changeDomRect()
-    overridePropertyWithProxy(window, 'open', {
-      apply(target, thisArg, args) {
-        const url = args[0];
-        if (typeof url === 'string') {
-          location.assign(url);
-          return window;
-        }
-        // 极端兜底（url 不是 string）
-        return Reflect.apply(target, thisArg, args);
-      }
-    });
+    changeOpen()
   })();
 })();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
