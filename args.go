@@ -1,10 +1,23 @@
 package browser
 
 var chromeArgs = []string{
+	"--no-startup-window", //是否多开一个窗口
 	"--use-mock-keychain", //使用模拟钥匙串。
+	"--force-webrtc-ip-handling-policy",
 	"--webrtc-ip-handling-policy=disable_non_proxied_udp",
+	"--remote-allow-origins=*",
+	"--useAutomationExtension=false",                //禁用自动化扩展。
+	"--excludeSwitches=enable-automation",           //禁用自动化
+	"--disable-blink-features=AutomationControlled", //禁用 Blink 引擎的自动化控制。
+	"--no-sandbox",                                  //禁用 Chrome 的沙盒模式。
+	"--enable-features=NetworkService,NetworkServiceInProcess",
+	"--disable-features=VizDisplayCompositor,WebRtcHideLocalIpsWithMdns,EnablePasswordsAccountStorage,FlashDeprecationWarning,UserAgentClientHint,AutoUpdate,site-per-process,Profiles,EasyBakeWebBundler,MultipleCompositingThreads,AudioServiceOutOfProcess,TranslateUI,BlinkGenPropertyTrees,BackgroundSync,ClientHints,NetworkQualityEstimator,PasswordGeneration,PrefetchPrivacyChanges,TabHoverCards,ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,TabFreezing,TabDiscarding,HttpsUpgrades", // 禁用一些 Chrome 功能。
+	"--blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4,imagesEnabled=true", //Blink 设置。
+	"--ignore-ssl-errors=true", //忽略 SSL 错误。
+	"--disable-setuid-sandbox", //重要headless
 	// "--disable-web-security",          //关闭同源策略，抖音需要, 开启会导致 cloudflare 验证不过
 	// "--disable-site-isolation-trials", // 开启会导致 cloudflare 验证不过
+	//==============================
 
 	"--disable-3d-apis",
 	"--disable-webgl",
@@ -18,20 +31,8 @@ var chromeArgs = []string{
 	"--virtual-time-budget=1",         //缩短setTimeout  setInterval 的时间1000秒:目前不生效，不知道以后会不会生效，等生效了再打开
 
 	//远程调试
-	"--force-webrtc-ip-handling-policy",
-	"--remote-allow-origins=*",
-	"--useAutomationExtension=false",                //禁用自动化扩展。
-	"--excludeSwitches=enable-automation",           //禁用自动化
-	"--disable-blink-features=AutomationControlled", //禁用 Blink 引擎的自动化控制。
-	"--no-sandbox",                                  //禁用 Chrome 的沙盒模式。
-	"--set-uid-sandbox",                             //命令行参数用于设置 Chrome 进程运行时使用的 UID，从而提高 Chrome 浏览器的安全性
-	"--set-gid-sandbox",                             //命令行参数用于设置 Chrome 进程运行时使用的 GID，从而提高 Chrome 浏览器的安全性
-
-	"--enable-features=NetworkService,NetworkServiceInProcess",
-	"--disable-features=VizDisplayCompositor,WebRtcHideLocalIpsWithMdns,EnablePasswordsAccountStorage,FlashDeprecationWarning,UserAgentClientHint,AutoUpdate,site-per-process,Profiles,EasyBakeWebBundler,MultipleCompositingThreads,AudioServiceOutOfProcess,TranslateUI,BlinkGenPropertyTrees,BackgroundSync,ClientHints,NetworkQualityEstimator,PasswordGeneration,PrefetchPrivacyChanges,TabHoverCards,ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,TabFreezing,TabDiscarding,HttpsUpgrades", // 禁用一些 Chrome 功能。
-	"--blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4,imagesEnabled=true", //Blink 设置。
-	"--ignore-ssl-errors=true", //忽略 SSL 错误。
-	"--disable-setuid-sandbox", //重要headless
+	"--set-uid-sandbox", //命令行参数用于设置 Chrome 进程运行时使用的 UID，从而提高 Chrome 浏览器的安全性
+	"--set-gid-sandbox", //命令行参数用于设置 Chrome 进程运行时使用的 GID，从而提高 Chrome 浏览器的安全性
 
 	"--disable-extensions", //禁用所有扩展程序，这可以降低Chrome对内存的占用。
 	"--disable-plugins",    //禁用所有已安装的Chrome浏览器插件。
@@ -42,9 +43,8 @@ var chromeArgs = []string{
 	"--no-pings",                      //禁用 ping。
 	"--no-zygote",                     //禁用 zygote 进程。
 
-	"--mute-audio",   //禁用音频。
-	"--no-first-run", //不显示欢迎页面。
-	"--no-startup-window",
+	"--mute-audio",                                //禁用音频。
+	"--no-first-run",                              //不显示欢迎页面。
 	"--no-default-browser-check",                  //不检查是否为默认浏览器。
 	"--disable-cloud-import",                      //禁用云导入。
 	"--disable-gesture-typing",                    //禁用手势输入。

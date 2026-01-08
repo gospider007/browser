@@ -5,7 +5,6 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
-	"log"
 	"math"
 	uurl "net/url"
 	"strconv"
@@ -46,7 +45,6 @@ type Page struct {
 }
 
 func defaultRequestFunc(ctx context.Context, r *cdp.Route) {
-	log.Print("怎么走的是默认的？")
 	r.Continue(ctx)
 }
 func (obj *Page) delStopNotice() {
@@ -128,16 +126,13 @@ func (obj *Page) routeMain(ctx context.Context, rd cdp.RecvData) {
 			route.FulFill(ctx, cdp.FulData{
 				StatusCode: 404,
 			})
-		} else {
+		} else if obj.option.requestFunc != nil {
 			obj.option.requestFunc(ctx, route)
+		} else {
+			defaultRequestFunc(ctx, route)
 		}
 		if !route.Used() {
 			route.Fail(ctx)
-			// if obj.isReplaceRequest {
-			// 	route.RequestContinue(ctx)
-			// } else {
-			// 	route.Continue(ctx)
-			// }
 		}
 	}
 }
@@ -220,10 +215,6 @@ func (obj *Page) init(ctx context.Context) error {
 	obj.addEvent("Page.frameNavigated", obj.frameNavigated)
 	obj.addEvent("Fetch.requestPaused", obj.routeMain)
 	obj.addEvent("Target.attachedToTarget", obj.iframeToTargetMain)
-	// obj.addEvent("Target.targetInfoChanged", obj.targetToTargetMain)
-	// if _, err = obj.webSock.TargetSetDiscoverTargets(ctx, true); err != nil {
-	// 	return err
-	// }
 	if _, err = obj.webSock.PageEnable(ctx); err != nil {
 		return err
 	}

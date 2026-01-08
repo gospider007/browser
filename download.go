@@ -132,10 +132,18 @@ func verifyEvalPath(path string) error {
 	return errors.New("请输入正确的浏览器路径,如: c:/chrome.exe")
 }
 func findChromeApp(dirPath string) (string, error) {
-	dirs, err := os.ReadDir(dirPath)
+	fdirs, err := os.ReadDir(dirPath)
 	if err != nil {
 		return "", err
 	}
+	dirs := []os.DirEntry{}
+	for _, fdir := range fdirs {
+		if strings.HasPrefix(fdir.Name(), ".") {
+			continue
+		}
+		dirs = append(dirs, fdir)
+	}
+	// log.Print(dirPath, len(dirs))
 	if len(dirs) == 0 {
 		return "", errors.New("空目录")
 	}
@@ -248,7 +256,7 @@ func (obj *Client) runChrome() error {
 	}
 	args := []string{}
 	args = append(args, chromeArgs...)
-	if obj.option.UserAgent != "" {
+	if obj.option.UserAgent != "" && obj.option.Headless {
 		args = append(args, fmt.Sprintf("--user-agent=%s", obj.option.UserAgent))
 	}
 	if obj.option.Headless {
