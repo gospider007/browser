@@ -5,7 +5,7 @@ go 1.25.0
 require (
 	github.com/gospider007/blog v0.0.0-20250815030743-f2af6b9013ab
 	github.com/gospider007/bs4 v0.0.0-20260108062326-fbff2c7cd1ed
-	github.com/gospider007/cdp v0.0.0-20260108062727-df06a88e176f
+	github.com/gospider007/cdp v0.0.0-20260108062745-994fd07a3f36
 	github.com/gospider007/cmd v0.0.0-20260108062418-d3da9acfc0f5
 	github.com/gospider007/conf v0.0.0-20250815031235-1df45ae2e117
 	github.com/gospider007/gson v0.0.0-20260108062328-278520589b2b
@@ -50,7 +50,7 @@ require (
 	github.com/minio/minlz v1.0.1 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // indirect
-	github.com/onsi/ginkgo/v2 v2.27.3 // indirect
+	github.com/onsi/ginkgo/v2 v2.27.4 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
 	github.com/quic-go/quic-go v0.58.0 // indirect
 	github.com/refraction-networking/uquic v0.0.6 // indirect
@@ -70,7 +70,7 @@ require (
 	golang.org/x/image v0.34.0 // indirect
 	golang.org/x/mod v0.31.0 // indirect
 	golang.org/x/sync v0.19.0 // indirect
-	golang.org/x/sys v0.39.0 // indirect
+	golang.org/x/sys v0.40.0 // indirect
 	golang.org/x/text v0.32.0 // indirect
 	golang.org/x/tools v0.40.0 // indirect
 	gopkg.in/errgo.v2 v2.1.0 // indirect
