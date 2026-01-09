@@ -5,12 +5,12 @@ go 1.25.0
 require (
 	github.com/gospider007/blog v0.0.0-20250815030743-f2af6b9013ab
 	github.com/gospider007/bs4 v0.0.0-20260108062326-fbff2c7cd1ed
-	github.com/gospider007/cdp v0.0.0-20260108062745-994fd07a3f36
+	github.com/gospider007/cdp v0.0.0-20260109055159-be464203abce
 	github.com/gospider007/cmd v0.0.0-20260108062418-d3da9acfc0f5
 	github.com/gospider007/conf v0.0.0-20250815031235-1df45ae2e117
 	github.com/gospider007/gson v0.0.0-20260108062328-278520589b2b
 	github.com/gospider007/re v0.0.0-20251212071142-f56bce921150
-	github.com/gospider007/requests v0.0.0-20260108062639-d9779ab48ae0
+	github.com/gospider007/requests v0.0.0-20260109055157-1fd6c781be75
 	github.com/gospider007/tools v0.0.0-20260108062122-babc2c2f0542
 	golang.org/x/net v0.48.0
 )
@@ -32,13 +32,13 @@ require (
 	github.com/google/gopacket v1.1.19 // indirect
 	github.com/google/pprof v0.0.0-20260106004452-d7df1bf2cac7 // indirect
 	github.com/gospider007/bar v0.0.0-20250815030902-4f5b5d6312cf // indirect
-	github.com/gospider007/gtls v0.0.0-20260108062405-3286ba96f909 // indirect
+	github.com/gospider007/gtls v0.0.0-20260109055238-b86b5e48a3d5 // indirect
 	github.com/gospider007/http1 v0.0.0-20260108062327-be1c0f86305f // indirect
-	github.com/gospider007/http2 v0.0.0-20260108062407-71f1b92287e7 // indirect
-	github.com/gospider007/http3 v0.0.0-20260108062406-fc903dc4143e // indirect
-	github.com/gospider007/ja3 v0.0.0-20260108062327-21ae5930c6d0 // indirect
+	github.com/gospider007/http2 v0.0.0-20260109055239-a768fb227df6 // indirect
+	github.com/gospider007/http3 v0.0.0-20260109055201-8386990aa346 // indirect
+	github.com/gospider007/ja3 v0.0.0-20260109055200-5c9094422cc0 // indirect
 	github.com/gospider007/kinds v0.0.0-20250815031133-b2282666f69c // indirect
-	github.com/gospider007/netx v0.0.0-20260108062502-d6ffdf621007 // indirect
+	github.com/gospider007/netx v0.0.0-20260109055200-f5f74ea9cdb4 // indirect
 	github.com/gospider007/websocket v0.0.0-20260108062424-ab4aa9f460a2 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.18.2 // indirect
