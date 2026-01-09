@@ -642,16 +642,15 @@ function getInjectableFingerprintFunction() {
     mainFunctionString = mainFunctionString.replaceAll(`    overrideInstancePrototype(window.navigator, navigatorProps);`, `    overrideInstancePrototype(window.navigator, {
       "platform": "MacIntel",
       "deviceMemory": 8,
-      "hardwareConcurrency": 4,
+      "hardwareConcurrency": 12,
       "maxTouchPoints": 0,
       "product": "Gecko",
       "productSub": "20030107",
       "vendor": "Google Inc.",
-      "vendorSub": null,
+      "vendorSub": "",
       "doNotTrack": null,
       "appCodeName": "Mozilla",
       "appName": "Netscape",
-      "oscpu": null,
     });`);
     return mainFunctionString
 }

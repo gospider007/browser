@@ -704,25 +704,25 @@
   ;
   const fp = {
     "screen": {
-      "availTop": 0,
+      "availTop": 32,
       "availLeft": 0,
       "pageXOffset": 0,
       "pageYOffset": 0,
-      "screenX": 1,
-      "hasHDR": false,
-      "width": 1920,
-      "height": 1080,
-      "availWidth": 1920,
-      "availHeight": 1080,
+      "screenX": 0,
+      "hasHDR": true,
+      "width": 1470,
+      "height": 956,
+      "availWidth": 1470,
+      "availHeight": 924,
       "clientWidth": 0,
-      "clientHeight": 18,
+      "clientHeight": 19,
       "innerWidth": 0,
       "innerHeight": 0,
-      "outerWidth": 1728,
-      "outerHeight": 962,
-      "colorDepth": 24,
-      "pixelDepth": 24,
-      "devicePixelRatio": 1
+      "outerWidth": 1470,
+      "outerHeight": 832,
+      "colorDepth": 30,
+      "pixelDepth": 30,
+      "devicePixelRatio": 2
     },
     "audioCodecs": {
       "ogg": "probably",
@@ -816,13 +816,13 @@
       "mimeTypes": ["Portable Document Format~~application/pdf~~pdf", "Portable Document Format~~text/pdf~~pdf"]
     },
     "battery": {
-      "charging": false,
-      "chargingTime": null,
+      "charging": true,
+      "chargingTime": 0,
       "dischargingTime": null,
       "level": 1
     },
     "videoCard": {
-      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4 Max, Unspecified Version)",
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Max, Unspecified Version)",
       "vendor": "Google Inc. (Apple)"
     },
     "multimediaDevices": {
@@ -852,6 +852,9 @@
       "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
       "userAgentData": {
         "brands": [{
+          "brand": "Google Chrome",
+          "version": "143"
+        }, {
           "brand": "Chromium",
           "version": "143"
         }, {
@@ -863,9 +866,12 @@
         "architecture": "arm",
         "bitness": "64",
         "model": "",
-        "platformVersion": "26.2.0",
+        "platformVersion": "26.0.1",
         "uaFullVersion": "143.0.7499.170",
         "fullVersionList": [{
+          "brand": "Google Chrome",
+          "version": "143.0.7499.170"
+        }, {
           "brand": "Chromium",
           "version": "143.0.7499.170"
         }, {
@@ -877,27 +883,27 @@
       "languages": ["en-US", "en"],
       "platform": "MacIntel",
       "deviceMemory": 8,
-      "hardwareConcurrency": 8,
+      "hardwareConcurrency": 10,
       "maxTouchPoints": 0,
       "product": "Gecko",
       "productSub": "20030107",
       "vendor": "Google Inc.",
       "vendorSub": null,
-      "doNotTrack": null,
+      "doNotTrack": "1",
       "appCodeName": "Mozilla",
       "appName": "Netscape",
       "appVersion": "5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
       "oscpu": null,
       "extraProperties": {
         "vendorFlavors": ["chrome"],
-        "globalPrivacyControl": null,
+        "globalPrivacyControl": true,
         "pdfViewerEnabled": true,
         "installedApps": []
       },
       "webdriver": false
     },
     "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
-    "historyLength": 5
+    "historyLength": 3
   };
   (function inject() {
     const {
@@ -968,16 +974,15 @@
     overrideInstancePrototype(window.navigator, {
       "platform": "MacIntel",
       "deviceMemory": 8,
-      "hardwareConcurrency": 4,
+      "hardwareConcurrency": 12,
       "maxTouchPoints": 0,
       "product": "Gecko",
       "productSub": "20030107",
       "vendor": "Google Inc.",
-      "vendorSub": null,
+      "vendorSub": "",
       "doNotTrack": null,
       "appCodeName": "Mozilla",
       "appName": "Netscape",
-      "oscpu": null,
     });
     overrideInstancePrototype(window.screen, newScreen);
     overrideWindowDimensionsProps(windowScreenProps);
