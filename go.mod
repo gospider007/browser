@@ -5,12 +5,12 @@ go 1.25.0
 require (
 	github.com/gospider007/blog v0.0.0-20250815030743-f2af6b9013ab
 	github.com/gospider007/bs4 v0.0.0-20260113083833-6173f2fd8185
-	github.com/gospider007/cdp v0.0.0-20260113084108-babe7152d7b2
+	github.com/gospider007/cdp v0.0.0-20260113084616-8342445a8e00
 	github.com/gospider007/cmd v0.0.0-20260113083925-339da06b2a30
 	github.com/gospider007/conf v0.0.0-20250815031235-1df45ae2e117
 	github.com/gospider007/gson v0.0.0-20260113083835-90149908a352
 	github.com/gospider007/re v0.0.0-20251212071142-f56bce921150
-	github.com/gospider007/requests v0.0.0-20260113084058-a0ef65d3ff54
+	github.com/gospider007/requests v0.0.0-20260113084548-9bfc80127393
 	github.com/gospider007/tools v0.0.0-20260113083648-187b0026d83c
 	golang.org/x/net v0.49.0
 )
