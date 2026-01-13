@@ -94,6 +94,7 @@ func PrintLibs() {
 	log.Print(blog.Color(1, "centos libs\n"), blog.Color(2, "yum install -y ", strings.Join(libs2, " ")))
 }
 
+// https://github.com/microsoft/playwright/blob/main/packages/playwright-core/src/server/registry/index.ts
 // https://github.com/microsoft/playwright/blob/main/packages/playwright-core/browsers.json
 const revision = "1200"
 
@@ -143,7 +144,7 @@ func findChromeApp(dirPath string) (string, error) {
 		}
 		dirs = append(dirs, fdir)
 	}
-	// log.Print(dirPath, len(dirs))
+	// log.Print(dirPath, "  ==. ", len(dirs))
 	if len(dirs) == 0 {
 		return "", errors.New("空目录")
 	}
@@ -166,6 +167,12 @@ func findChromeApp(dirPath string) (string, error) {
 				return findChromeApp(path)
 			}
 		} else {
+			if strings.Contains(dir.Name(), ".") && !strings.HasSuffix(dir.Name(), ".exe") {
+				continue
+			}
+			if strings.Contains(name, "_") {
+				continue
+			}
 			if strings.Contains(name, "chrome") || strings.Contains(name, "chromium") {
 				return path, nil
 			}
@@ -184,7 +191,8 @@ func (obj *downClient) getChromePath(preCtx context.Context) (string, error) {
 	var chromeDownUrl string
 	chromeDir = tools.PathJoin(chromeDir, revision)
 	chromePath, _ := findChromeApp(chromeDir)
-	switch runtime.GOOS {
+	goos := runtime.GOOS
+	switch goos {
 	case "windows":
 		chromeDownUrl = win64
 	case "darwin":
@@ -256,7 +264,7 @@ func (obj *Client) runChrome() error {
 	}
 	args := []string{}
 	args = append(args, chromeArgs...)
-	if obj.option.UserAgent != "" && obj.option.Headless {
+	if obj.option.UserAgent != "" {
 		args = append(args, fmt.Sprintf("--user-agent=%s", obj.option.UserAgent))
 	}
 	if obj.option.Headless {

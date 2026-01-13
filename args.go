@@ -1,6 +1,7 @@
 package browser
 
 var chromeArgs = []string{
+	"--disable-translate",
 	"--no-startup-window", //是否多开一个窗口
 	"--use-mock-keychain", //使用模拟钥匙串。
 	"--force-webrtc-ip-handling-policy",
