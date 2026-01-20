@@ -704,22 +704,22 @@
   ;
   const fp = {
     "screen": {
-      "availTop": 32,
+      "availTop": 44,
       "availLeft": 0,
       "pageXOffset": 0,
       "pageYOffset": 0,
       "screenX": 0,
       "hasHDR": true,
-      "width": 1470,
-      "height": 956,
-      "availWidth": 1470,
-      "availHeight": 924,
+      "width": 2056,
+      "height": 1329,
+      "availWidth": 2056,
+      "availHeight": 1285,
       "clientWidth": 0,
       "clientHeight": 19,
       "innerWidth": 0,
       "innerHeight": 0,
-      "outerWidth": 1470,
-      "outerHeight": 832,
+      "outerWidth": 2056,
+      "outerHeight": 1161,
       "colorDepth": 30,
       "pixelDepth": 30,
       "devicePixelRatio": 2
@@ -822,7 +822,7 @@
       "level": 1
     },
     "videoCard": {
-      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Max, Unspecified Version)",
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Unspecified Version)",
       "vendor": "Google Inc. (Apple)"
     },
     "multimediaDevices": {
@@ -866,7 +866,7 @@
         "architecture": "arm",
         "bitness": "64",
         "model": "",
-        "platformVersion": "26.0.1",
+        "platformVersion": "15.6.1",
         "uaFullVersion": "143.0.7499.170",
         "fullVersionList": [{
           "brand": "Google Chrome",
@@ -889,21 +889,21 @@
       "productSub": "20030107",
       "vendor": "Google Inc.",
       "vendorSub": null,
-      "doNotTrack": "1",
+      "doNotTrack": null,
       "appCodeName": "Mozilla",
       "appName": "Netscape",
       "appVersion": "5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
       "oscpu": null,
       "extraProperties": {
         "vendorFlavors": ["chrome"],
-        "globalPrivacyControl": true,
+        "globalPrivacyControl": null,
         "pdfViewerEnabled": true,
         "installedApps": []
       },
       "webdriver": false
     },
     "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
-    "historyLength": 3
+    "historyLength": 4
   };
   (function inject() {
     const {
@@ -1526,6 +1526,45 @@
       });
     }
 
+    function changeDomRectV2() {
+      const noise = seededRandom(seed, 1e-6, -1e-6);
+      var handler = {
+        apply(target, thisArg, args) {
+          const rect = cache.Reflect.apply(target, thisArg, args);
+          if (rect) {
+            if (rect.x !== 0) rect.x += noise;
+            if (rect.width !== 0) rect.width += noise;
+          }
+          return rect;
+        },
+        get(target, prop, receiver) {
+          useStrictModeExceptions(prop);
+          return Reflect.get(target, prop, receiver);
+        },
+      }
+      overridePropertyWithProxy(window.Element.prototype, 'getBoundingClientRect', handler)
+      overridePropertyWithProxy(window.Range.prototype, 'getBoundingClientRect', handler)
+      var handler2 = {
+        apply(target, thisArg, args) {
+          const rlist = cache.Reflect.apply(target, thisArg, args);
+          if (rlist) {
+            for (let i = 0; i < rlist.length; i++) {
+              const rect = rlist[i];
+              if (rect.x !== 0) rect.x += noise;
+              if (rect.width !== 0) rect.width += noise;
+            }
+          }
+          return rlist;
+        },
+        get(target, prop, receiver) {
+          useStrictModeExceptions(prop);
+          return Reflect.get(target, prop, receiver);
+        },
+      }
+      overridePropertyWithProxy(window.Element.prototype, 'getClientRects', handler2)
+      overridePropertyWithProxy(window.Range.prototype, 'getClientRects', handler2)
+    }
+
     function changeOpen() {
       overridePropertyWithProxy(window, 'open', {
         apply(target, thisArg, args) {
@@ -1546,7 +1585,8 @@
     changeAudio()
     changeFont()
     changeWebgpu()
-    changeDomRect()
+    // changeDomRect()
+    changeDomRectV2()
     changeOpen()
   })();
 })();

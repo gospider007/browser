@@ -986,3 +986,67 @@ const hookTasks  = [
     }
   },
 ];
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+({ win, conf, useSeed, useProxy }) => {
+      if (!win) return;
+
+      const seed = useSeed(conf.fp.other.domRect)
+      if (seed == null) return;
+
+      const noise = seededRandom(seed, 1e-6, -1e-6);
+
+      {
+        const handler = {
+          apply(target: () => DOMRect, thisArg: any, args: any) {
+            notify('strong.domRect')
+            const rect = Reflect.apply(target, thisArg, args);
+            if (rect) {
+              if (rect.x !== 0) rect.x += noise;
+              if (rect.width !== 0) rect.width += noise;
+            }
+            return rect;
+          }
+        }
+        useProxy(win.Element.prototype, 'getBoundingClientRect', handler)
+        useProxy(win.Range.prototype, 'getBoundingClientRect', handler)
+      }
+
+      {
+        const handler = {
+          apply(target: () => DOMRectList, thisArg: any, args: any) {
+            notify('strong.domRect')
+            const rlist = Reflect.apply(target, thisArg, args);
+            if (rlist) {
+              for (let i = 0; i < rlist.length; i++) {
+                const rect = rlist[i];
+                if (rect.x !== 0) rect.x += noise;
+                if (rect.width !== 0) rect.width += noise;
+              }
+            }
+            return rlist;
+          }
+        }
+        useProxy(win.Element.prototype, 'getClientRects', handler)
+        useProxy(win.Range.prototype, 'getClientRects', handler)
+      }
+    }

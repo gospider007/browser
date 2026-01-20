@@ -7,15 +7,19 @@ var chromeArgs = []string{
 	"--force-webrtc-ip-handling-policy",
 	"--webrtc-ip-handling-policy=disable_non_proxied_udp",
 	"--remote-allow-origins=*",
-	"--useAutomationExtension=false",                //禁用自动化扩展。
-	"--excludeSwitches=enable-automation",           //禁用自动化
-	"--disable-blink-features=AutomationControlled", //禁用 Blink 引擎的自动化控制。
-	"--no-sandbox",                                  //禁用 Chrome 的沙盒模式。
+	"--useAutomationExtension=false",                            //禁用自动化扩展。
+	"--excludeSwitches=enable-automation",                       //禁用自动化
+	"--disable-blink-features=AutomationControlled",             //禁用 Blink 引擎的自动化控制。
+	"--no-sandbox",                                              //禁用 Chrome 的沙盒模式。
+	"--enable-webrtc-stun-origin=false",                         //用于禁用WebRTC的STUN源，而
+	"--enforce-webrtc-ip-permission-check=false",                //用于禁用WebRTC的IP权限检查。
+	"--force-webrtc-ip-handling-policy=disable_non_proxied_udp", //强制 WebRTC IP 处理策略。
 	"--enable-features=NetworkService,NetworkServiceInProcess",
 	"--disable-features=VizDisplayCompositor,WebRtcHideLocalIpsWithMdns,EnablePasswordsAccountStorage,FlashDeprecationWarning,UserAgentClientHint,AutoUpdate,site-per-process,Profiles,EasyBakeWebBundler,MultipleCompositingThreads,AudioServiceOutOfProcess,TranslateUI,BlinkGenPropertyTrees,BackgroundSync,ClientHints,NetworkQualityEstimator,PasswordGeneration,PrefetchPrivacyChanges,TabHoverCards,ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,TabFreezing,TabDiscarding,HttpsUpgrades", // 禁用一些 Chrome 功能。
 	"--blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4,imagesEnabled=true", //Blink 设置。
-	"--ignore-ssl-errors=true", //忽略 SSL 错误。
-	"--disable-setuid-sandbox", //重要headless
+	"--ignore-ssl-errors=true",         //忽略 SSL 错误。
+	"--disable-setuid-sandbox",         //重要headless
+	"--disable-renderer-backgrounding", //禁用渲染器后台化。,反爬用到
 	// "--disable-web-security",          //关闭同源策略，抖音需要, 开启会导致 cloudflare 验证不过
 	// "--disable-site-isolation-trials", // 开启会导致 cloudflare 验证不过
 	//==============================
@@ -78,17 +82,14 @@ var chromeArgs = []string{
 	"--disable-hang-monitor",                   //禁用挂起监视器
 	"--disable-popup-blocking",                 //禁用弹出窗口阻止。
 
-	"--disable-crash-reporter",                                  //禁用崩溃报告器。
-	"--disable-background-timer-throttling",                     //禁用后台计时器限制。
-	"--disable-backgrounding-occluded-windows",                  //禁用后台窗口。
-	"--disable-infobars",                                        //禁用信息栏。
-	"--hide-scrollbars",                                         //隐藏滚动条。
-	"--disable-prompt-on-repost",                                //禁用重新提交提示。
-	"--metrics-recording-only",                                  //仅记录指标。
-	"--safebrowsing-disable-auto-update",                        //禁用安全浏览自动更新。
-	"--force-webrtc-ip-handling-policy=disable_non_proxied_udp", //强制 WebRTC IP 处理策略。
-	"--enable-webrtc-stun-origin=false",                         //用于禁用WebRTC的STUN源，而
-	"--enforce-webrtc-ip-permission-check=false",                //用于禁用WebRTC的IP权限检查。
+	"--disable-crash-reporter",                 //禁用崩溃报告器。
+	"--disable-background-timer-throttling",    //禁用后台计时器限制。
+	"--disable-backgrounding-occluded-windows", //禁用后台窗口。
+	"--disable-infobars",                       //禁用信息栏。
+	"--hide-scrollbars",                        //隐藏滚动条。
+	"--disable-prompt-on-repost",               //禁用重新提交提示。
+	"--metrics-recording-only",                 //仅记录指标。
+	"--safebrowsing-disable-auto-update",       //禁用安全浏览自动更新。
 
 	"--disable-session-crashed-bubble",                     //禁用会话崩溃气泡。
 	"--font-render-hinting=none",                           //禁用字体渲染提示
@@ -108,7 +109,6 @@ var chromeArgs = []string{
 	"--disable-dev-shm-usage",   //禁用Chrome在/dev/shm文件系统中分配的共享内存
 	"--disable-background-mode", // 禁用浏览器后台模式。
 
-	"--disable-renderer-backgrounding",       //禁用渲染器后台化。,反爬用到
 	"--disable-search-engine-choice-screen",  //用于禁用搜索引擎选择屏幕。该选项通常用于自定义 Chrome 浏览器的行为。
 	"--renderer",                             //使进程作为渲染器而不是浏览器运行。
 	"--disable-renderer-accessibility",       //关闭渲染器中的辅助功能。

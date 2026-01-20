@@ -521,6 +521,44 @@ function inject2() {
             }
         });
     }
+    function changeDomRectV2() {
+        const noise = seededRandom(seed, 1e-6, -1e-6);
+        var handler = {
+            apply(target, thisArg, args) {
+                const rect = cache.Reflect.apply(target, thisArg, args);
+                if (rect) {
+                    if (rect.x !== 0) rect.x += noise;
+                    if (rect.width !== 0) rect.width += noise;
+                }
+                return rect;
+            },
+            get(target, prop, receiver) {
+                useStrictModeExceptions(prop);
+                return Reflect.get(target, prop, receiver);
+            },
+        }
+        overridePropertyWithProxy(window.Element.prototype, 'getBoundingClientRect', handler)
+        overridePropertyWithProxy(window.Range.prototype, 'getBoundingClientRect', handler)
+        var handler2 = {
+            apply(target, thisArg, args) {
+                const rlist = cache.Reflect.apply(target, thisArg, args);
+                if (rlist) {
+                    for (let i = 0; i < rlist.length; i++) {
+                        const rect = rlist[i];
+                        if (rect.x !== 0) rect.x += noise;
+                        if (rect.width !== 0) rect.width += noise;
+                    }
+                }
+                return rlist;
+            },
+            get(target, prop, receiver) {
+                useStrictModeExceptions(prop);
+                return Reflect.get(target, prop, receiver);
+            },
+        }
+        overridePropertyWithProxy(window.Element.prototype, 'getClientRects', handler2)
+        overridePropertyWithProxy(window.Range.prototype, 'getClientRects', handler2)
+    }
     function changeOpen() {
         overridePropertyWithProxy(window, 'open', {
             apply(target, thisArg, args) {
@@ -541,7 +579,8 @@ function inject2() {
     changeAudio()
     changeFont()
     changeWebgpu()
-    changeDomRect()
+    // changeDomRect()
+    changeDomRectV2()
     changeOpen()
 }
 /**
@@ -667,3 +706,15 @@ fs.writeFile('browser/stealthRaw.js', data, (err) => {
 });
 
 
+
+ // page2.GoTo(nil, "https://browserleaks.com/tcp")
+	// // page2.GoTo(nil, "https://browserleaks.com/ip")
+	// // page2.GoTo(nil, "https://www.yalala.com/")
+	// // page2.GoTo(nil, "https://abrahamjuliot.github.io/creepjs/")
+	// // page2.GoTo(nil, "https://gologin.com/cn/check-browser/")
+	// // page2.GoTo(nil, "https://dicloak.com/tc/free-tools-detail/creepjs")
+	// // page2.GoTo(nil, "https://iphey.com/")
+	// // page2.GoTo(nil, "https://www.browserscan.net/zh/webrtc")
+
+	// // page2.GoTo(nil, "https://pixelscan.net/fingerprint-check")
+	// // page2.GoTo(nil, "https://www.browserscan.net/zh")
