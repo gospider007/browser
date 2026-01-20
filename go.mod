@@ -10,7 +10,7 @@ require (
 	github.com/gospider007/conf v0.0.0-20250815031235-1df45ae2e117
 	github.com/gospider007/gson v0.0.0-20260120074724-2ff4db9f71c8
 	github.com/gospider007/re v0.0.0-20251212071142-f56bce921150
-	github.com/gospider007/requests v0.0.0-20260120074915-1622616e5a2e
+	github.com/gospider007/requests v0.0.0-20260120075043-8f75616a6406
 	github.com/gospider007/tools v0.0.0-20260120074453-dbd9d4748c8a
 	golang.org/x/net v0.49.0
 )
