@@ -163,6 +163,13 @@ type Dom struct {
 	ele     *bs4.Client
 }
 
+func (obj *Dom) HasAttr(key string) bool {
+	_, ok := obj.ele.Attrs()[key]
+	return ok
+}
+func (obj *Dom) Html() *bs4.Client {
+	return obj.ele
+}
 func (obj *Dom) Rect(ctx context.Context) (cdp.Rect, error) {
 	rs, err := obj.webSock.DOMGetBoxModel(ctx, obj.nodeId)
 	if err != nil {
